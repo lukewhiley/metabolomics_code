@@ -5,7 +5,7 @@ lgw_boxplot <- function(x){
     geom_boxplot(aes(color = class, fill = class), outlier.shape = NA, lwd = 1, alpha=0.05)  +
     geom_jitter(aes(color = class), width = 0.05) +
     labs(x = paste(""), y = paste("Concentration µM")) +
-    ggtitle(idx_bp) +
+    ggtitle("") +
     theme_bw() +
     theme(plot.title = element_text(hjust = 0.5)) +
     theme(plot.title = element_text(size=50)) +
