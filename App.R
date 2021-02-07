@@ -35,12 +35,6 @@ ui_metabolite_target_upload <- sidebarLayout(
   )
 )
 
-ui <- fluidPage(
-  ui_title,
-  ui_data_upload,
-  ui_metabolite_target_upload
-)
-
 #create a user interface for uploading corresponding metadata
 ui_metadata_upload <- sidebarLayout(
   sidebarPanel(
@@ -55,11 +49,30 @@ ui_metadata_upload <- sidebarLayout(
   )
 )
 
+
+#create a user interface for making boxplots
+ui_boxplot <- sidebarLayout(
+  sidebarPanel(
+    p("test boxplot"),
+    selectInput('xcol', 'X Variable', ""),
+    selectInput('ycol', 'Y Variable', "", selected = "")
+  ),
+    mainPanel(
+      mainPanel(
+        h3("boxplot"),
+        plotOutput(outputId = "cars_plot") # depends on input
+      )
+  )
+)
+
+
+
 ui <- fluidPage(
   ui_title,
   ui_data_upload,
   ui_metabolite_target_upload,
-  ui_metadata_upload
+  ui_metadata_upload,
+  ui_boxplot
 )
 
 
@@ -116,7 +129,19 @@ output$metabolite_metadata_file <- renderTable({
   head(metabolite_metadata_file(), c(input$r3, input$c3))
   
 })
-}
+
+
+# server for boxplot ################################################
+
+output$cars_plot <- renderPlot({
+  
+  plot(cars)
+  
+})
+
+
+
+}#final bracket for server
 
 # shinyApp()
 shinyApp(ui = ui, server = server)
