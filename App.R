@@ -13,7 +13,7 @@ ui_data_upload <- sidebarLayout(
   sidebarPanel(
     p("select a .csv or .tsv containing metabolite concentration values. Column headers should contain the metabolite name matching the metabolite list below. sample/filenames should be in a column called: sample name"),
     fileInput("metabolite_data_file", NULL, accept = c(".csv", ".tsv")),
-    numericInput("r", "Rows to preview", 10, min = 1),
+    numericInput("r", "Rows to preview", 5, min = 1),
     numericInput("c", "Columns to preview", 5, min = 1)
   ),
   mainPanel(
@@ -39,6 +39,27 @@ ui <- fluidPage(
   ui_title,
   ui_data_upload,
   ui_metabolite_target_upload
+)
+
+#create a user interface for uploading corresponding metadata
+ui_metadata_upload <- sidebarLayout(
+  sidebarPanel(
+    p("select a .csv or .tsv contatining any project metadata. Column headers should contain the metadata headers. Sample/filenames should be in a column called: sample name. This should match the raw data file uploaded above"),
+    fileInput("metabolite_metadata_file", NULL, accept = c(".csv", ".tsv")),
+    numericInput("r", "Rows to preview", 5, min = 1),
+    numericInput("c", "Columns to preview", 5, min = 1)
+  ),
+  mainPanel(
+    h3("Metadata"),
+    tableOutput("metabolite_metadata_file")
+  )
+)
+
+ui <- fluidPage(
+  ui_title,
+  ui_data_upload,
+  ui_metabolite_target_upload,
+  ui_metadata_upload
 )
 
 
@@ -78,6 +99,23 @@ server <- function(input, output, session) {
     head(metabolite_target_file(), input$r)
     
   })
+
+#server on importing metadata
+metabolite_metadata_file <- reactive({
+  req(input$metabolite_metadata_file)
+  
+  ext <- tools::file_ext(input$metabolite_metadata_file$name)
+  switch(ext,
+         csv = vroom::vroom(input$metabolite_metadata_file$datapath, delim = ","),
+         tsv = vroom::vroom(input$metabolite_metadata_file$datapath, delim = "\t"),
+         validate("Invalid file; Please upload a .csv or .tsv file")
+  )
+})
+
+output$metabolite_metadata_file <- renderTable({
+  head(metabolite_metadata_file(), input$r)
+  
+})
 }
 
 # shinyApp()
