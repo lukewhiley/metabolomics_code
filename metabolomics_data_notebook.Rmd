@@ -15,6 +15,8 @@ library(readxl)
 library(tidyverse)
 library(httr)
 library(dunn.test)
+
+parent_path <- paste(getwd())
 ```
 
 
@@ -30,9 +32,18 @@ eval(parse(text = script), envir = .GlobalEnv)
 rm(script)
 ```
 
-Section 3 - read in data
+Section 3 - What are the data files called?
 
 ```{r}
+name_of_data_file <- ""
+name_of_metadata_file <- ""
+```
 
+
+Section 4 - read in the data
+
+```{r}
+name_of_data_file <- ""
+name_of_metadata_file <- ""
 ```
 
