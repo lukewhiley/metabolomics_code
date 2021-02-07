@@ -18,4 +18,4 @@ lgw_boxplot <- function(x){
           legend.key.size = unit(2, "cm"))
 }
 
-print("BOXPLOT COMMIT")
+#print("BOXPLOT COMMIT")
