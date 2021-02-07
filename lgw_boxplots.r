@@ -17,3 +17,5 @@ lgw_boxplot <- function(x){
           legend.text = element_text(color = "black", size = 40),
           legend.key.size = unit(2, "cm"))
 }
+
+print("BOXPLOT COMMIT")
