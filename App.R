@@ -13,8 +13,8 @@ ui_data_upload <- sidebarLayout(
   sidebarPanel(
     p("select a .csv or .tsv containing metabolite concentration values. Column headers should contain the metabolite name matching the metabolite list below. sample/filenames should be in a column called: sample name"),
     fileInput("metabolite_data_file", NULL, accept = c(".csv", ".tsv")),
-    numericInput("r", "Rows to preview", 5, min = 1),
-    numericInput("c", "Columns to preview", 5, min = 1)
+    numericInput("r1", "Rows to preview", 5, min = 1),
+    numericInput("c1", "Columns to preview", 5, min = 1)
   ),
   mainPanel(
     h3("Raw data"),
@@ -27,7 +27,7 @@ ui_metabolite_target_upload <- sidebarLayout(
   sidebarPanel(
     p("select a .csv or .tsv contatining a list of metabolite targets in a column named: metabolite"),
     fileInput("metabolite_target_file", NULL, accept = c(".csv", ".tsv")),
-    numericInput("r", "Rows to preview", 5, min = 1),
+    numericInput("r2", "Rows to preview", 5, min = 1),
   ),
   mainPanel(
     h3("Metabolite targets"),
@@ -46,8 +46,8 @@ ui_metadata_upload <- sidebarLayout(
   sidebarPanel(
     p("select a .csv or .tsv contatining any project metadata. Column headers should contain the metadata headers. Sample/filenames should be in a column called: sample name. This should match the raw data file uploaded above"),
     fileInput("metabolite_metadata_file", NULL, accept = c(".csv", ".tsv")),
-    numericInput("r", "Rows to preview", 5, min = 1),
-    numericInput("c", "Columns to preview", 5, min = 1)
+    numericInput("r3", "Rows to preview", 5, min = 1),
+    numericInput("c3", "Columns to preview", 5, min = 1)
   ),
   mainPanel(
     h3("Metadata"),
@@ -79,7 +79,7 @@ server <- function(input, output, session) {
   })
   
   output$metabolite_data_file <- renderTable({
-    head(metabolite_data_file(), c(input$r, input$c))
+    head(metabolite_data_file(), c(input$r1, input$c1))
     
   })
   
@@ -96,7 +96,7 @@ server <- function(input, output, session) {
   })
   
   output$metabolite_target_file <- renderTable({
-    head(metabolite_target_file(), input$r)
+    head(metabolite_target_file(), input$r2)
     
   })
 
@@ -113,7 +113,7 @@ metabolite_metadata_file <- reactive({
 })
 
 output$metabolite_metadata_file <- renderTable({
-  head(metabolite_metadata_file(), input$r)
+  head(metabolite_metadata_file(), c(input$r3, input$c3))
   
 })
 }
