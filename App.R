@@ -10,13 +10,26 @@ ui_title <- titlePanel(title=div(img(src="ANPC_logo.png", width = "240px", heigh
 
 #create a user interface for uplopading the metabolite data values
 ui_data_upload <- sidebarLayout(
+  
+  #side panel
   sidebarPanel(
     p("select a .csv or .tsv containing metabolite concentration values. Column headers should contain the metabolite name matching the metabolite list below. sample/filenames should be in a column called: sample name"),
-    fileInput("metabolite_data_file", NULL, accept = c(".csv", ".tsv")),
+    fileInput("metabolite_data_file",
+              label = "choose file",
+              multiple = TRUE,
+              accept = c(".csv", ".tsv")),
+    p("does the file have a header?"),
+    checkboxInput("header", "Header", TRUE),
+    radioButtons("sep", "Separator",
+                 choices = c(Semicolon = ";",
+                             Comma = ",",
+                             Tab = "\t"),
+                 selected = ","),
     numericInput("r1", "Rows to preview", 5, min = 1),
     numericInput("c1", "Columns to preview", 5, min = 1)
   ),
-  mainPanel(
+  
+mainPanel(
     h3("Raw data"),
     tableOutput("metabolite_data_file")
   )
@@ -54,13 +67,15 @@ ui_metadata_upload <- sidebarLayout(
 ui_boxplot <- sidebarLayout(
   sidebarPanel(
     p("test boxplot"),
-    selectInput('xcol', 'X Variable', ""),
-    selectInput('ycol', 'Y Variable', "", selected = "")
+    selectInput("dataset","Data:",
+                choices =list(iris = "iris", mtcars = "mtcars",
+                              uploaded_file = "inFile"), selected=NULL)
   ),
     mainPanel(
       mainPanel(
         h3("boxplot"),
-        plotOutput(outputId = "cars_plot") # depends on input
+        plotOutput(outputId = "plot1"), # depends on input
+        tableOutput(outputId = "content")
       )
   )
 )
@@ -77,7 +92,7 @@ ui <- fluidPage(
 
 
 # server()
-server <- function(input, output, session) {
+server <- shinyServer(function(input, output, session) {
   
   #server on importing raw data
   metabolite_data_file <- reactive({
@@ -133,15 +148,37 @@ output$metabolite_metadata_file <- renderTable({
 
 # server for boxplot ################################################
 
-output$cars_plot <- renderPlot({
-  
-  plot(cars)
-  
+# data <- reactive({
+#   inFile <- input$metabolite_data_file
+#   if(!is.null(inFile)){
+#     read.csv(inFile$datapath, header = input$header, stringsAsFactors = FALSE)    
+#   }
+# })
+# 
+# output$plot1 <- renderPlot({
+#   req(data())
+#   print("help") 
+# })
+
+plot_data <- reactive({
+  if (is.null(input$metabolite_data_file)) return(NULL)
+  read.csv(input$metabolite_data_file$datapath, header = input$header)
+})
+
+output$contents <- renderTable({
+  req(plot_data()) # if user_data() is null than the reactive will not run
+  head(plot_data(), c(input$r1, input$c1))
+})
+
+output$plot1 <- renderPlot({
+  #req(user_data())
+  #plot(user_data$speed, user_data$dist)
 })
 
 
 
-}#final bracket for server
+
+})#final bracket for server
 
 # shinyApp()
 shinyApp(ui = ui, server = server)
