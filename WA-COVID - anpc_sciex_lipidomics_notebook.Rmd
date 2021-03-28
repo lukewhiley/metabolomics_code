@@ -1,6 +1,8 @@
 ---
 title: "SCIEX LIPIDOMICS NOTEBOOK"
-output: LIPIDOMICS RESULTS
+output:
+  html_document:
+    df_print: paged
 ---
 
 This is an R Notebook designed to help with the processing of lipidomic data generated using the ANPC sciex platform. To run this script you need the following:
@@ -70,7 +72,7 @@ Section 2 - USER INPUT REQUIRED
 
 the project name should contain a text string that is in the file names e.g "WA COVID"
 
-```{r, libraries used,  echo = FALSE, warning=FALSE, message=FALSE}
+```{r, user inputs,  echo = FALSE, warning=FALSE, message=FALSE}
 
 project_name <- "WA COVID"
 user_name <- "LGW"
@@ -172,7 +174,7 @@ print("HAVE YOU COMPLETED THIS SECTION?")
 
 Section 6 - create training analysis dataset for both individual lipid species and lipid family data
 
-```{r, filter data,  echo = FALSE, warning=FALSE, message=FALSE}
+```{r, prepare training data,  echo = FALSE, warning=FALSE, message=FALSE}
 # create training set data for individual lipid species
 training_analysis_data <-  analysis_data %>% 
   filter(!!as.symbol(filter_column_1) == filter_value_1) %>% 
@@ -191,7 +193,7 @@ family_training_analysis_data <- family_data %>%
 Section 7 - USER INPUT REQUIRED - PLOT OPTIONS
 ##############################################
 
-```{r, filter data,  echo = FALSE, warning=FALSE, message=FALSE}
+```{r, plot options,  echo = FALSE, warning=FALSE, message=FALSE}
 
 plot_two_group_colours <- c("#999999",  "#56B4E9") #put in plot colors here. This is for 2 class analysis.
 
@@ -224,55 +226,5 @@ lipids_opls(training_analysis_data)
 #lipids_pca_plotly(family_training_analysis_data)
 ```
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-lipids_opls()
-
-```
-
-
-
-
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=12}
-opls_x <-  training_analysis_data %>% select(c(lipid)) %>% as.matrix() 
-opls_y <- training_analysis_data %>% select(class) %>% as.matrix()
-sampleID <- training_analysis_data %>% select(sampleID)
-
-opls_model <- opls(log10(opls_x+1), opls_y, center = TRUE, scale = "UV")
-plot_t_pred <- as.numeric(as.matrix(opls_model@t_pred))
-plot_t_orth <- as.numeric(as.matrix(opls_model@t_orth))
-
-#produce OPLS-DA plot
-plot_Val <- as_tibble(cbind(plot_t_pred, plot_t_orth))
-plot_Val$class <- opls_y[,'class']
-plot_Val$sampleID <- sampleID$sampleID
-
-opls_plot <- ggplot() +
-  geom_vline(xintercept = 0, colour="black", linetype = "longdash", alpha = 0.4)+
-  geom_point(data=plot_Val, aes(x =  plot_t_pred, y =  plot_t_orth, color = class),  size = 6.0)+
-  #geom_text(data=plot_Val, aes(x =  plot_t_pred, y =  plot_t_orth, label = sampleID))+
-  theme_bw() +
-  scale_color_manual(values=plot_two_group_colours)+
-  xlab("t_pred")+
-  ylab("t_orth")+
-  #xlim(c(-5,5))+
-  #ylim(c(-8,8))+
-  ggtitle("OPLS-DA Sciex Lipidomics Training Model")+
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(plot.title = element_text(size=30)) +
-  theme(axis.text.y=element_text(size = 22, margin = margin(t = 0, r = 0, b = 0, l = 2))) +
-  theme(axis.text.x=element_text(size = 22)) +
-  theme(axis.title = element_text(size = 25)) +
-  theme(legend.position = 'none'); opls_plot
-
-#opls_eruption <- eruption(opls_model)
-
-
-# generate loadings plot -----------------------------------------------
-
-#plotload_cat(opls_model)
-
-```
-Section 9 - 
 
 
