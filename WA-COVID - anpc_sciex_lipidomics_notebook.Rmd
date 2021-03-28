@@ -216,12 +216,6 @@ lipids_pca_plotly(family_training_analysis_data)
 ```
 
 
-Section 8 - create a PCA for lipid family
-
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-
-
-```
 
 Section 9 - create a OPLS-DA training model
 
