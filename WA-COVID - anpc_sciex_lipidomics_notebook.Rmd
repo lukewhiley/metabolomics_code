@@ -1,9 +1,6 @@
 ---
 title: "SCIEX LIPIDOMICS NOTEBOOK"
 output: LIPIDOMICS RESULTS
-pdf_document: 
-fig_caption: yes
-keep_tex: yes
 ---
 
 This is an R Notebook designed to help with the processing of lipidomic data generated using the ANPC sciex platform. To run this script you need the following:
@@ -61,7 +58,7 @@ library(devtools)
 library(metabom8)
 library(shiny)
 library(plotly)
-source('LGW_lipidomics_fuctions.R')
+source('scripts/LGW_lipidomics_fuctions.R')
 
 
 
@@ -182,12 +179,8 @@ training_analysis_data <-  analysis_data %>%
   filter(!!as.symbol(filter_column_2) == filter_value_2[1]|!!as.symbol(filter_column_2) == filter_value_2[2])
 
 # create training set data for summed lipid families
-family_data <- apply(lipid_family, 1, function(func_family){
-  family_targets <- which(sub("\\(.*", "", colnames(training_analysis_data)) == func_family) # find the columns in each family
-  training_analysis_data %>% select(family_targets)  %>% mutate(rowsum = rowSums(.)) %>% select(rowsum)
-  }) %>% bind_cols()
+family_data <- create_family_data_summed(training_analysis_data)
 
-colnames(family_data) <- c(lipid_family$lipid_class)
 
 family_training_analysis_data <- family_data %>% 
   add_column(training_analysis_data$sampleID, training_analysis_data$class, .before = 1) %>% 
@@ -209,26 +202,42 @@ label_sampleIDs <- FALSE # do you want you sampleIDs labelled on the plots? TRUE
 
 ```
   
-Section 7 - create a PCA for individual lipid species
+Section 7 - create a PCA for individual lipid species and lipid families
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=12, fig.pos='H', }
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
 
 lipids_pca(training_analysis_data)
 lipids_pca_plotly(training_analysis_data)
+
+lipids_pca(family_training_analysis_data)
+lipids_pca_plotly(family_training_analysis_data)
+
 
 ```
 
 
 Section 8 - create a PCA for lipid family
 
-```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=12}
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
 
-lipids_pca(family_training_analysis_data)
-lipids_pca_plotly(family_training_analysis_data)
 
 ```
 
 Section 9 - create a OPLS-DA training model
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
+lipids_opls(training_analysis_data)
+#lipids_pca_plotly(family_training_analysis_data)
+```
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
+lipids_opls()
+
+```
+
+
+
+
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=12}
 opls_x <-  training_analysis_data %>% select(c(lipid)) %>% as.matrix() 
@@ -262,12 +271,8 @@ opls_plot <- ggplot() +
   theme(axis.title = element_text(size = 25)) +
   theme(legend.position = 'none'); opls_plot
 
-
-#ggsave(paste(getwd(), '/plots/', Sys.Date(), '_opls_plot_matched_to_tryptophan_paper.png', sep = ""), width = 10, height = 7.5, units = "in", plot = last_plot(), dpi = 300)
-
-
 #opls_eruption <- eruption(opls_model)
-#ggsave(paste(getwd(), '/plots/', Sys.Date(), '_eruption_plot_matched_to_tryptophan_paper.png', sep = ""), width = 10, height = 7.5, units = "in", plot = last_plot(), dpi = 300)
+
 
 # generate loadings plot -----------------------------------------------
 
