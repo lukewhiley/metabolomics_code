@@ -1,0 +1,209 @@
+sampleID	Drug_Allocation	Timepoint	Status	TBSA%	Source	TBSA_category	X95pcheal14	depth	Scar_laser_removal	Infect_Presentation
+1_1CAB0.01	0	1	Burns	0.6	Scald	?5	1	graft	0	0
+1_2CAB0.02	0	2	Burns	0.6	Scald	?5	1	graft	0	0
+1_3CAB0.03	0	3	Burns	0.6	Scald	?5	1	graft	0	0
+1_4CAB0.06	0	4	Burns	0.6	Scald	?5	1	graft	0	0
+1_5CAB0.23	0	5	Burns	0.6	Scald	?5	1	graft	0	0
+2_1CAB0.04	1	1	Burns	1.1	Scald	?5	1	graft	0	1
+2_3CAB0.05	1	3	Burns	1.1	Scald	?5	1	graft	0	1
+2_4CAB0.06	1	4	Burns	1.1	Scald	?5	1	graft	0	1
+3_1CAB0.07	0	1	Burns	4.2	Flame	?5	1	cells	0	0
+3_2CAB0.08	0	2	Burns	4.2	Flame	?5	1	cells	0	0
+3_3CAB0.12	0	3	Burns	4.2	Flame	?5	1	cells	0	0
+3_4CAB0.19	0	4	Burns	4.2	Flame	?5	1	cells	0	0
+3_5CAB0.34	0	5	Burns	4.2	Flame	?5	1	cells	0	0
+4_1CAB0.09		1	Burns	4	Contact	?5	0	graft	0	
+4_2CAB0.13		2	Burns	4	Contact	?5	0	graft	0	
+4_3CAB0.14		3	Burns	4	Contact	?5	0	graft	0	
+5_1CAB0.10	1	1	Burns	2.35	Scald	?5	0	graft	0	0
+5_2CAB0.11	1	2	Burns	2.35	Scald	?5	0	graft	0	0
+5_3CAB0.15	1	3	Burns	2.35	Scald	?5	0	graft	0	0
+5_4CAB0.21	1	4	Burns	2.35	Scald	?5	0	graft	0	0
+5_5CAB0.29	1	5	Burns	2.35	Scald	?5	0	graft	0	0
+6_1CAB0.16	1	1	Burns	5	Flame	?5	0	graft	1	0
+6_2CAB0.17	1	2	Burns	5	Flame	?5	0	graft	1	0
+6_3CAB0.20	1	3	Burns	5	Flame	?5	0	graft	1	0
+6_4CAB0.22	1	4	Burns	5	Flame	?5	0	graft	1	0
+6_5CAB0.36	1	5	Burns	5	Flame	?5	0	graft	1	0
+7_1CAB0.24	1	1	Burns	3.5	Flame	?5	0	graft	1	0
+7_2CAB0.26	1	2	Burns	3.5	Flame	?5	0	graft	1	0
+7_3CAB0.27	1	3	Burns	3.5	Flame	?5	0	graft	1	0
+7_4CAB0.30	1	4	Burns	3.5	Flame	?5	0	graft	1	0
+7_5CAB0.38	1	5	Burns	3.5	Flame	?5	0	graft	1	0
+7_6CAB0.45	1	6	Burns	3.5	Flame	?5	0	graft	1	0
+8_1CAB0.25	0	1	Burns	3	Flame	?5	0	graft	0	0
+8_2CAB0.28	0	2	Burns	3	Flame	?5	0	graft	0	0
+8_3CAB0.33	0	3	Burns	3	Flame	?5	0	graft	0	0
+8_4CAB0.37	0	4	Burns	3	Flame	?5	0	graft	0	0
+8_5CAB0.46 	0	5	Burns	3	Flame	?5	0	graft	0	0
+9_1CAB0.31	1	1	Burns	2	Contact	?5	1	cells	0	0
+9_2CAB0.32	1	2	Burns	2	Contact	?5	1	cells	0	1
+9_3CAB0.35	1	3	Burns	2	Contact	?5	1	cells	0	1
+10_1CAB0.39	1	1	Burns	1.3	Flame	?5	0	graft	0	0
+10_2CAB0.40	1	2	Burns	1.3	Flame	?5	0	graft	0	0
+10_3CAB0.41	1	3	Burns	1.3	Flame	?5	0	graft	0	0
+10_4CAB0.42	1	4	Burns	1.3	Flame	?5	0	graft	0	0
+10_5CAB0.55	1	5	Burns	1.3	Flame	?5	0	graft	0	0
+11_1CAB0.43	0	1	Burns	0.4	Scald	?5	1	graft	0	0
+11_3CAB0.50	0	3	Burns	0.4	Scald	?5	1	graft	0	0
+11_4CAB0.53	0	4	Burns	0.4	Scald	?5	1	graft	0	0
+11_5CAB0.70	0	5	Burns	0.4	Scald	?5	1	graft	0	0
+12_1CAB0.44	1	1	Burns	0.22	Contact	?5	0	graft	0	1
+12_3CAB0.47	1	3	Burns	0.22	Contact	?5	0	graft	0	1
+12_4CAB0.54	1	4	Burns	0.22	Contact	?5	0	graft	0	1
+13_1CAB0.48	1	1	Burns	0.02	Chemical	?5	0	graft	1	1
+13_3CAB0.51	1	3	Burns	0.02	Chemical	?5	0	graft	1	1
+13_4CAB0.56	1	4	Burns	0.02	Chemical	?5	0	graft	1	1
+13_5CAB0.73	1	5	Burns	0.02	Chemical	?5	0	graft	1	1
+14_1CAB0.49	0	1	Burns	1.5	Scald	?5	1	cells	0	0
+14_3CAB0.52	0	3	Burns	1.5	Scald	?5	1	cells	0	0
+14_4CAB0.57	0	4	Burns	1.5	Scald	?5	1	cells	0	0
+14_5CAB0.67	0	5	Burns	1.5	Scald	?5	1	cells	0	0
+15_1CAB0.58	0	1	Burns	0.4	Chemical	?5	0	graft	0	1
+15_3CAB0.59	0	3	Burns	0.4	Chemical	?5	0	graft	0	1
+16_1CAB0.60	0	1	Burns	5	Flame	>5 - ?10	1	graft	0	0
+16_3CAB0.61	0	3	Burns	5	Flame	>5 - ?10	1	graft	0	0
+16_4CAB0.65	0	4	Burns	5	Flame	>5 - ?10	1	graft	0	0
+16_5CAB0.79	0	5	Burns	5	Flame	>5 - ?10	1	graft	0	0
+17_1CAB0.62	0	1	Burns	10	Chemical	>5 - ?10	0	graft	0	
+17_2CAB0.63	0	2	Burns	10	Chemical	>5 - ?10	0	graft	0	
+17_3CAB0.66	0	3	Burns	10	Chemical	>5 - ?10	0	graft	0	
+17_5CAB0.87	0	5	Burns	10	Chemical	>5 - ?10	0	graft	0	
+18_1CAB0.64	0	1	Burns	13.5	Flame	>10	0	graft	0	
+18_3CAB0.68	0	3	Burns	13.5	Flame	>10	0	graft	0	
+18_4CAB0.71	0	4	Burns	13.5	Flame	>10	0	graft	0	
+19_1CAB0.69		1	Burns				0	graft	0	
+20_1CAB0.72	1	1	Burns	1	Scald	?5	1	cells	0	0
+20_2CAB0.74	1	2	Burns	1	Scald	?5	1	cells	0	0
+20_4CAB0.78	1	4	Burns	1	Scald	?5	1	cells	0	0
+20_5CAB0.94	1	5	Burns	1	Scald	?5	1	cells	0	0
+21_1CAB0.75	1	1	Burns	2.05	Flame	?5	1	nonop	0	0
+21_2CAB0.77	1	2	Burns	2.05	Flame	?5	1	nonop	0	0
+21_3CAB0.84	1	3	Burns	2.05	Flame	?5	1	nonop	0	0
+21_4CAB0.86	1	4	Burns	2.05	Flame	?5	1	nonop	0	0
+22_1CAB0.76	0	1	Burns	9.01	Flame	>5 - ?10	1	nonop	0	0
+22_2CAB0.81	0	2	Burns	9.01	Flame	>5 - ?10	1	nonop	0	0
+22_3CAB0.85	0	3	Burns	9.01	Flame	>5 - ?10	1	nonop	0	0
+23_1CAB0.80	0	1	Burns	6.25	Chemical	>5 - ?10	0	graft	0	1
+23_2CAB0.82	0	2	Burns	6.25	Chemical	>5 - ?10	0	graft	0	1
+23_3CAB0.83	0	3	Burns	6.25	Chemical	>5 - ?10	0	graft	0	1
+23_4CAB0.89	0	4	Burns	6.25	Chemical	>5 - ?10	0	graft	0	1
+24_1CAB0.88	0	1	Burns	4.1	Flame	?5	0	graft	0	0
+24_2CAB0.90	0	2	Burns	4.1	Flame	?5	0	graft	0	0
+24_3CAB0.91	0	3	Burns	4.1	Flame	?5	0	graft	0	0
+24_4CAB0.92	0	4	Burns	4.1	Flame	?5	0	graft	0	0
+24_5CAB0.99	0	5	Burns	4.1	Flame	?5	0	graft	0	0
+25_1CAB0.93	1	1	Burns	2.5	Flame	?5	0	graft	0	0
+25_3CAB0.95	1	3	Burns	2.5	Flame	?5	0	graft	0	0
+25_4CAB0.97	1	4	Burns	2.5	Flame	?5	0	graft	0	0
+25_5CAB1.03	1	5	Burns	2.5	Flame	?5	0	graft	0	0
+26_1CAB0.96	1	1	Burns	15.2	Scald	>10	0	nonop	0	0
+27_1CAB1.01	1	1	Burns	4	Flame	?5	1	cells	0	0
+27_3CAB1.02	1	3	Burns	4	Flame	?5	1	cells	0	0
+27_4CAB1.05	1	4	Burns	4	Flame	?5	1	cells	0	0
+27_5CAB1.11	1	5	Burns	4	Flame	?5	1	cells	0	0
+28_1CAB1.04 	1	1	Burns	1.1	Scald	?5	0	graft	0	0
+28_3CAB1.06	1	3	Burns	1.1	Scald	?5	0	graft	0	0
+28_4CAB1.07	1	4	Burns	1.1	Scald	?5	0	graft	0	0
+28_5CAB1.17	1	5	Burns	1.1	Scald	?5	0	graft	0	0
+29_2CAB1.08	1	2	Burns	6.61	Flame	>5 - ?10	1	graft	0	0
+29_3CAB1.09	1	3	Burns	6.61	Flame	>5 - ?10	1	graft	0	0
+29_4CAB1.13	1	4	Burns	6.61	Flame	>5 - ?10	1	graft	0	0
+29_5CAB1.20	1	5	Burns	6.61	Flame	>5 - ?10	1	graft	0	0
+30_2CAB1.10	1	2	Burns	0.5	Contact	?5	1	scrub	0	0
+31_2CAB1.12	0	2	Burns	2.2	Scald	?5	1	nonop	0	0
+32_1CAB1.14	0	1	Burns	3.75	Cold	?5	0	graft	1	0
+32_2CAB1.16	0	2	Burns	3.75	Cold	?5	0	graft	1	0
+32_3CAB1.18	0	3	Burns	3.75	Cold	?5	0	graft	1	0
+32_4CAB1.19	0	4	Burns	3.75	Cold	?5	0	graft	1	0
+32_5CAB1.37	0	5	Burns	3.75	Cold	?5	0	graft	1	0
+33_3CAB1.15	0	3	Burns	2.81	Flame	?5	0	graft	0	0
+33_4CAB1.20	0	4	Burns	2.81	Flame	?5	0	graft	0	0
+33_5CAB1.36	0	5	Burns	2.81	Flame	?5	0	graft	0	0
+34_1CAB1.21	0	1	Burns	4	Chemical	?5	0	graft	0	0
+34_3CAB1.26	0	3	Burns	4	Chemical	?5	0	graft	0	0
+34_4CAB1.32	0	4	Burns	4	Chemical	?5	0	graft	0	0
+35_1CAB1.28	1	1	Burns	1.52	Flame	?5	1	graft	0	0
+35_3CAB1.31	1	3	Burns	1.52	Flame	?5	1	graft	0	0
+35_4CAB1.38	1	4	Burns	1.52	Flame	?5	1	graft	0	0
+36_1CAB1.33	0	1	Burns	2.6	Flame	?5	0	cells	0	0
+36_3CAB1.35	0	3	Burns	2.6	Flame	?5	0	cells	0	0
+37_1CAB1.39	1	1	Burns	7	Flame	>5 - ?10	1	graft	0	0
+38_1CAB1.44	1	1	Burns	0.2	Unknown	?5	0	graft	0	1
+38_3CAB1.47	1	3	Burns	0.2	Unknown	?5	0	graft	0	1
+38_4CAB1.60	1	4	Burns	0.2	Unknown	?5	0	graft	0	1
+38_5CAB1.79	1	5	Burns	0.2	Unknown	?5	0	graft	0	1
+39_1CAB1.43	0	1	Burns	4.2	Flame	?5	1	graft	0	0
+39_3CAB1.51	0	3	Burns	4.2	Flame	?5	1	graft	0	0
+39_5CAB1.81	0	5	Burns	4.2	Flame	?5	1	graft	0	0
+40_1CAB1.45	0	1	Burns	2.4	Flame	?5	0	graft	0	0
+40_3CAB1.48	0	3	Burns	2.4	Flame	?5	0	graft	0	0
+41_1CAB1.62	0	1	Burns	1.21	Flame	?5	0	cells	0	0
+41_4CAB1.71	0	4	Burns	1.21	Flame	?5	0	cells	0	0
+41_5CAB1.94	0	5	Burns	1.21	Flame	?5	0	cells	0	0
+42_1CAB1.64	0	1	Burns	2.5	Contact	?5	1	graft	0	0
+42_3CAB1.65	0	3	Burns	2.5	Contact	?5	1	graft	0	0
+43_1CAB1.70	0	1	Burns	8.3	Flame	>5 - ?10	0	nonop	0	0
+43_2CAB1.73	0	2	Burns	8.3	Flame	>5 - ?10	0	nonop	0	0
+43_4CAB1.76	0	4	Burns	8.3	Flame	>5 - ?10	0	nonop	0	0
+43_5CAB2.05	0	5	Burns	8.3	Flame	>5 - ?10	0	nonop	0	0
+44_1CAB1.75	0	1	Burns	0.5	Scald	?5	1	graft	0	1
+44_2CAB1.80	0	2	Burns	0.5	Scald	?5	1	graft	0	1
+44_5CAB2.10	0	5	Burns	0.5	Scald	?5	1	graft	0	1
+45_1CAB1.78	1	1	Burns	1.14	Scald	?5	0	cells	0	1
+45_3CAB1.85 	1	3	Burns	1.14	Scald	?5	0	cells	0	1
+45_4CAB1.91	1	4	Burns	1.14	Scald	?5	0	cells	0	1
+45_5CAB2.14	1	5	Burns	1.14	Scald	?5	0	cells	0	1
+46_1CAB1.89	1	1	Burns	5.5	Flame	>5 - ?10	0	cells	1	0
+46_3CAB1.92	1	3	Burns	5.5	Flame	>5 - ?10	0	cells	1	0
+46_4CAB2.04	1	4	Burns	5.5	Flame	>5 - ?10	0	cells	1	0
+46_5CAB2.16	1	5	Burns	5.5	Flame	?5	0	cells	1	0
+47_1CAB1.95	1	1	Burns	1	Contact	?5	1	graft	0	1
+47_2CAB1.97	1	2	Burns	1	Contact	?5	1	graft	0	1
+47_4CAB2.09	1	4	Burns	1	Contact	?5	1	graft	0	1
+47_5CAB2.22	1	5	Burns	1	Contact	?5	1	graft	0	1
+48_1CAB1.96	1	1	Burns	3.5	Scald	?5	0	cells	0	0
+48_3CAB2.03	1	3	Burns	3.5	Scald	?5	0	cells	0	0
+48_4CAB2.11	1	4	Burns	3.5	Scald	?5	0	cells	0	0
+48_5CAB2.21	1	5	Burns	3.5	Scald	?5	0	cells	0	0
+49_1CAB1.99	1	1	Burns	3	Scald	?5	1	graft	0	0
+49_2CAB2.02	1	2	Burns	3	Scald	?5	1	graft	0	0
+49_3CAB2.07	1	3	Burns	3	Scald	?5	1	graft	0	0
+49_4CAB2.12	1	4	Burns	3	Scald	?5	1	graft	0	0
+49_5CAB2.27	1	5	Burns	3	Scald	?5	1	graft	0	0
+50_1CAB2.13	0	1	Burns	6.5	Scald	>5 - ?10	0	graft	1	0
+50_4CAB2.19	0	4	Burns	6.5	Scald	>5 - ?10	0	graft	1	0
+50_5CAB2.37	0	5	Burns	6.5	Scald	>5 - ?10	0	graft	1	0
+51_1CAB2.17	1	1	Burns	0.75	Scald	?5	1	graft	0	0
+51_3CAB2.20	1	3	Burns	0.75	Scald	?5	1	graft	0	0
+51_4CAB2.25	1	4	Burns	0.75	Scald	?5	1	graft	0	0
+51_5CAB2.51	1	5	Burns	0.75	Scald	?5	1	graft	0	0
+52_1CAB2.26	0	1	Burns	6	Flame	>5 - ?10	0	graft	0	0
+52_3CAB2.33	0	3	Burns	6	Flame	>5 - ?10	0	graft	0	0
+52_4CAB2.35	0	4	Burns	6	Flame	>5 - ?10	0	graft	0	0
+52_5CAB2.47	0	5	Burns	6	Flame	>5 - ?10	0	graft	0	0
+53_1CAB2.30	0	1	Burns	13.2	Flame	>10	1	graft	0	1
+53_3CAB2.32	0	3	Burns	13.2	Flame	>10	1	graft	0	1
+54_1CAB2.31	1	1	Burns	1.5	Flame	?5	1	cells	0	1
+54_3CAB2.43 	1	3	Burns	1.5	Flame	?5	1	cells	0	1
+55_1CAB2.41	0	1	Burns	3.25	Contact	?5	1	graft	1	1
+55_2CAB2.42	0	2	Burns	3.25	Contact	?5	1	graft	1	1
+55_3CAB2.43	0	3	Burns	3.25	Contact	?5	1	graft	1	1
+55_4CAB2.50	0	4	Burns	3.25	Contact	?5	1	graft	1	1
+55_5CAB2.61	0	5	Burns	3.25	Contact	?5	1	graft	1	1
+56_1CAB2.45	1	1	Burns	5	Unknown	?5	0	cells	0	0
+57_1CAB2.49	1	1	Burns	5.5	Flame	>5 - ?10	0	cells	0	0
+57_3CAB2.53	1	3	Burns	5.5	Flame	>5 - ?10	0	cells	0	0
+57_4CAB2.55	1	4	Burns	5.5	Flame	>5 - ?10	0	cells	0	0
+58_1CAB2.52	0	1	Burns	7	Flame	>5 - ?10	0	cells	0	0
+58_3CAB2.54	0	3	Burns	7	Flame	>5 - ?10	0	cells	0	0
+58 4_4CAB2.56 	0	4	Burns	7	Flame	>5 - ?10	0	cells	0	0
+58_5CAB2.66	0	5	Burns	7	Flame	>5 - ?10	0	cells	0	0
+59_1CAB2.60										
+60_1CAB2.62	0	1	Burns	6.55	Flame	>5 - ?10	0	cells	0	0
+60_2CAB2.64	0	2	Burns	6.55	Flame	>5 - ?10	0	cells	0	0
+60_5CAB2.69	0	5	Burns	6.55	Scald	?5	0	cells	0	0
+61_1CAB2.68	1	1	Burns	2.02	Scald	?5	0	cells	1	1
+61_3CAB2.70	1	3	Burns	2.02	Scald	?5	0	graft	1	1
+61_4CAB2.71	1	4	Burns	2.02	Scald	?5	0	graft	1	1
+61_5CAB2.72	1	5	Burns	2.02	Scald	?5	0	graft	1	1

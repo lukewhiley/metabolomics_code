@@ -131,6 +131,38 @@ label_sampleIDs <- dlgInput("Do you want each sample to be labelled with its ID 
 pca_lipid_individual <- lipids_pca(training_analysis_data, class_selection)
 pca_lipid_family <- lipids_pca(family_training_analysis_data, class_selection)
 
+html_plotly_output <- subplot(pca_lipid_individual[5][[1]], 
+                              pca_lipid_family[5][[1]], 
+                              nrows = 2, margin = c(0.1, 0.1, 0.1, 0.01)) %>%
+  layout(annotations = list(
+  list(x = 0.1, y = 1.025, text = "Individual lipids scores plot", showarrow = F, xref='paper', yref='paper'),
+  list(x = 0.85 , y = 1.025, text = "Individual lipids loadings plot", showarrow = F, xref='paper', yref='paper'),
+  list(x = 0.12 , y = 0.45, text = "Lipid family scores plot", showarrow = F, xref='paper', yref='paper'),
+  list(x = 0.85 , y = 0.45, text = "Lipid family loadings plot", showarrow = F, xref='paper', yref='paper'))
+  )
+
+
+saveWidget(html_plotly_output, file = "tmp.html")
+browseURL("tmp.html")
+
+
+remove_samples <- dlgInput("Do you want to remove any outlier samples from the analysis?", "yes/no")$res
+
+while(remove_samples == "yes"){
+  training_template_edited <- data_edit(training_template_edited,
+          viewer = "dialog")
+  training_template_edited <- training_template_edited %>% filter(training == TRUE)
+  training_analysis_data <- analysis_data %>% filter(sampleID %in% training_template_edited$sampleID)
+  dlg_message("The script will now create lipid family data", type = 'ok') 
+  family_data <- create_family_data_summed(training_analysis_data)
+family_training_analysis_data <- family_data %>% 
+  add_column(select(training_analysis_data, sampleID), select(training_analysis_data, all_of(filter_terms)), .before = 1)
+pca_lipid_individual <- lipids_pca(training_analysis_data, class_selection)
+pca_lipid_family <- lipids_pca(family_training_analysis_data, class_selection)
+saveWidget(html_plotly_output, file = "tmp.html")
+browseURL("tmp.html")
+remove_samples <- dlgInput("Do you want to remove any outlier samples from the analysis?", "yes/no")$res
+}
 
 ```
 

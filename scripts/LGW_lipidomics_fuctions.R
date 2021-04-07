@@ -95,7 +95,8 @@ lipids_pca <- function(multivariate_data, multivariate_class){
   plotly_loadings <- plot_ly(type = "scatter", plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, marker = list(color = "black")) %>% 
     layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
   
-  combined_plotly <- subplot(plotly_pca, plotly_loadings) %>% layout(showlegend = FALSE, title =  "Plotly PCA")
+  combined_plotly <- subplot(plotly_pca, plotly_loadings, 
+                             margin = c(0.01, 0.01, 0.2, 0.01)) %>% layout(showlegend = FALSE, title =  "Plotly PCA")
   #pca_plotly_list <- list(plotly_pca, plotly_loadings, combined_plotly)
   #print(pca_plotly_list) 
   
