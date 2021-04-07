@@ -2,9 +2,11 @@
 
 
 create_family_data_summed <- function(individual_lipid_data){
- apply(lipid_family, 1, function(func_family){
+  lipid_class <- as_tibble(c("CE",  "CER", "DAG",  "DCER", "FFA", "HCER", "LCER", "LPC", "LPE", "LPG", "PC", "PE", "PG", "PI", "PS", "SM", "TAG"))
+  #lipid_family <- individual_lipid_data %>% select(all_of(lipid_class)) %>% unique()
+  apply(lipid_class, 1, function(func_family){
   #browser()
-  family_targets <- which(sub("\\(.*", "", colnames(training_analysis_data)) == func_family) # find the columns in each family
+  family_targets <- which(sub("\\(.*", "", colnames(individual_lipid_data)) == func_family) # find the columns in each family
   temp_family_data <- individual_lipid_data %>% select(family_targets)  %>% mutate(rowsum = rowSums(.)) %>% select(rowsum)
   colnames(temp_family_data) <- func_family
   temp_family_data

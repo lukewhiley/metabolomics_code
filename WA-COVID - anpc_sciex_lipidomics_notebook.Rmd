@@ -51,7 +51,7 @@ Load required packages and functions that are required throughout the notebook
 
 library(plyr)
 library(tidyverse)
-library(janitor`)
+library(janitor)
 library(gridExtra)
 library(ggpubr)
 library(readxl)
@@ -143,22 +143,25 @@ dlg_message("The next step is to prepare the data for the training models", type
 
 filter_terms <- dlgInput("Enter the filter critera seperated by a comma. Remember sampleID is automatically selected.", "example: class, sex, anpc_timepoint")$res %>% strsplit(split = ",") %>% unlist() %>% c() %>% str_replace_all(" ", "")
 
-training_template <- analysis_data %>% select(c("sampleID", filter_terms)) %>% as.data.frame()
+training_template <- analysis_data %>% select(c("sampleID", all_of(filter_terms))) %>% as.data.frame()
 training_template$training <- FALSE
 
 dlg_message("Select the training set samples in the next window. Remeber to press the Sync button before pressing the Done button", type = 'ok')
 
-training_template <- data_edit(training_template,
+training_template_edited <- data_edit(training_template,
           viewer = "dialog")
-training_template <- training_template %>% filter(training == TRUE) 
+training_template_edited <- training_template_edited %>% filter(training == TRUE) 
 
 #create final training set data from analysis data
-training_analysis_data <- analysis_data %>% filter(sampleID %in% training_template$sampleID)
+training_analysis_data <- analysis_data %>% filter(sampleID %in% training_template_edited$sampleID)
+
+dlg_message("The script will now create lipid family data", type = 'ok') 
+
 # create training set data for summed lipid families
 family_data <- create_family_data_summed(training_analysis_data)
+
 family_training_analysis_data <- family_data %>% 
-  add_column(training_analysis_data$sampleID, training_analysis_data$class, .before = 1) %>% 
-  rename(sampleID = `training_analysis_data$sampleID`, class = `training_analysis_data$class`)
+  add_column(select(training_analysis_data, sampleID), select(training_analysis_data, all_of(filter_terms)), .before = 1) 
 
 
 
