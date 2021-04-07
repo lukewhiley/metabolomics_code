@@ -46,40 +46,16 @@ This is an R Notebook designed to help with the processing of lipidomic data gen
 Notebook Section 1 
 Load required packages and functions that are required throughout the notebook
 
-```{r, libraries used,  echo = FALSE, warning=FALSE, message=FALSE}
+```{r, libraries used,  echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
 # libraries
 
-library(plyr)
-library(tidyverse)
-library(janitor)
-library(gridExtra)
-library(ggpubr)
-library(readxl)
-library(cowplot)
-library(scales)
-library(devtools)
-library(metabom8)
-library(shiny)
-library(plotly)
-library(svDialogs)
-library(reactable)
-library(DataEditR)
-
+package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR")
+lapply(package_list, require, character.only = TRUE)
 source('scripts/LGW_lipidomics_fuctions.R')
 
+#user input here for project name and user initials
 
-
-```
-
-################################
-Section 2 - USER INPUT REQUIRED
-################################
-
-the project name should contain a text string that is in the file names e.g "WA COVID"
-
-```{r, user inputs,  echo = FALSE, warning=FALSE, message=FALSE}
-
-project_name <- dlgInput("what is the name of the project", "example_project")$res
+project_name <- dlgInput("what is the name of the project? This must match the string in Filename", "example_project")$res
 user_name <- dlgInput("Insert your initials", "example_initials")$res
 
 # read in master data
@@ -104,44 +80,16 @@ for(idx_sID in 1:nrow(master_metadata)){
 combined_data <- right_join(master_metadata, metabolite_data, by = "sampleID") 
 analysis_data <- combined_data
 
-```
-
-
-#####################################################################################
-Section X - ONLY FOR COVID WA - FILTER DATA FOR ANALYSIS AND REMOVED UNWANTED SAMPLES
-####################################################################################
-
-
-```{r, match to tryptophan paper,  echo = FALSE, warning=FALSE, message=FALSE}
-# this analysis is set up to analyse WA COVID cohort 1. HC vs SARS-CoV-2 (-) vs SARS-CoV-2 (+)
-
-# filter data to match tryptophan paper
-analysis_data <- combined_data %>% filter(!is.na(class)) #remove samples from other cohorts that are not in tryptophan paper
-analysis_data <- analysis_data %>% filter(class != "Healthy*")
-analysis_data <- analysis_data %>% filter(sampleID != "COV00138") %>% filter(sampleID != "COV00157") #remove inconclusive positive sample (JKN?)
-
-#WA COVID ONLY
-#TIMEPOINT DATA IS A MESS SO - this section uses the metadata to find the FIRST timepoint available in the samples run (e.g. a sample may have a metadata timepoint of 2,3,4,5, in this instance the ANPC would not have run the true sample 1.) 
-#This section will "re-allocate" this time point to an "ANPC timepoint" indexing from 1. e.g. timepoint 2,3,4,5 become 1,2,3,4
-anpc_timepoint <- rep(NA, nrow(analysis_data))
-analysis_data <- analysis_data %>% add_column(anpc_timepoint, .before = 4) # new column to put a lipid specific timepoint (e.g the earliest timpoint we ran assay on)
-unique_rcap <- unique(analysis_data$rcap)
-
-for (idx_tp in 1:length(unique_rcap)){
-  first_tp <- (analysis_data %>% filter(rcap == unique_rcap[idx_tp]) %>%  arrange(tpoint) %>% select(sampleID))[1,] %>% paste()
-  analysis_data$anpc_timepoint[which(analysis_data$sampleID == first_tp)] <- 1
-}
-
-```
-
-#################################################################################################
-Section 6 - FILTER DATA FOR TRAINING MODELS - EXAMPLE HERE IS BY TIMEPOINT - USER INPUT REQUIRED
-################################################################################################
-
-```{r}
 dlg_message("The next step is to prepare the data for the training models", type = 'ok')
 
 filter_terms <- dlgInput("Enter the filter critera seperated by a comma. Remember sampleID is automatically selected.", "example: class, sex, anpc_timepoint")$res %>% strsplit(split = ",") %>% unlist() %>% c() %>% str_replace_all(" ", "")
+
+filter_column_check <- which(colnames(analysis_data) == filter_terms)
+
+while(length(filter_column_check) != length(filter_terms)){
+  filter_terms <- dlgInput("Columns not found. Are you sure the spelling matches? Re-enter filter criteria here.", "example: class, sex, anpc_timepoint")$res %>% strsplit(split = ",") %>% unlist() %>% c() %>% str_replace_all(" ", "")
+  filter_column_check <- which(colnames(analysis_data) == filter_terms)
+}
 
 training_template <- analysis_data %>% select(c("sampleID", all_of(filter_terms))) %>% as.data.frame()
 training_template$training <- FALSE
@@ -161,36 +109,44 @@ dlg_message("The script will now create lipid family data", type = 'ok')
 family_data <- create_family_data_summed(training_analysis_data)
 
 family_training_analysis_data <- family_data %>% 
-  add_column(select(training_analysis_data, sampleID), select(training_analysis_data, all_of(filter_terms)), .before = 1) 
+  add_column(select(training_analysis_data, sampleID), select(training_analysis_data, all_of(filter_terms)), .before = 1)
 
+#user input - plot options should be entered here
+
+class_selection <- dlgInput("What column should be used for colouring multivariate plots?", paste("example:", filter_terms))$res
+class_name <- training_analysis_data %>% select(class_selection) %>% unique() %>% unlist() %>% paste()
+number_of_classes <- training_analysis_data %>% select(class_selection) %>% unique() %>% nrow()
+
+plot_colours <- dlgInput(paste("To colour multivariate plots by", class_selection, "please enter", number_of_classes, "colour choices"), "example: #999999,  #56B4E9, firebrick3")$res %>%  strsplit(split = ",") %>% unlist() %>% c() %>% str_replace_all(" ", "")
+
+while(length(plot_colours) != number_of_classes){
+  plot_colours <- dlgInput(paste("You have not selected enough colours please enter", number_of_classes, "colour choices"), "example: #999999,  #56B4E9")$res %>%  strsplit(split = ",") %>% unlist() %>% c() %>% str_replace_all(" ", "")
+}
+
+label_sampleIDs <- dlgInput("Do you want each sample to be labelled with its ID on the plot? TRUE or FALSE", "example: TRUE")$res
+
+
+
+# create a PCA here
+pca_lipid_individual <- lipids_pca(training_analysis_data, class_selection)
+pca_lipid_family <- lipids_pca(family_training_analysis_data, class_selection)
 
 
 ```
+
+
+
 
 ##############################################
 Section 7 - USER INPUT REQUIRED - PLOT OPTIONS
 ##############################################
 
-```{r, plot options,  echo = FALSE, warning=FALSE, message=FALSE}
 
-plot_two_group_colours <- dlgInput("input the colours to be used for a two class plot sepatated by a comma (e.g. healthy vs control)", "example: #999999,  #56B4E9")$res %>%  strsplit(split = ",") %>% unlist() %>% c() %>% str_replace_all(" ", "")
-
-plot_three_group_colours <- dlgInput("input the colours to be used for a three class plot sepatated by a comma (e.g. pos vs neg vs control)", "example: #999999,  #56B4E9, firebrick3")$res %>%  strsplit(split = ",") %>% unlist() %>% c() %>% str_replace_all(" ", "")
-  
-label_sampleIDs <- dlgInput("Do you want each sample to be labelled with its ID on the plot? TRUE or FALSE", "example: TRUE")$res
-
-
-```
-  
 Section 7 - create a PCA for individual lipid species and lipid families
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
 
-lipids_pca(training_analysis_data)
-lipids_pca_plotly(training_analysis_data)
 
-lipids_pca(family_training_analysis_data)
-lipids_pca_plotly(family_training_analysis_data)
 
 
 ```
@@ -200,7 +156,7 @@ lipids_pca_plotly(family_training_analysis_data)
 Section 9 - create a OPLS-DA training model
 
 ```{r, echo = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-lipids_opls(training_analysis_data)
+
 #lipids_pca_plotly(family_training_analysis_data)
 ```
 

@@ -20,19 +20,23 @@ create_family_data_summed <- function(individual_lipid_data){
 
 # pca plot using metaboanalyst
 
-lipids_pca <- function(multivariate_data){
-
+lipids_pca <- function(multivariate_data, multivariate_class){
   if(length(grep("TAG", colnames(multivariate_data))) > 1){ 
     pca_x <- multivariate_data %>%  select(c(lipid)) %>% as.matrix()
     title_text <- "individual lipid species"
   }
-  
   if(length(grep("TAG", colnames(multivariate_data))) == 1){ 
     pca_x <- multivariate_data %>%  select(c(lipid_family$lipid_class)) %>% as.matrix()
     title_text <- "lipid family"
   }
   
-  pca_class <- multivariate_data %>% select(class) %>% as.matrix()
+  pca_x[pca_x == 0] <- NA #remove all 0 values
+  pca_x[is.infinite(pca_x)] <- NA #remove all infinite values
+  min_value <- min(pca_x, na.rm = TRUE) # find the lowest value in the matrix
+  pca_x[is.na(pca_x)] <- min_value # replace all NA, Inf, and 0 values with the lowest value in the matrix
+  
+  pca_class <- multivariate_data %>% select(multivariate_class) %>% as.matrix()
+  pca_class[is.na(pca_class)] <- "none"
   sampleID <- multivariate_data %>% select(sampleID)
   
   pca_model <- pca(pca_x, scale = "UV", center = TRUE)
@@ -42,13 +46,13 @@ lipids_pca <- function(multivariate_data){
   #produce PCA plot
   plot_Val <- as_tibble(cbind(PC1, PC2))
   plot_Val$sampleID <- sampleID$sampleID
-  plot_Val$class <- pca_class
+  plot_Val$sample_group <- c(pca_class)
   
   pca_plot <- ggplot() +
     geom_vline(xintercept = 0, colour="black", linetype = "longdash", alpha = 0.4)+
-    geom_point(data=plot_Val, aes(x =  PC1, y =  PC2, color = class),  size = 6.0)+
+    geom_point(data=plot_Val, aes(x =  PC1, y =  PC2, color = as.factor(sample_group)),  size = 3.0)+
     theme_bw() +
-    scale_color_manual(values=plot_two_group_colours)+
+    scale_color_manual(values=c(plot_colours))+
     xlab("PC1")+
     ylab("PC2")+
     theme(plot.title = element_text(hjust = 0.5)) +
@@ -58,7 +62,8 @@ lipids_pca <- function(multivariate_data){
     theme(axis.title = element_text(size = 25)) +
     theme(legend.text = element_text(size = 18)) +
     theme(legend.title  = element_text(size = 18))+
-    theme(legend.position = "bottom") + 
+    theme(legend.position = "right") + 
+    labs(color = "Sample group") +
     ggtitle(paste(project_name, " PCA - ", title_text, sep = ""))
   
   if(label_sampleIDs == TRUE){
@@ -79,14 +84,29 @@ lipids_pca <- function(multivariate_data){
     theme(legend.position = "none") +
     ggtitle(paste(project_name, " PCA - ", title_text, sep = ""))
   
-  pca_plot_list <- list(pca_plot, pca_plot_loadings)
-  print(pca_plot_list)
+  #pca_plot_list <- list(pca_plot, pca_plot_loadings)
+  #print(pca_plot_list)
+  
+  plotly_loadings_data <- pca_model@p %>% as_tibble(rownames = "lipid") %>% rename(PC1 = V1, PC2 = V2)
+  
+  plotly_pca <- plot_ly(type = "scatter", plot_Val, x = ~PC1, y = ~PC2, text =~sampleID, color = ~sample_group, colors = plot_colours, marker = list(size = 12)) %>% 
+    layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
+  
+  plotly_loadings <- plot_ly(type = "scatter", plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, marker = list(color = "black")) %>% 
+    layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
+  
+  combined_plotly <- subplot(plotly_pca, plotly_loadings) %>% layout(showlegend = FALSE, title =  "Plotly PCA")
+  #pca_plotly_list <- list(plotly_pca, plotly_loadings, combined_plotly)
+  #print(pca_plotly_list) 
+  
+  pca_plot_list <- list(pca_plot, pca_plot_loadings, plotly_pca, plotly_loadings, combined_plotly)
+  pca_plot_list
 }
 
 
 #interactive plotly PCA plots
 
-lipids_pca_plotly <- function(multivariate_data){
+lipids_pca_plotly <- function(multivariate_data, multivariate_class){
  
   if(length(grep("TAG", colnames(multivariate_data))) > 1){ 
     pca_x <- multivariate_data %>%  select(c(lipid)) %>% as.matrix()
