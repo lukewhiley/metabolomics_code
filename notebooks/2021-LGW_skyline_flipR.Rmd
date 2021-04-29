@@ -1,0 +1,58 @@
+---
+title: "Skyline FlipR"
+output: html_notebook
+---
+An R notebook to "flip" skyline data
+
+# requirements:
+# 1.  a skyline results export csv with the headings "protein", "petptide", "area"
+#     note: any internal standards must be tagged with SIL
+# 2.  a csv guide, containing the columns "metabolite", "SIL_used"
+# 3.  the worklist from the mass spectrometer with column headers "sampleID" and "sample_text" to allow the addition of "sample_text" in addition to file name 
+
+
+
+
+```{r, message=FALSE}
+package_list <- c("plyr", "tidyverse", "janitor")
+loaded_packages <- lapply(package_list, require, character.only = TRUE)
+rm(loaded_packages)
+
+ dlg_message("Select the working directory for the project", type = 'ok')
+ setwd(rstudioapi::selectDirectory())
+
+ dlg_message("Select the skyline export results csv", type = 'ok')
+ skyline_results <- read_csv(file = file.choose(.)) %>% clean_names() %>% rename(molecule_list_name = protein, precursor_name = peptide) 
+ dlg_message("Select the metabolite guide csv", type = 'ok')
+ metabolite_guide <- read_csv(file = file.choose(.)) %>% clean_names() %>% rename(precursor_name = metabolite) 
+ dlg_message("Select the mass spectromtry worklist in csv format", type = 'ok')
+ ms_worklist <- read_csv(file = file.choose(.)) %>% clean_names()
+
+
+skyline_results$area <- sapply(skyline_results$area, as.numeric) #ensure area column is numeric
+
+sample_results <- lapply(metabolite_guide$precursor_name, function(idx_m){
+  browser()
+  sample_data <- skyline_results %>% filter(precursor_name == idx_m) %>% filter(!is.na(area))
+  sil_used  <- (metabolite_guide %>% filter(precursor_name == idx_m))[1,"sil_used"] %>% paste()
+  sample_sil_data <- skyline_results %>% filter(precursor_name == sil_used) %>% select(replicate, area) %>% rename(sil_area = area)
+  sample_data <- full_join(sample_data, sample_sil_data, by = "replicate")
+  sample_data$response <- signif(sample_data$area/sample_data$sil_area, 3)
+  sample_data %>% select(response) 
+}) %>% bind_cols %>% add_column(unique(skyline_results$replicate), .before = 1) %>% setNames(c("sample_id", paste(metabolite_target_list)))
+
+final_data <- left_join(ms_worklist, sample_results, by = "sample_id")
+
+export_filename <- dlgInput("Name the export file - Do not include .csv", "example_filename")$res
+
+export_filepath <- getwd()
+
+write_csv(final_data, file = paste(export_filepath, "/", export_filename, ".csv", sep = ""))
+
+
+
+
+```
+
+
+
