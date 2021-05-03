@@ -1,11 +1,9 @@
 ---
-title: "Targeted Lipdomics - Cambridge"
-output:
-  html_document:
-    df_print: paged
+title: "Targeted Lipdomics - Data Explorer"
+output: html_notebook
 ---
 
-Targeted Lipidomcis data pre-processing
+Targeted Lipidomcis data pre-processing and data explorer
 
 Includes:
 
@@ -14,9 +12,13 @@ Includes:
  ->
 
 ```{r, read in data,  echo = FALSE, results = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets")
+package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
+lipidomics_functions <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/functions/LGW_function_lipidomics_tools.r",
+                            accept("application/vnd.github.v3.raw")) %>% content(as = "text")
+eval(parse(text = script), envir = .GlobalEnv)
+rm(script)
 source('LGW_lipidomics_fuctions.R')
 
 #user input here for project name and user initials
