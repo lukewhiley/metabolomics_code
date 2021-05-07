@@ -13,9 +13,6 @@
 
 dlg_message("Internal standard check. This next step will assess the internal standards accross all of the samples. If internal standards have been incorrectly added the summed signal intensity will be too low/high.", type = 'ok')
 
-sil_check_status <- "change"
-
-while(sil_check_status == "change"){
 total_summed_sil <- apply(individual_lipid_data %>% select(sampleID), 1, function(summedSIL){
   temp_data <- individual_lipid_data %>% filter(sampleID == summedSIL) %>% select(-sampleID) %>% select(contains("SIL")) %>% rowSums(na.rm = TRUE)
 }) %>% c() %>% as_tibble() %>%  add_column(individual_lipid_data$sampleID, .before = 1) %>% 
@@ -28,6 +25,10 @@ plate_id <- paste(plateid, sub(".*\\_", "", individual_lipid_data$sampleID), sep
 total_summed_sil <- total_summed_sil %>% add_column(plate_id, .before = 2) %>% arrange(plate_id)
 total_summed_sil$sample_idx <- c(1:nrow(total_summed_sil))
 total_summed_sil$LOG_SIL_TIC <- log(total_summed_sil$SIL_TIC)
+
+# while loop here
+sil_check_status <- "change"
+while(sil_check_status == "change"){
 
 #flag samples with SIL x standard deviations below mean
 temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of standard deviations from the mean", "e.g.   x = 2")$res
