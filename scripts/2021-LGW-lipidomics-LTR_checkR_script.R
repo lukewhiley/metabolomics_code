@@ -6,7 +6,7 @@
 
 dlg_message("Let's look at LTRs! :-)", type = 'ok')
 
-qc_data <- individual_lipid_data_sil_tic_filtered %>% filter(!grepl("conditioning", sampleID)) %>% filter(grepl("LTR", sampleID))
+qc_data <- individual_lipid_data_tic_filtered %>% filter(!grepl("conditioning", sampleID)) %>% filter(grepl("LTR", sampleID))
 
 area_sum <- apply(qc_data, 1, function(peakArea){
   #browser()
@@ -19,6 +19,7 @@ while(is.na(as.numeric(temp_answer))){
   temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of standard deviations from the mean", "e.g.   x = 2")$res
 }
 
+temp_answer <- as.numeric(temp_answer)
 area_mean <- mean(area_sum$summed_area)
 (sd(area_sum$summed_area)*100)/area_mean
 upper_cutoff <- area_mean + temp_answer*sd(area_sum$summed_area)
