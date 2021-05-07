@@ -35,15 +35,15 @@ REQUIREMENTS:
 
 
 ```{r, skylineR,  echo = FALSE, results = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-
-require(httr)
+package_list <- c("plyr", "tidyverse", "janitor", "httr")
+loaded_packages <- lapply(package_list, require, character.only = TRUE)
+rm(loaded_packages)
 
 # Source R script from Github
 skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-skylineR_script.R") %>% content(as = "text")
 
-eval(parse(text = script), envir = .GlobalEnv)
+eval(parse(text = skylineR_script), envir = .GlobalEnv)
 
-skylineR_script
 
 ```
 
@@ -56,14 +56,14 @@ Section 2 - lipid_exploreR
 This notebook is designed to explore the dataset and QC check it. The script generates a report and a final dataset that can be used for data modelling.
 
 ```{r, lipid_exploreR,  echo = FALSE, results = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
-
-require(httr)
+package_list <- c("plyr", "tidyverse", "janitor", "httr")
+loaded_packages <- lapply(package_list, require, character.only = TRUE)
+rm(loaded_packages)
 
 # Source R script from Github
-skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-skylineR_script.R") %>% content(as = "text")
+lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-lipid_exploreR_script.R") %>% content(as = "text")
 
-eval(parse(text = script), envir = .GlobalEnv)
+eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 
-skylineR_script
 
 ```

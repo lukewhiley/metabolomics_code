@@ -8,7 +8,6 @@ dlg_message("Welcome to lipid exploreR! :-)", type = 'ok')
 
 lipidomics_functions_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/functions/LGW_function_lipidomics_tools.r") %>% content(as = "text")
 eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
-source(lipidomics_functions_script)
 rm(lipidomics_functions_script)
 
 #user input here for project name and user initials
