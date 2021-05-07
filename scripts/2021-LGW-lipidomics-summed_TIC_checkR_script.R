@@ -62,8 +62,8 @@ plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summe
 for (idx_line in 2:length(plate_idx)){
   p <- add_trace(p, x = plate_idx[idx_line], type = 'scatter', mode = 'lines', color = paste("plate_", plate_number[idx_line], sep=""), line = list(color = "grey", dash = "dash"), showlegend = FALSE)
 }
-p <- add_trace(p, y = log(tic_cut_off_lower), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "red", dash = "dash"))
-p <- add_trace(p, y = log(median_summed_tic), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "black", dash = "dash"))
+p <- add_trace(p, y = log(tic_cut_off_lower), type = 'scatter', mode = 'lines', color = "TIC QC threshold", line = list(color = "red", dash = "dash"))
+p <- add_trace(p, y = log(median_summed_tic), type = 'scatter', mode = 'lines', color = "TIC QC threshold", line = list(color = "black", dash = "dash"))
 
 
 tic_check_p <- p
@@ -76,3 +76,4 @@ while(tic_check_status != "continue" & sil_check_status != "change"){
   tic_check_status <- dlgInput("Error. Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
 }
 }
+

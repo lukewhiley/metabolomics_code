@@ -44,18 +44,17 @@ ltr_rsd <- apply(as_tibble(colnames(lipid_data)), 1, function(RSD){
 }) %>% as_tibble() %>% add_column(colnames(lipid_data), .before = 1)
 
 colnames(ltr_rsd) <- c("lipid", "RSD")
-paste("number of feature ratios with with an LTR RSD of <30% =", length(which(ltr_rsd$RSD < 30)))
-paste("number of feature ratios with with an LTR RSD of <20% =", length(which(ltr_rsd$RSD < 20)))
-paste("number of feature ratios with with an LTR RSD of <15% =", length(which(ltr_rsd$RSD < 15)))
-paste("number of feature ratios with with an LTR RSD of <10% =", length(which(ltr_rsd$RSD < 10)))
-
-ltr_rsd <- ltr_rsd %>% arrange(RSD)
-plot(ltr_rsd$RSD)
+dlg_message(paste("number of feature ratios with with an LTR RSD of <30% =", length(which(ltr_rsd$RSD < 30))), type = 'ok')
+dlg_message(paste("number of feature ratios with with an LTR RSD of <20% =", length(which(ltr_rsd$RSD < 20))), type = 'ok')
+dlg_message(paste("number of feature ratios with with an LTR RSD of <15% =", length(which(ltr_rsd$RSD < 15))), type = 'ok')
+dlg_message(paste("number of feature ratios with with an LTR RSD of <10% =", length(which(ltr_rsd$RSD < 10))), type = 'ok')
 
 lipid_keep_list <- ltr_rsd %>% filter(RSD < 30)
 
 final_dataset <- ratio_data %>% select(sampleID, plateID, all_of(lipid_keep_list$lipid))
 
+# visualisation of normalied data
+# first - produce a plot of all normalized features to see if there are any overall trends in the data
 
 total_summed_ratio <- apply(final_dataset %>% select(sampleID), 1, function(summedTIC){
   #browser()
@@ -71,4 +70,72 @@ total_summed_ratio$sample[grep("LTR", total_summed_ratio$sampleID)] <- "LTR"
 
 p <- plot_ly(type = "scatter", total_summed_ratio, x = ~sample_idx, y = ~summed_TIC, text = ~sampleID, color = ~sample, colors = c("red", "lightblue"));p
 
-p
+normalized_check_p <- p
+
+if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
+saveWidget(normalized_check_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_plot.html", sep=""))# save plotly widget
+browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_plot.html", sep="")) #open plotly widget in internet browser
+
+dlg_message("Check plot for summed all normilized features. Press OK to continue", type = 'ok')
+
+
+
+# second - produce a plot of normalized features, summed by class to see if there are any overall trends in the lipid class data
+
+dlg_message("Now we are going to look at the data summed by lipid class", type = 'ok')
+
+final_individual_lipid_data <- final_dataset
+
+final_class_lipid_data <- create_lipid_class_data_summed(final_dataset)
+
+lipid_class_list <- final_individual_lipid_data %>% select(contains("(")) %>% colnames() 
+lipid_class_list <- sub("\\(.*", "", lipid_class_list) %>% unique()
+lipid_class_list <- lipid_class_list[!grepl("sampleID", lipid_class_list)] %>% as_tibble()
+
+#add ltr TRUE/FALSE column
+
+class_lipid_data$is_ltr <- "sample"
+class_lipid_data$is_ltr[grep("LTR", class_lipid_data$sampleID)] <- "LTR"
+
+plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
+  #browser()
+  #plot_data <- class_lipid_data %>% select("sampleID", "is_ltr", all_of(lipidClass))
+  plot_data <- final_class_lipid_data %>% select("sampleID", "is_ltr", lipidClass) %>% 
+    rename(ms_response = value) 
+  plate_id <- str_extract(plot_data$sampleID, "PLIP.*")
+  plate_id <- substr(plate_id, 0,15)
+  
+  plot_data$sample_index <- paste(plate_id, sub(".*\\_", "", plot_data$sampleID), sep="_")
+  plot_data <- plot_data %>% arrange(sample_index)
+  plot_data$idx <- 1:nrow(plot_data)
+  
+  plot_data_ltr <- plot_data %>% filter(is_ltr == "LTR")
+  #plot_data <- plot_data %>% filter(is_ltr == "sample")
+  
+  plate_idx <- lapply(unique(plate_id), function(plateID){
+    grep(plateID, plot_data$sampleID)[1]
+  }) %>% unlist
+  
+  p <- plot_ly(type = "scatter", plot_data, x = ~idx, y = ~ms_response, text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE) %>% 
+    layout(xaxis = list(title = paste(lipidClass)))
+  
+  p <- add_trace(p, data = plot_data_ltr, x = ~idx, y = ~ms_response, text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE)
+  
+  plate_number <- unique(plate_id) %>% substr(14,14)
+  
+  plot_limits <- c(min(plot_data$ms_response), max(plot_data$ms_response))
+  
+  for (idx_line in 2:length(plate_idx)){
+    p <- p %>% add_segments(x = plate_idx[idx_line], xend = plate_idx[idx_line], y = plot_limits[1], yend = plot_limits[2], line = list(color = "grey", dash = "dash"), showlegend = FALSE, text = plateid[plate_idx[idx_line]])
+  }
+  p
+})
+
+normalized_check_class_p <- subplot(plotlist, nrows = 4, titleX = TRUE, margin = c(0.01,0.01,0.05,0.05))
+
+if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
+saveWidget(normalized_check_class_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_class_plot.html", sep=""))# save plotly widget
+browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_class_plot.html", sep="")) #open plotly widget in internet browser
+
+dlg_message("Check plot for summed lipid class normilized features. Press OK to continue", type = 'ok')
+
