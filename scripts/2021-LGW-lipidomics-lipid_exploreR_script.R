@@ -91,7 +91,7 @@ p <- add_trace(p, y = log(sil_sd_mean_cut_off_lower), type = 'scatter', mode = '
 p <- add_trace(p, y = log(sil_sd_mean_cut_off_upper), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "red", dash = "dash"));p
 
 sil_check_p <- p
-dir.create("/html_files")
+dir.create(paste(project_dir, "/html_files", sep=""))
 saveWidget(sil_check_p, file = paste("/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
 browseURL(paste("/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
 
