@@ -59,6 +59,9 @@ This notebook is designed to explore the dataset and QC check it. The script gen
 package_list <- c("plyr", "tidyverse", "janitor", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
+lipidomics_functions_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/functions/LGW_function_lipidomics_tools.r") %>% content(as = "text")
+eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
+rm(lipidomics_functions_script)
 
 # Source R script from Github
 lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-lipid_exploreR_script.R") %>% content(as = "text")

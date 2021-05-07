@@ -6,9 +6,10 @@ rm(loaded_packages)
 
 dlg_message("Welcome to lipid exploreR! :-)", type = 'ok')
 
-lipidomics_functions_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/functions/LGW_function_lipidomics_tools.r") %>% content(as = "text")
-eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
-rm(lipidomics_functions_script)
+dlg_message("Please select your project folder", type = 'ok')
+
+project_dir <- rstudioapi::selectDirectory() # save project directory root location
+setwd(project_dir)# switch the project directory
 
 #user input here for project name and user initials
 if(exists("project_name") != TRUE){project_name <- dlgInput("what is the name of the project? This must match the string in Filename", "example_project")$res}
@@ -90,6 +91,8 @@ p <- add_trace(p, y = log(sil_sd_mean_cut_off_lower), type = 'scatter', mode = '
 p <- add_trace(p, y = log(sil_sd_mean_cut_off_upper), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "red", dash = "dash"));p
 
 sil_check_p <- p
-
+dir.create("/html_files")
+saveWidget(sil_check_p, file = paste("/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
+browseURL(paste("/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
 
 
