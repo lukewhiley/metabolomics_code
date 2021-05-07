@@ -40,10 +40,15 @@ sil_sd_mean_cut_off_upper <- mean_sil_tic + (as.numeric(temp_answer)*sd_sil_tic)
 
 sil_qc_fail <- total_summed_sil$sampleID[which(total_summed_sil$SIL_TIC < sil_sd_mean_cut_off_lower | total_summed_sil$SIL_TIC > sil_sd_mean_cut_off_upper)] %>% as_tibble %>% rename(sampleID = value)
 sil_qc_fail$fail_point <- "sil"
+sil_qc_fail_ltr <- sil_qc_fail %>% filter(grepl("LTR", sampleID))
 
 #sil_qc_fail
-temp_answer <- dlgInput(paste(nrow(sil_qc_fail), "sample FAILED the SIL QC check.  Do you want to remove failed samples?"), "yes/no")$res
-if(temp_answer == "yes"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail$sampleID)}
+temp_answer <- "blank"
+while(temp_answer != "all" & temp_answer != "none" & temp_answer != "LTR"){
+temp_answer <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  ",  nrow(sil_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/LTR")$res
+if(temp_answer == "all"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail$sampleID)}
+if(temp_answer == "LTR"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_ltr$sampleID)}
+}
 
 #visualise for reports
 total_summed_sil$removed <- "pass_qc"

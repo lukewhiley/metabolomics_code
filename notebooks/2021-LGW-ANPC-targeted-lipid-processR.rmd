@@ -68,7 +68,11 @@ lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 
 # Source R script from Github
-summed-SIL-checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics_summed_SIL_checkR.r") %>% content(as = "text")
-eval(parse(text = summed-SIL-checkR_script), envir = .GlobalEnv)
+summed_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-summed_SIL_checkR_script.r") %>% content(as = "text")
+eval(parse(text = summed_SIL_checkR_script), envir = .GlobalEnv)
+
+# Source R script from Github
+summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics_summed_TIC_checkR.R") %>% content(as = "text")
+eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
 
 ```

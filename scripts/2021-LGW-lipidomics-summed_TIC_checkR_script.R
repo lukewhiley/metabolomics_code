@@ -26,7 +26,6 @@ tic_check_status <- "change"
 while(tic_check_status == "change"){
 
 #flag samples with SIL x number of standard deviations below mean
-
 temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of standard deviations from the mean", "e.g.   x = 2")$res
 while(is.na(as.numeric(temp_answer))){
   temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of standard deviations from the mean", "e.g.   x = 2")$res
@@ -38,13 +37,14 @@ tic_sd_mean_cut_off <- mean_summed_tic - (as.numeric(temp_answer)*sd_summed_tic)
 
 tic_qc_fail <- total_summed_tic$sampleID[which(total_summed_tic$summed_TIC < tic_sd_mean_cut_off)] %>% as_tibble %>% rename(sampleID = value)
 tic_qc_fail$fail_point <- "tic"
+tic_qc_fail_ltr <- tic_qc_fail %>% filter(grepl("LTR", sampleID))
 
-temp_answer <- dlgInput(paste(nrow(tic_qc_fail), "sample FAILED the SIL QC check.  Do you want to remove failed samples?"), "yes/no")$res
-#while(!is.numeric(which(c("yes", "no") == temp_answer))){
-# temp_answer <- dlgInput("You did not enter a yes or no value.  Do you want to remove failed samples?"), "yes/no")$res
-#}
-
-if(temp_answer == "yes"){individual_lipid_data_sil_tic_filtered <- individual_lipid_data_sil_filtered %>% filter(!sampleID %in% tic_qc_fail$sampleID)}
+temp_answer <- "blank"
+while(temp_answer != "all" & temp_answer != "none" & temp_answer != "LTR"){
+  temp_answer <- dlgInput(paste(nrow(tic_qc_fail), "samples FAILED the summed TIC QC check.  ",  nrow(tic_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/LTR")$res
+  if(temp_answer == "all"){individual_lipid_data_tic_filtered <- individual_lipid_data %>% filter(!sampleID %in% tic_qc_fail$sampleID)}
+  if(temp_answer == "LTR"){individual_lipid_data_tic_filtered <- individual_lipid_data %>% filter(!sampleID %in% tic_qc_fail_ltr$sampleID)}
+}
 
 #visualise for reports
 total_summed_tic$removed <- "pass_qc"
