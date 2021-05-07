@@ -64,11 +64,11 @@ eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
 rm(lipidomics_functions_script)
 
 # Source R script from Github
-lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-lipid_exploreR_script.r") %>% content(as = "text")
+lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-lipid_exploreR_script.R") %>% content(as = "text")
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 
 # Source R script from Github
-summed-SIL-checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-summed-SIL-checkR.r") %>% content(as = "text")
+summed-SIL-checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics_summed_SIL_checkR.r") %>% content(as = "text")
 eval(parse(text = summed-SIL-checkR_script), envir = .GlobalEnv)
 
 ```
