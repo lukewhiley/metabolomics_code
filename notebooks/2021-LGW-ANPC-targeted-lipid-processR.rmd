@@ -40,7 +40,7 @@ loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
 
 # Source R script from Github
-skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-skylineR_script.R") %>% content(as = "text")
+skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-skylineR_script.r") %>% content(as = "text")
 
 eval(parse(text = skylineR_script), envir = .GlobalEnv)
 
@@ -64,9 +64,11 @@ eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
 rm(lipidomics_functions_script)
 
 # Source R script from Github
-lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-lipid_exploreR_script.R") %>% content(as = "text")
-
+lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-lipid_exploreR_script.r") %>% content(as = "text")
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 
+# Source R script from Github
+summed-SIL-checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-summed-SIL-checkR.r") %>% content(as = "text")
+eval(parse(text = summed-SIL-checkR_script), envir = .GlobalEnv)
 
 ```
