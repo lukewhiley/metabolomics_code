@@ -1,0 +1,69 @@
+---
+title: "ANPC SkylineR and Lipid_exploreR notebook"
+output: html_notebook
+---
+This notebook is designed for use with the ANPC targeted lipid method. 
+Section 1: SkylineR is designed to optimise lipidomics data processing in combination with skyline.
+Section2: Lipid_exploreR is designed to explore, visualise and QC check the data.
+
+The sections should be run in sequence. However should section 1 already be completed, section 2 can be run independantly at a later date.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Section 1 - SkylineR
+
+This notebook is designed to optimise lipidomics data processing in combination with skyline.
+
+It will perform:
+- retention time optimisation using LTR QC
+- peak boundary fitting to all samples
+
+REQUIREMENTS:
+- A subfolder containig mzML files. Proteowizard should be used to convert Sciex targeted lipidomics data using proteowizard default settings
+- Filename should match the LIMS where possible
+- mzML files from LTR samples must have "LTR" in their filename
+- A csv template containing the target transition details. ONLY the following column headers should be present: 
+      - "Molecule List" (lipid family (e.g. CE))
+      - "Precursor Name" (lipid name (e.g. CE(14:0)))
+      - "Precursor Mz" (e.g. 614.6)
+      - "Precursor Charge" (set as 1)
+      - "Product Mz" (e.g. 369.4)
+      - "Product Charge" (set as 1)
+      - "Explicit Retention Time" (e.g. 11.66)
+      - "Explicit Retention Time Window" (leave at 0.5)
+      - "Note" in the column "Note" insert the SIL IS to be used for the target lipid. For the rows containing SIL IS themselves leave the note column blank.
+
+
+
+```{r, skylineR,  echo = FALSE, results = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
+
+require(httr)
+
+# Source R script from Github
+skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-skylineR_script.R") %>% content(as = "text")
+
+eval(parse(text = script), envir = .GlobalEnv)
+
+skylineR_script
+
+```
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Section 2 - lipid_exploreR
+
+This notebook is designed to explore the dataset and QC check it. The script generates a report and a final dataset that can be used for data modelling.
+
+```{r, lipid_exploreR,  echo = FALSE, results = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
+
+require(httr)
+
+# Source R script from Github
+skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-skylineR_script.R") %>% content(as = "text")
+
+eval(parse(text = script), envir = .GlobalEnv)
+
+skylineR_script
+
+```
