@@ -32,6 +32,9 @@ while(sil_check_status == "change"){
 
 #flag samples with SIL x standard deviations below mean
 temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of standard deviations from the mean", "e.g.   x = 2")$res
+while(is.na(as.numeric(temp_answer))){
+  temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of standard deviations from the mean", "e.g.   x = 2")$res
+}
 
 mean_sil_tic <- mean(total_summed_sil$SIL_TIC)
 sd_sil_tic <- sd(total_summed_sil$SIL_TIC)
