@@ -9,4 +9,12 @@ class_lipid_data$sample_class[grep("LTR", class_lipid_data$sampleID)] <- "LTR"
 plot_colours <- c("red", "lightblue3")
 label_sampleIDs <- FALSE
 
-lipids_pca(individual_lipid_data, class_lipid_data, multivariate_class = "sample_class", plot_label = "sampleID")
+pca_p <- lipids_pca(individual_lipid_data, class_lipid_data, multivariate_class = "sample_class", plot_label = "sampleID")
+
+if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
+saveWidget(pca_p[[1]][[1]], file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_QC_PCA_all_lipids.html", sep=""))# save plotly widget
+browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_QC_PCA_all_lipids.html", sep="")) #open plotly widget in internet browser
+saveWidget(pca_p[[2]][[1]], file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_QC_PCA_lipid_class.html", sep=""))# save plotly widget
+browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_QC_PCA_all_lipids.html", sep="")) #open plotly widget in internet browser
+
+

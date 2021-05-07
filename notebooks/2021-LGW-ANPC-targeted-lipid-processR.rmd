@@ -79,5 +79,10 @@ eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
 LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
 
+# Source R script from Github
+LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
+eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
+
+dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skylineR and lipid exploreR. TTFN.", type = 'ok')
 
 ```
