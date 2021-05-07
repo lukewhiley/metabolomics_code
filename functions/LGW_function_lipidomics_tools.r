@@ -58,7 +58,13 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
   pca_class[is.na(pca_class)] <- "none"
   sampleID <- multivariate_data %>% select(sampleID)
   
-  pca_model <- pca(pca_x, scale = "Pareto", center = TRUE)
+  temp_answer <- "blank"
+  temp_answer <- "blank"
+  while(temp_answer != "UV" & temp_answer != "Pareto"){
+  temp_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
+  }
+    
+  pca_model <- pca(pca_x, scale = paste(temp_answer), center = TRUE)
   PC1 <- as.numeric(as.matrix(pca_model@t[,1]))
   PC2 <- as.numeric(as.matrix(pca_model@t[,2]))
   
