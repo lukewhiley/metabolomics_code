@@ -10,6 +10,7 @@ dlg_message("REQUIRES - a template csv listing each lipid target and the assigne
 
 #import transition report 3
 filtered_data <- individual_lipid_data_tic_filtered %>% filter(!grepl("conditioning", sampleID))
+filtered_data[is.na(filtered_data)] <- 0
 
 dlg_message("Please select this template file now.", type = 'ok')
 
@@ -52,6 +53,7 @@ dlg_message(paste("number of feature ratios with with an LTR RSD of <10% =", len
 lipid_keep_list <- ltr_rsd %>% filter(RSD < 30)
 
 final_dataset <- ratio_data %>% select(sampleID, plateID, all_of(lipid_keep_list$lipid))
+final_dataset[is.na(final_dataset)] <- 0
 
 # visualisation of normalied data
 # first - produce a plot of all normalized features to see if there are any overall trends in the data
@@ -94,36 +96,33 @@ lipid_class_list <- lipid_class_list[!grepl("sampleID", lipid_class_list)] %>% a
 
 #add ltr TRUE/FALSE column
 
-class_lipid_data$is_ltr <- "sample"
-class_lipid_data$is_ltr[grep("LTR", class_lipid_data$sampleID)] <- "LTR"
+final_class_lipid_data$is_ltr <- "sample"
+final_class_lipid_data$is_ltr[grep("LTR", final_class_lipid_data$sampleID)] <- "LTR"
 
 plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   #browser()
-  #plot_data <- class_lipid_data %>% select("sampleID", "is_ltr", all_of(lipidClass))
-  plot_data <- final_class_lipid_data %>% select("sampleID", "is_ltr", lipidClass) %>% 
-    rename(ms_response = value) 
+  plot_data <- final_class_lipid_data %>% select("sampleID", "is_ltr", all_of(lipidClass)) %>% rename(ms_response = value) 
   plate_id <- str_extract(plot_data$sampleID, "PLIP.*")
   plate_id <- substr(plate_id, 0,15)
-  
   plot_data$sample_index <- paste(plate_id, sub(".*\\_", "", plot_data$sampleID), sep="_")
   plot_data <- plot_data %>% arrange(sample_index)
   plot_data$idx <- 1:nrow(plot_data)
   
   plot_data_ltr <- plot_data %>% filter(is_ltr == "LTR")
-  #plot_data <- plot_data %>% filter(is_ltr == "sample")
+  plot_data <- plot_data %>% filter(is_ltr == "sample")
   
   plate_idx <- lapply(unique(plate_id), function(plateID){
     grep(plateID, plot_data$sampleID)[1]
   }) %>% unlist
   
-  p <- plot_ly(type = "scatter", plot_data, x = ~idx, y = ~ms_response, text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE) %>% 
+  p <- plot_ly(type = 'scatter', mode   = 'markers', plot_data, x = ~idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE) %>% 
     layout(xaxis = list(title = paste(lipidClass)))
   
-  p <- add_trace(p, data = plot_data_ltr, x = ~idx, y = ~ms_response, text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE)
+  p <- add_trace(p, data = plot_data_ltr, x = ~idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE)
   
   plate_number <- unique(plate_id) %>% substr(14,14)
   
-  plot_limits <- c(min(plot_data$ms_response), max(plot_data$ms_response))
+  plot_limits <- log(c(min(plot_data$ms_response+1), max(plot_data$ms_response+1)))
   
   for (idx_line in 2:length(plate_idx)){
     p <- p %>% add_segments(x = plate_idx[idx_line], xend = plate_idx[idx_line], y = plot_limits[1], yend = plot_limits[2], line = list(color = "grey", dash = "dash"), showlegend = FALSE, text = plateid[plate_idx[idx_line]])

@@ -383,13 +383,13 @@ lipid_class_list <- lipid_class_list[!grepl("sampleID", lipid_class_list)] %>% a
 
 #add ltr TRUE/FALSE column
 
-class_lipid_data$is_ltr <- "sample"
-class_lipid_data$is_ltr[grep("LTR", class_lipid_data$sampleID)] <- "LTR"
+final_class_lipid_data$is_ltr <- "sample"
+final_class_lipid_data$is_ltr[grep("LTR", final_class_lipid_data$sampleID)] <- "LTR"
 
 plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
-  #browser()
-  #plot_data <- class_lipid_data %>% select("sampleID", "is_ltr", all_of(lipidClass))
-  plot_data <- final_class_lipid_data %>% select("sampleID", "is_ltr", lipidClass) %>% 
+  browser()
+  #plot_data <- final_class_lipid_data %>% select("sampleID", "is_ltr", all_of(lipidClass))
+  plot_data <- final_class_lipid_data %>% select("sampleID", "is_ltr", all_of(lipidClass)) %>% 
     rename(ms_response = value) 
   plate_id <- str_extract(plot_data$sampleID, "PLIP.*")
   plate_id <- substr(plate_id, 0,15)
@@ -405,7 +405,7 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   grep(plateID, plot_data$sampleID)[1]
   }) %>% unlist
   
-  p <- plot_ly(type = "scatter", plot_data, x = ~idx, y = ~ms_response, text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE) %>% 
+  p <- plot_ly(type = 'scatter',  mode   = 'markers', plot_data, x = ~idx, y = ~ms_response, text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE) %>% 
     layout(xaxis = list(title = paste(lipidClass)))
   
   p <- add_trace(p, data = plot_data_ltr, x = ~idx, y = ~ms_response, text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE)

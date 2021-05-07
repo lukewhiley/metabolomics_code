@@ -76,7 +76,7 @@ summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhi
 eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
 
 # Source R script from Github
-LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-LTR_checkR_script.R") %>% content(as = "text")
+LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
 
 
