@@ -92,7 +92,7 @@ p <- add_trace(p, y = log(sil_sd_mean_cut_off_upper), type = 'scatter', mode = '
 
 sil_check_p <- p
 dir.create(paste(project_dir, "/html_files", sep=""))
-saveWidget(sil_check_p, file = paste("/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
-browseURL(paste("/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
+saveWidget(sil_check_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
+browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))
 
 
