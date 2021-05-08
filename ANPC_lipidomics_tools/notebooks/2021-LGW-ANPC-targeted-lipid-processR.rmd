@@ -86,3 +86,18 @@ eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
 dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skylineR and lipid exploreR. TTFN.", type = 'ok')
 
 ```
+
+
+#notes
+SILS are being kept in the data - check to see why.
+add a SIL check (indvidual SIL in case a SIL isn't present)
+add an intensity threshold filter
+add a filter where lipid might be present in samples but not LTR, so should be kept for analysis
+multiply by concentration factor
+plate boundaries on one of the plots
+report export
+
+
+
+
+
