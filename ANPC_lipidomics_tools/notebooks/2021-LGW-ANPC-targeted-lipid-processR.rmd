@@ -64,7 +64,7 @@ eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
 rm(lipidomics_functions_script)
 
 # Source R script from Github
-lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-lipid_exploreR_script.R") %>% content(as = "text")
+lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-lipid_exploreR_script.r") %>% content(as = "text")
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 
 # SIL check
