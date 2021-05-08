@@ -40,7 +40,7 @@ loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
 
 # Source R script from Github
-skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-skylineR_script.r") %>% content(as = "text")
+skylineR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-skylineR_script.r") %>% content(as = "text")
 
 eval(parse(text = skylineR_script), envir = .GlobalEnv)
 
@@ -59,28 +59,28 @@ This notebook is designed to explore the dataset and QC check it. The script gen
 package_list <- c("plyr", "tidyverse", "janitor", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
-lipidomics_functions_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/functions/LGW_function_lipidomics_tools.r") %>% content(as = "text")
+lipidomics_functions_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/LGW_function_lipidomics_tools.r") %>% content(as = "text")
 eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
 rm(lipidomics_functions_script)
 
 # Source R script from Github
-lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-lipid_exploreR_script.R") %>% content(as = "text")
+lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-lipid_exploreR_script.R") %>% content(as = "text")
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 
 # SIL check
-summed_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-summed_SIL_checkR_script.r") %>% content(as = "text")
+summed_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_SIL_checkR_script.r") %>% content(as = "text")
 eval(parse(text = summed_SIL_checkR_script), envir = .GlobalEnv)
 
 # TIC check
-summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-summed_TIC_checkR_script.R") %>% content(as = "text")
+summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_TIC_checkR_script.R") %>% content(as = "text")
 eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
 
 # Source R script from Github
-LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% content(as = "text")
+LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
 
 # Source R script from Github
-LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
+LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
 
 dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skylineR and lipid exploreR. TTFN.", type = 'ok')
