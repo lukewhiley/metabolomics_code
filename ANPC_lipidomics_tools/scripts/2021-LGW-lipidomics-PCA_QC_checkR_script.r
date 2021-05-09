@@ -1,7 +1,12 @@
 # produces a PCA of the normalised sampels
 
+#source PCA QC function from guthub
+lipidomics_PCA_QC_function <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/2021-LGW-lipidomics-PCA_QC_checkR_function.r") %>% content(as = "text")
+eval(parse(text = lipidomics_PCA_QC_function), envir = .GlobalEnv)
+rm(lipidomics_PCA_QC_function)
 
 
+#label data
 final_individual_lipid_data$sample_class <- "sample"
 final_individual_lipid_data$sample_class[grep("LTR", final_individual_lipid_data$sampleID)] <- "LTR"
 
@@ -11,6 +16,8 @@ final_class_lipid_data$sample_class[grep("LTR", final_class_lipid_data$sampleID)
 plot_colours <- c("red", "lightblue3")
 label_sampleIDs <- FALSE
 
+
+#run function
 pca_check_status <- "change"
 while(pca_check_status == "change"){
 
