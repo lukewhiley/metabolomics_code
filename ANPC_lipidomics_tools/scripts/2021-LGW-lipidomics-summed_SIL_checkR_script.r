@@ -61,7 +61,7 @@ if(temp_answer == "none"){individual_lipid_data_sil_filtered <- individual_lipid
 total_summed_sil$removed <- "pass_qc"
 total_summed_sil$removed[total_summed_sil$sampleID %in% sil_qc_fail$sampleID] <- "removed"
 
-p <- plot_ly(type = "scatter", total_summed_sil, x = ~sample_idx, y = ~LOG_SIL_TIC, text = ~sampleID, color = ~removed, colors = c("lightblue3", "red"))
+p <- plot_ly(type = "scatter", mode = "markers", total_summed_sil, x = ~sample_idx, y = ~LOG_SIL_TIC, text = ~sampleID, color = ~removed, colors = c("lightblue3", "red"))
 
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
 plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()

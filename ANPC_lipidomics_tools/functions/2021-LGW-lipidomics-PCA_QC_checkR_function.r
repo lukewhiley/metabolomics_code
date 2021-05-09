@@ -48,10 +48,10 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
     
     plotly_loadings_data <- pca_model@p %>% as_tibble(rownames = "lipid") %>% rename(PC1 = V1, PC2 = V2)
     
-    plotly_pca <- plot_ly(type = "scatter", plot_Val, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = plot_colours, marker = list(size = 6)) %>% 
+    plotly_pca <- plot_ly(type = "scatter", mode = "markers", plot_Val, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = plot_colours, marker = list(size = 6)) %>% 
       layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
     
-    plotly_loadings <- plot_ly(type = "scatter", plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, marker = list(color = "black")) %>% 
+    plotly_loadings <- plot_ly(type = "scatter", mode = "markers", plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, marker = list(color = "black")) %>% 
       layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
     
     combined_plotly <- subplot(plotly_pca, plotly_loadings, 
