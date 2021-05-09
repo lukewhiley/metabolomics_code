@@ -63,7 +63,7 @@ lipidomics_functions_script <- GET(url = "https://raw.githubusercontent.com/luke
 eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
 rm(lipidomics_functions_script)
 
-# Source R script from Github
+# Source R script from Github and prepare data
 lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-lipid_exploreR_script.r") %>% content(as = "text")
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 
@@ -75,11 +75,11 @@ eval(parse(text = summed_SIL_checkR_script), envir = .GlobalEnv)
 summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_TIC_checkR_script.R") %>% content(as = "text")
 eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
 
-# Source R script from Github
+# Create target lipid to stable isotope ratio internal standard and evaluate them in the pooled QC. Here we use Long Term Reference pool
 LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
 
-# Source R script from Github
+# Produce a PC to QC
 PCA_QC_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
 eval(parse(text = PCA_QC_script), envir = .GlobalEnv)
 
@@ -89,7 +89,7 @@ dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skyline
 
 
 #notes
-SILS are being kept in the data - check to see why.
+
 add a SIL check (indvidual SIL in case a SIL isn't present)
 add an intensity threshold filter
 add a filter where lipid might be present in samples but not LTR, so should be kept for analysis
