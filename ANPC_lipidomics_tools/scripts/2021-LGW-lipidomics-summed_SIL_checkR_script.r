@@ -41,21 +41,11 @@ mad_sil_tic <- mad(total_summed_sil$SIL_TIC)
 sil_cut_off_lower <- median_sil_tic - (as.numeric(temp_answer)*mad_sil_tic)
 sil_cut_off_upper <- median_sil_tic + (as.numeric(temp_answer)*mad_sil_tic)
 
+#create lists of which samples have failed the SIL internalk standard check
 sil_qc_fail <- total_summed_sil$sampleID[which(total_summed_sil$SIL_TIC < sil_cut_off_lower | total_summed_sil$SIL_TIC > sil_cut_off_upper)] %>% as_tibble %>% rename(sampleID = value)
 sil_qc_fail$fail_point <- "sil"
 sil_qc_fail_ltr <- sil_qc_fail %>% filter(grepl("LTR", sampleID))
 sil_qc_fail_samples <- sil_qc_fail %>% filter(!grepl("LTR", sampleID))
-
-
-#sil_qc_fail
-temp_answer <- "blank"
-while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & temp_answer != "LTR"){
-temp_answer <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  ",  nrow(sil_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/samples/LTR")$res
-if(temp_answer == "all"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail$sampleID)}
-if(temp_answer == "samples"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_samples$sampleID)}
-if(temp_answer == "LTR"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_ltr$sampleID)}
-if(temp_answer == "none"){individual_lipid_data_sil_filtered <- individual_lipid_data}
-}
 
 #visualise for reports
 total_summed_sil$removed <- "pass_qc"
@@ -72,14 +62,25 @@ p <- add_trace(p, y = log(sil_cut_off_lower), type = 'scatter', mode = 'lines', 
 p <- add_trace(p, y = log(median_sil_tic), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "black", dash = "dash"))
 p <- add_trace(p, y = log(sil_cut_off_upper), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "red", dash = "dash"))
 
-
+#create html widget and display it in the users internet browser
 sil_check_p <- p
 if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
 saveWidget(sil_check_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))# save plotly widget
 browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep="")) #open plotly widget in internet browser
 
+#sil_qc_fail - ask the user if they wish to continue or change the threshold
 sil_check_status <- dlgInput("Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
 while(sil_check_status != "continue" & sil_check_status != "change"){
   sil_check_status <- dlgInput("Error. Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
 }
+}
+
+#sil_qc_fail - ask the user if they wish to remove all/none/samples/LTR which failed the QC check
+temp_answer <- "blank"
+while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & temp_answer != "LTR"){
+  temp_answer <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  ",  nrow(sil_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/samples/LTR")$res
+  if(temp_answer == "all"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail$sampleID)}
+  if(temp_answer == "samples"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_samples$sampleID)}
+  if(temp_answer == "LTR"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_ltr$sampleID)}
+  if(temp_answer == "none"){individual_lipid_data_sil_filtered <- individual_lipid_data}
 }

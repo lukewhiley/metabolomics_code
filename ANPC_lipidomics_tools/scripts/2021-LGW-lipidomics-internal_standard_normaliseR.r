@@ -72,8 +72,14 @@ total_summed_ratio$sample[grep("LTR", total_summed_ratio$sampleID)] <- "LTR"
 
 p <- plot_ly(type = "scatter", total_summed_ratio, x = ~sample_idx, y = ~summed_TIC, text = ~sampleID, color = ~sample, colors = c("red", "lightblue"));p
 
+plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
+plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
+for (idx_line in 2:length(plate_idx)){
+  p <- add_trace(p, x = plate_idx[idx_line], type = 'scatter', mode = 'lines', color = paste("plate_", plate_number[idx_line], sep=""), line = list(color = "grey", dash = "dash"), showlegend = FALSE)
+}
 normalized_check_p <- p
 
+#create html widget and display it in the users internet browser
 if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
 saveWidget(normalized_check_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_plot.html", sep=""))# save plotly widget
 browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_plot.html", sep="")) #open plotly widget in internet browser
@@ -88,7 +94,7 @@ dlg_message("Now we are going to look at the data summed by lipid class", type =
 
 final_individual_lipid_data <- final_dataset
 
-final_class_lipid_data <- create_lipid_class_data_summed(final_dataset)
+final_class_lipid_data <- create_lipid_class_data_summed(final_individual_lipid_data)
 
 lipid_class_list <- final_individual_lipid_data %>% select(contains("(")) %>% colnames() 
 lipid_class_list <- sub("\\(.*", "", lipid_class_list) %>% unique()

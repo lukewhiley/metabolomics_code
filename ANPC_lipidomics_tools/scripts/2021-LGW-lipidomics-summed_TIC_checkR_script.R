@@ -41,21 +41,12 @@ tic_qc_fail$fail_point <- "tic"
 tic_qc_fail_ltr <- tic_qc_fail %>% filter(grepl("LTR", sampleID))# create tibble of failed LTRs
 tic_qc_fail_samples <- tic_qc_fail %>% filter(!grepl("LTR", sampleID)) # create tibble of failed samples (not LTRS)
 
-temp_answer <- "blank"
-while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & temp_answer != "LTR"){
-  temp_answer <- dlgInput(paste(nrow(tic_qc_fail), "samples FAILED the summed TIC QC check.  ",  nrow(tic_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/samples/LTR")$res
-  if(temp_answer == "all"){individual_lipid_data_tic_filtered <- individual_lipid_data_sil_filtered %>% filter(!sampleID %in% tic_qc_fail$sampleID)}
-  if(temp_answer == "samples"){individual_lipid_data_tic_filtered <- individual_lipid_data_sil_filtered %>% filter(!sampleID %in% tic_qc_fail_samples$sampleID)}
-  if(temp_answer == "LTR"){individual_lipid_data_tic_filtered <- individual_lipid_data_sil_filtered %>% filter(!sampleID %in% tic_qc_fail_ltr$sampleID)}
-  if(temp_answer == "none"){individual_lipid_data_tic_filtered <- individual_lipid_data_sil_filtered}
-}
 
 #visualise for reports
 total_summed_tic$removed <- "pass_qc"
 total_summed_tic$removed[total_summed_tic$sampleID %in% tic_qc_fail$sampleID] <- "removed"
 
 p <- plot_ly(type = "scatter", mode = "markers", total_summed_tic, x = ~sample_idx, y = ~LOG_summed_TIC, text = ~sampleID, color = ~removed, colors = c("lightblue3", "red"))
-
 
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
 plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_tic$sampleID)[1]}) %>% unlist()
@@ -66,14 +57,26 @@ p <- add_trace(p, y = log(tic_cut_off_lower), type = 'scatter', mode = 'lines', 
 p <- add_trace(p, y = log(median_summed_tic), type = 'scatter', mode = 'lines', color = "TIC QC threshold", line = list(color = "black", dash = "dash"))
 
 
+#create html widget and display it in the users internet browser
 tic_check_p <- p
 if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
 saveWidget(tic_check_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_TIC_check_plot.html", sep=""))# save plotly widget
 browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_TIC_check_plot.html", sep="")) #open plotly widget in internet browser
 
+#tic_qc_fail - ask the user if they wish to continue or change the threshold
 tic_check_status <- dlgInput("Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
 while(tic_check_status != "continue" & sil_check_status != "change"){
   tic_check_status <- dlgInput("Error. Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
 }
+}
+
+#tic_qc_fail - ask the user if they wish to remove all/none/samples/LTR which failed the QC check
+temp_answer <- "blank"
+while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & temp_answer != "LTR"){
+  temp_answer <- dlgInput(paste(nrow(tic_qc_fail), "samples FAILED the summed TIC QC check.  ",  nrow(tic_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/samples/LTR")$res
+  if(temp_answer == "all"){individual_lipid_data_sil_tic_filtered <- individual_lipid_data_sil_filtered %>% filter(!sampleID %in% tic_qc_fail$sampleID)}
+  if(temp_answer == "samples"){individual_lipid_data_sil_tic_filtered <- individual_lipid_data_sil_filtered %>% filter(!sampleID %in% tic_qc_fail_samples$sampleID)}
+  if(temp_answer == "LTR"){individual_lipid_data_sil_tic_filtered <- individual_lipid_data_sil_filtered %>% filter(!sampleID %in% tic_qc_fail_ltr$sampleID)}
+  if(temp_answer == "none"){individual_lipid_data_sil_tic_filtered <- individual_lipid_data_sil_filtered}
 }
 
