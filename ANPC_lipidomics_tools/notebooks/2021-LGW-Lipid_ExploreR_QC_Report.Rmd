@@ -80,10 +80,22 @@ print(paste("Total number of feature ratios with with an LTR RSD of <10% =", len
 
 ```
 
-# 5. PCA plot to visualize final dataset (LTR and samples)
+#5. Visualisation of normalised data
+normalized_check_class_p
+
+```{r Visualisation of normalised data, echo=FALSE, message=FALSE, fig.width=10, fig.height=8}
+
+print(paste("Plot of lipid feature ratios normalised by internal standards. This plot can be used to look for trends in the data such as run order and plate/batch effects"))
+normalized_check_p
+
+print(paste("Plot of lipid feature ratios normalised by internal standards - seperated into lipid classes. This plot can be used to look for trends in the data such as run order and plate/batch effeects"))
+normalized_check_class_p
+```
+
+# 6. PCA plot to visualize final dataset (LTR and samples)
 
 
-```{r PCA for the report, echo=FALSE, message=FALSE, fig.width=10, fig.height=6}
+```{r PCA for the report, echo=FALSE, message=FALSE, fig.width=10, fig.height=5}
 
 print(paste("For creating the QC PCA plots",  scale_used, "scaling was used"))
 
