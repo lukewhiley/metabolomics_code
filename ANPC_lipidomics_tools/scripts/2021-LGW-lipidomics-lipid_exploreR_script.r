@@ -1,8 +1,14 @@
 ######### read in data etc
 
+# load required packages
 package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "stats", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
+
+# load custom functions from github
+lipidomics_class_sum_function <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/2021-LGW-lipidomics-clas_sumR_function.r") %>% content(as = "text")
+eval(parse(text = lipidomics_class_sum_function), envir = .GlobalEnv)
+rm(lipidomics_class_sum_function)
 
 dlg_message("Welcome to lipid exploreR! :-)", type = 'ok')
 
