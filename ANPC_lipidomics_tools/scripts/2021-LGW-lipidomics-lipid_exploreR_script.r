@@ -3,10 +3,10 @@
 # load required packages
 package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "stats", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
-rm(loaded_packages)
+rm(loaded_packages, package_list)
 
 # load custom functions from github
-lipidomics_class_sum_function <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/2021-LGW-lipidomics-clas_sumR_function.r") %>% content(as = "text")
+lipidomics_class_sum_function <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/2021-LGW-lipidomics-class_sumR_function.r") %>% content(as = "text")
 eval(parse(text = lipidomics_class_sum_function), envir = .GlobalEnv)
 rm(lipidomics_class_sum_function)
 
@@ -15,7 +15,7 @@ dlg_message("Welcome to lipid exploreR! :-)", type = 'ok')
 dlg_message("Please select your project folder", type = 'ok')
 
 project_dir <- rstudioapi::selectDirectory() # save project directory root location
-setwd(project_dir)# switch the project directory
+setwd(project_dir) # switch the project directory
 
 #user input here for project name and user initials
 temp_answer <- "blank"

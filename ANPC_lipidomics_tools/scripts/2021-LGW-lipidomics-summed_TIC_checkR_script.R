@@ -65,7 +65,7 @@ browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_TIC_
 
 #tic_qc_fail - ask the user if they wish to continue or change the threshold
 tic_check_status <- dlgInput("Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
-while(tic_check_status != "continue" & sil_check_status != "change"){
+while(tic_check_status != "continue" & tic_check_status != "change"){
   tic_check_status <- dlgInput("Error. Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
 }
 }
@@ -80,3 +80,7 @@ while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & 
   if(temp_answer == "none"){individual_lipid_data_sil_tic_filtered <- individual_lipid_data_sil_filtered}
 }
 
+#tidy up environment
+
+remove_list <- c("idx_line", "mad_summed_tic", "median_summed_tic", "plate_number", "tic_check_status", "tic_cut_off_lower","p", "total_summed_tic", "remove_list")
+rm(list = remove_list)

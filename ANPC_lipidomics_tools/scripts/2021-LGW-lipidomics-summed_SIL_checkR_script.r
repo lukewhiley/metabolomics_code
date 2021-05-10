@@ -69,9 +69,9 @@ saveWidget(sil_check_p, file = paste(project_dir, "/html_files/",project_name, "
 browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep="")) #open plotly widget in internet browser
 
 #sil_qc_fail - ask the user if they wish to continue or change the threshold
-sil_check_status <- dlgInput("Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
+sil_check_status <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  Check the plot.  Are you happy to continue? or change the exclusion threshold?"), "continue/change")$res
 while(sil_check_status != "continue" & sil_check_status != "change"){
-  sil_check_status <- dlgInput("Error. Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
+  sil_check_status <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  Check the plot.  Are you happy to continue? or change the exclusion threshold?"), "continue/change")$res
 }
 }
 
@@ -84,3 +84,11 @@ while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & 
   if(temp_answer == "LTR"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_ltr$sampleID)}
   if(temp_answer == "none"){individual_lipid_data_sil_filtered <- individual_lipid_data}
 }
+
+#tidy up environment
+
+remove_list <- c("idx_line", "mad_sil_tic", "median_sil_tic", "plate_number", "sil_check_status", "sil_cut_off_lower", "sil_cut_off_upper", "summed_SIL_checkR_script", "remove_list",
+                 "p", "total_summed_sil")
+rm(list = remove_list)
+      
+
