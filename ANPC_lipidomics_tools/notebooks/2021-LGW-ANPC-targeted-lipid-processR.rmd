@@ -1,12 +1,15 @@
 ---
 title: "ANPC SkylineR and Lipid_exploreR notebook"
-output: html_notebook
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 This notebook is designed for use with the ANPC targeted lipid method. 
 Section 1: SkylineR is designed to optimise lipidomics data processing in combination with skyline.
 Section2: Lipid_exploreR is designed to explore, visualise and QC check the data.
 
-The sections should be run in sequence. However should section 1 already be completed, section 2 can be run independantly at a later date.
+The sections should be run in sequence. However should section 1 already be completed, section 2 can be run independently at a later date.
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 Section 1 - SkylineR
@@ -34,7 +37,7 @@ REQUIREMENTS:
 
 
 
-```{r, skylineR,  echo = FALSE, results = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
+```{r, skylineR,  eval = FALSE, echo = FALSE, results = FALSE, warning=FALSE, message=FALSE}
 package_list <- c("plyr", "tidyverse", "janitor", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
@@ -55,7 +58,7 @@ Section 2 - lipid_exploreR
 
 This notebook is designed to explore the dataset and QC check it. The script generates a report and a final dataset that can be used for data modelling.
 
-```{r, lipid_exploreR,  echo = FALSE, results = FALSE, warning=FALSE, message=FALSE, fig.height=6, fig.width=10}
+```{r, lipid_exploreR,  eval = FALSE, echo = FALSE, results = FALSE, warning=FALSE, message=FALSE}
 package_list <- c("plyr", "tidyverse", "janitor", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
 rm(loaded_packages)
@@ -86,7 +89,7 @@ intensity_threshold_checkR_script <- GET(url = "https://raw.githubusercontent.co
   eval(parse(text = intensity_threshold_checkR_script), envir = .GlobalEnv)
 
 # Review individual SIL internal standards 
-# Create target lipid to stable isotope ratio internal standard and evaluates them in the pooled QC. Here we use Long Term Reference pool
+# Create target lipid to stable isotope ratio internal standard and evaluate them in the pooled QC. Here we use Long Term Reference pool
 LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% 
    content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
@@ -95,19 +98,27 @@ rm(LTR_SIL_checkR_script)
 # Produce a PCA to QC data. Allowws for visualization of LTR sample clustering
 PCA_QC_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
 eval(parse(text = PCA_QC_script), envir = .GlobalEnv)
+rm(PCA_QC_script)
+
+
+rmarkdown::render(input = "/Users/lukewhiley/OneDrive - Murdoch University/r_data_analysis/github/metabolomics_code/ANPC_lipidomics_tools/notebooks/2021-LGW-Lipid_ExploreR_QC_Report.Rmd",
+                  output_format = "html_document",
+                  output_dir = paste(project_dir, "/html_files/", sep=""),
+                  output_file = paste(user_name, "_", project_name, "_lipid_exploreR_QC_report.html", sep="")
+                  )
+
 
 dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skylineR and lipid exploreR. TTFN.", type = 'ok')
+dlg_message("PS. an official html report can be found in the project folder", type = 'ok')
+
 
 ```
 
-
 #notes
 
-
-add an intensity threshold filter
-add a filter where lipid might be present in samples but not LTR, so should be kept for analysis
 multiply by concentration factor
 report export
+
 
 
 

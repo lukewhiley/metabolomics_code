@@ -69,16 +69,16 @@ saveWidget(sil_check_p, file = paste(project_dir, "/html_files/",project_name, "
 browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep="")) #open plotly widget in internet browser
 
 #sil_qc_fail - ask the user if they wish to continue or change the threshold
-sil_check_status <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  Check the plot.  Are you happy to continue? or change the exclusion threshold?"), "continue/change")$res
+sil_check_status <- "blank"
 while(sil_check_status != "continue" & sil_check_status != "change"){
-  sil_check_status <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  Check the plot.  Are you happy to continue? or change the exclusion threshold?"), "continue/change")$res
+  sil_check_status <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  continue or change the exclusion threshold?"), "continue/change")$res
 }
 }
 
 #sil_qc_fail - ask the user if they wish to remove all/none/samples/LTR which failed the QC check
 temp_answer <- "blank"
 while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & temp_answer != "LTR"){
-  temp_answer <- dlgInput(paste(nrow(sil_qc_fail), "samples FAILED the SIL QC check.  ",  nrow(sil_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/samples/LTR")$res
+  temp_answer <- dlgInput(paste("of the ", nrow(sil_qc_fail), "FAILED samples.  ",  nrow(sil_qc_fail_ltr),"were LTRs.  Do you want to remove failed samples?"), "all/none/samples/LTR")$res
   if(temp_answer == "all"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail$sampleID)}
   if(temp_answer == "samples"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_samples$sampleID)}
   if(temp_answer == "LTR"){individual_lipid_data_sil_filtered <- individual_lipid_data %>% filter(!sampleID %in% sil_qc_fail_ltr$sampleID)}

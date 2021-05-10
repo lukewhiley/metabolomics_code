@@ -40,16 +40,28 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
     PC1 <- as.numeric(as.matrix(pca_model@t[,1]))
     PC2 <- as.numeric(as.matrix(pca_model@t[,2]))
     
+    #browser()
     #produce plot_ly PCA plot
     plot_Val <- as_tibble(cbind(PC1, PC2))
     plot_Val$sampleID <- sampleID$sampleID
     plot_Val$sample_group <- c(pca_class)
     plot_Val$pca_plot_label <- c(pca_plot_label)
+    plot_Val_samples <- plot_Val %>% filter(sample_group == "sample")
+    plot_Val_ltr <- plot_Val %>% filter(sample_group == "LTR")
     
     plotly_loadings_data <- pca_model@p %>% as_tibble(rownames = "lipid") %>% rename(PC1 = V1, PC2 = V2)
     
-    plotly_pca <- plot_ly(type = "scatter", mode = "markers", plot_Val, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = plot_colours, marker = list(size = 6)) %>% 
-      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
+    plotly_pca <- plot_ly(type = "scatter", mode = "markers", data = plot_Val_samples, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = c('#1E90FF', '#FF0000'), 
+                          marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
+                                        line = list(
+                                          color = '#000000',
+                                          width = 1)
+                                        )) %>% 
+      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = "")) %>% 
+      add_trace(type = "scatter", mode = "markers", data = plot_Val_ltr, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, marker = list(size = 7, color = '#FF0000'))
+    
+    
+    
     
     plotly_loadings <- plot_ly(type = "scatter", mode = "markers", plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, marker = list(color = "black")) %>% 
       layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
@@ -58,9 +70,11 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
                                margin = c(0.01, 0.01, 0.2, 0.01)) %>% layout(showlegend = FALSE, title =  "Plotly PCA")
     
     pca_plot_list <- c(list(combined_plotly))
-    print(pca_plot_list)
+    #print(pca_plot_list)
     
   })
   
   pca_plot_list
+  
+  
 }

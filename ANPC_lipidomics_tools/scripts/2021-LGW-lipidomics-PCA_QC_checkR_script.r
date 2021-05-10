@@ -12,10 +12,6 @@ final_individual_lipid_data$sample_class[grep("LTR", final_individual_lipid_data
 final_class_lipid_data$sample_class <- "sample"
 final_class_lipid_data$sample_class[grep("LTR", final_class_lipid_data$sampleID)] <- "LTR"
 
-plot_colours <- c("red", "lightblue3")
-label_sampleIDs <- FALSE
-
-
 #run function
 pca_check_status <- "change"
 while(pca_check_status == "change"){
@@ -30,7 +26,13 @@ browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_QC_P
 
 
 pca_check_status <- dlgInput("Check the PCA plots. Are you happy to continue? or do wish to change the scalling type?", "continue/change")$res
-while(tic_check_status != "continue" & sil_check_status != "change"){
+while(pca_check_status != "continue" & pca_check_status != "change"){
   pca_check_status <- dlgInput("Check the PCA plots. Are you happy to continue? or do wish to change the scalling type?", "continue/change")$res
 }
 }
+
+scale_used <- "blank"
+while(pca_check_status != "UV" & pca_check_status != "Pareto"){
+  pca_check_status <- dlgInput("What scaling type was used?", "UV/Pareto")$res
+}
+

@@ -9,7 +9,7 @@ dlg_message("Time for normalization using the internal standards :-)", type = 'o
 dlg_message("REQUIRES - a template csv listing each lipid target and the assigned internal standard. Column headings required are 'Precursor Name' containing the lipid target  and 'Note' containing the IS name", type = 'ok')
 
 #import transition report 3
-filtered_data <- individual_lipid_data_tic_intensity_filtered %>% filter(!grepl("conditioning", sampleID))
+filtered_data <- individual_lipid_data_sil_tic_intensity_filtered %>% filter(!grepl("conditioning", sampleID))
 filtered_data[is.na(filtered_data)] <- 0
 
 dlg_message("Please select this template file now.", type = 'ok')
@@ -42,11 +42,6 @@ sil_sum_lower_threshold <- sil_sum_q1 - inter_quantile_range
 #create a list of IS that fail the test
 sil_list_warning <- sil_sum$note[which(sil_sum$SIL_SUM < sil_sum_lower_threshold)]
 
-dlg_message(paste("Warning! These internal standards have a very low signal and may not be present in the mixture:", 
-                  paste(sil_list_warning, collapse = ", "), 
-                  " - double check skyline!"), 
-            type = 'ok')
-
 sil_rsd <- lapply(sil_list$note, function(FUNC_SIL){
   #browser()
   temp_func_data <- sil_data_check %>% select(all_of(FUNC_SIL))
@@ -69,7 +64,7 @@ dlg_message(paste( "############################################",
             type = 'ok')
 
 
-sil_list_warning <- c(sil_list_warning, unlist(sil_list_warning_2$sil_list))
+sil_list_warning <- c(sil_list_warning, unlist(sil_list_warning_2$note))
 
 temp_answer <- dlgInput("Do you wish to continue or use different internal standards?", "continue/change")$res
 
@@ -86,10 +81,10 @@ if(temp_answer == "change"){
 
 # this section creates a response ratio by dividing the signal area for each target lipid by the peak area from the appropriate SIL IS metabolite. As defined in the imported template above.
 
-ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(LIPID){
+ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(FUNC_IS_RATIO){
   #browser()
-  func_data <- lipid_data %>% select(all_of(LIPID))
-  sil_to_use <- sil_target_list$note[which(sil_target_list$precursor_name==LIPID)]
+  func_data <- lipid_data %>% select(all_of(FUNC_IS_RATIO))
+  sil_to_use <- sil_target_list$note[which(sil_target_list$precursor_name==FUNC_IS_RATIO)]
   func_data_sil <- sil_data %>% select(sil_to_use)
   normalised_data <- func_data/func_data_sil
   normalised_data
@@ -97,9 +92,9 @@ ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(LIPID){
 
 colnames(ratio_data) <- c("sampleID", "plateID", colnames(lipid_data))
 
-ltr_rsd <- apply(as_tibble(colnames(lipid_data)), 1, function(RSD){
+ltr_rsd <- apply(as_tibble(colnames(lipid_data)), 1, function(LTR_RSD){
   #browser()
-  func_data <- ratio_data %>% filter(grepl("LTR", sampleID)) %>% select(all_of(RSD))
+  func_data <- ratio_data %>% filter(grepl("LTR", sampleID)) %>% select(all_of(LTR_RSD))
   (sd(func_data$value)*100)/mean(func_data$value)
 }) %>% as_tibble() %>% add_column(colnames(lipid_data), .before = 1)
 
@@ -114,7 +109,13 @@ lipid_keep_list <- ltr_rsd %>% filter(RSD < 30)
 final_dataset <- ratio_data %>% select(sampleID, plateID, all_of(lipid_keep_list$lipid))
 final_dataset[is.na(final_dataset)] <- 0
 
-# visualisation of normalied data
+# now multiply by the IS concentration to create a concentration factor
+dlg_message("Now we calculate lipid concentrations from the internal standard", type = 'ok')
+dlg_message("Please select the concentration template", type = 'ok')
+
+
+
+# visualisation of normalized data
 # first - produce a plot of all normalized features to see if there are any overall trends in the data
 
 total_summed_ratio <- apply(final_dataset %>% select(sampleID), 1, function(summedTIC){
@@ -129,7 +130,7 @@ sd(total_summed_ratio$summed_TIC*100)/mean(total_summed_ratio$summed_TIC)
 total_summed_ratio$sample <- "sample"
 total_summed_ratio$sample[grep("LTR", total_summed_ratio$sampleID)] <- "LTR"
 
-p <- plot_ly(type = "scatter", total_summed_ratio, x = ~sample_idx, y = ~summed_TIC, text = ~sampleID, color = ~sample, colors = c("red", "lightblue"));p
+p <- plot_ly(type = "scatter", mode   = 'markers', total_summed_ratio, x = ~sample_idx, y = ~summed_TIC, text = ~sampleID, color = ~sample, colors = c("red", "lightblue"))
 
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
 plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
