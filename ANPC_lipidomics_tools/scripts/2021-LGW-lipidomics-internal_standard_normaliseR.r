@@ -9,7 +9,7 @@ dlg_message("Time for normalization using the internal standards :-)", type = 'o
 dlg_message("REQUIRES - a template csv listing each lipid target and the assigned internal standard. Column headings required are 'Precursor Name' containing the lipid target  and 'Note' containing the IS name", type = 'ok')
 
 #import transition report 3
-filtered_data <- individual_lipid_data_tic_filtered %>% filter(!grepl("conditioning", sampleID))
+filtered_data <- individual_lipid_data_tic_intensity_filtered %>% filter(!grepl("conditioning", sampleID))
 filtered_data[is.na(filtered_data)] <- 0
 
 dlg_message("Please select this template file now.", type = 'ok')
