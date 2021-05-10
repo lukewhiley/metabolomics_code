@@ -81,6 +81,5 @@ while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & 
 }
 
 #tidy up environment
-
 remove_list <- c("idx_line", "mad_summed_tic", "median_summed_tic", "plate_number", "tic_check_status", "tic_cut_off_lower","p", "total_summed_tic", "remove_list")
 rm(list = remove_list)
