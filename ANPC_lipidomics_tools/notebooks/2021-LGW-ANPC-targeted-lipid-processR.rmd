@@ -66,23 +66,27 @@ rm(loaded_packages)
 # Source R script from Github and prepare data - imports data from section 1. Lipidomics peak picking from skyline
 lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-lipid_exploreR_script.r") %>% content(as = "text")
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
+rm(lipid_exploreR_script)
 
 # SIL check - sums the intensity of all stable isotope labeled internal standards, visualizes the result. If IS have been added correctly should be within x deviations from the median. Allows visualization of outliers
 summed_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_SIL_checkR_script.r") %>% content(as = "text")
 eval(parse(text = summed_SIL_checkR_script), envir = .GlobalEnv)
+rm(summed_SIL_checkR_script)
 
 # TIC check - sums the intensity of all target lipids, visualizes the result. If samplehas been added to the well correctly should be within x deviations from the median. Allows visualization of outliers.
-summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_TIC_checkR_script.R") %>% content(as = "text")
-eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
+intensity_threshold_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_TIC_checkR_script.R") %>% content(as = "text")
+eval(parse(text = intensity_threshold_checkR_script), envir = .GlobalEnv)
 
 #intensity threshold filter
-
-
+summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-intensity_threshold_checkR_script.R") %>% content(as = "text")
+eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
+rm(summed_TIC_checkR_script)
 
 # Review individual SIL internal standards 
 # Create target lipid to stable isotope ratio internal standard and evaluates them in the pooled QC. Here we use Long Term Reference pool
 LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
+rm(LTR_SIL_checkR_script)
 
 # Produce a PCA to QC data. Allowws for visualization of LTR sample clustering
 PCA_QC_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
