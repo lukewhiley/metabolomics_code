@@ -6,7 +6,7 @@
 # Requires a template guide with internal standard transition for each target lipid SRM transition
 
 dlg_message("Time for normalization using the internal standards :-)", type = 'ok')
-dlg_message("REQUIRES - a template csv listing each lipid target and the assigned internal standard", type = 'ok')
+dlg_message("REQUIRES - a template csv listing each lipid target and the assigned internal standard. Column headings required are 'Precursor Name' containing the lipid target  and 'Note' containing the IS name", type = 'ok')
 
 #import transition report 3
 filtered_data <- individual_lipid_data_tic_filtered %>% filter(!grepl("conditioning", sampleID))
@@ -14,14 +14,77 @@ filtered_data[is.na(filtered_data)] <- 0
 
 dlg_message("Please select this template file now.", type = 'ok')
 
+temp_answer <- "change"
+while(temp_answer == "change"){
 sil_target_list <- read_csv(file = file.choose(.)) %>% clean_names
 lipid_data <- filtered_data %>% select(-sampleID, - plate_id) %>% select(!contains("SIL"))
 sil_data <- filtered_data %>% select(-sampleID, - plate_id) %>% select(contains("SIL"))
 
-normalisation_factor <- lapply(filtered_data$sampleID, function(sampleNORM){
+# this section checks each of the SIL IS used in the target list template in the LTRS. It evaluates if:
+##  a: is the internal standard present in the LTR samples? Some batches of IS do not contain every IS availible. This alos prevents user error if the IS batch has not been made correctly.
+##  b: the RSD of the internal standard signal intensity in LTRs. If the SIL IS is suitable for use in the dataset its signal should be stable in the LTRs. (raises a warning for >30%)
+
+dlg_message("Checks to see if all internal standards are present in the SIL internal standard mix", type = 'ok')
+
+sil_data_check <- individual_lipid_data_sil_tic_filtered %>% select(sampleID, plate_id, contains("SIL")) %>% filter(grepl("LTR", sampleID))
+
+sil_list <- sil_target_list %>% filter(grepl("SIL", note)) %>% select(note) %>% unique() 
+
+sil_sum <- lapply(sil_list$note, function(FUNC_SIL){
   #browser()
-  func_data <- filtered_data %>% filter(sampleID == sampleNORM) %>% select(contains("SIL")) %>% rowSums(na.rm = TRUE)
-}) %>% unlist
+  temp_func_data_sum <- sil_data_check %>% select(all_of(FUNC_SIL)) %>% as.matrix() %>% sum() %>% log()
+}) %>% c() %>% unlist() %>% as_tibble() %>% rename(SIL_SUM = value) %>% add_column(sil_list, .before = 1) %>% arrange(SIL_SUM)
+
+sil_sum_q1 <- quantile(sil_sum$SIL_SUM, 0.25) %>% as.numeric()
+inter_quantile_range <- as.numeric(quantile(sil_sum$SIL_SUM, 0.75)) - as.numeric(quantile(sil_sum$SIL_SUM, 0.25))
+sil_sum_lower_threshold <- sil_sum_q1 - inter_quantile_range
+
+#create a list of IS that fail the test
+sil_list_warning <- sil_sum$note[which(sil_sum$SIL_SUM < sil_sum_lower_threshold)]
+
+dlg_message(paste("Warning! These internal standards have a very low signal and may not be present in the mixture:", 
+                  paste(sil_list_warning, collapse = ", "), 
+                  " - double check skyline!"), 
+            type = 'ok')
+
+sil_rsd <- lapply(sil_list$note, function(FUNC_SIL){
+  #browser()
+  temp_func_data <- sil_data_check %>% select(all_of(FUNC_SIL))
+  temp_func_data_mean <- temp_func_data %>% as.matrix() %>% mean()
+  temp_func_data_sd <- temp_func_data %>% as.matrix() %>% sd()
+  temp_func_data_rsd <- (temp_func_data_sd/temp_func_data_mean)*100
+  temp_func_data_rsd
+}) %>% c() %>% unlist() %>% as_tibble() %>% rename(SIL_RSD = value) %>% add_column(sil_list, .before = 1)
+
+sil_list_warning_2 <- sil_rsd %>% filter(SIL_RSD > 30) 
+
+dlg_message(paste( "############################################", 
+                   "Warning 1! These internal standards have a very low signal and may not be present in the mixture:",
+                   paste(sil_list_warning, collapse = ";     ."),
+                   "############################################", 
+                   "Warning 2! These internal standards have a %RSD >30%: ",
+                   paste(sil_list_warning_2$note, collapse = ";     ."),
+                   "############################################",
+                   "double check skyline!"), 
+            type = 'ok')
+
+
+sil_list_warning <- c(sil_list_warning, unlist(sil_list_warning_2$sil_list))
+
+temp_answer <- dlgInput("Do you wish to continue or use different internal standards?", "continue/change")$res
+
+#add in a check in case the user enters the incorrect entry. It must be "continue" or "change" to continue
+while(temp_answer != "continue" & temp_answer!="change"){
+  temp_answer <- dlgInput("Do you wish to continue or use different internal standards?", "continue/change")$res
+}
+
+# if change has been selected the user now has an opportunity to change the internal standard import file template
+if(temp_answer == "change"){
+  dlg_message("OK - please edit and select a new internal standard template file now")
+}
+}
+
+# this section creates a response ratio by dividing the signal area for each target lipid by the peak area from the appropriate SIL IS metabolite. As defined in the imported template above.
 
 ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(LIPID){
   #browser()
@@ -29,10 +92,6 @@ ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(LIPID){
   sil_to_use <- sil_target_list$note[which(sil_target_list$precursor_name==LIPID)]
   func_data_sil <- sil_data %>% select(sil_to_use)
   normalised_data <- func_data/func_data_sil
-  #normalised_data <- (func_data/((func_data+func_data_sil)))/normalisation_factor
-  #normalised_data <- (func_data/func_data_sil)+normalisation_factor
-  #normalised_data <- func_data/(func_data+normalisation_factor)
-  #normalised_data <- func_data/func_data_sil
   normalised_data
 }) %>% bind_cols() %>% add_column(filtered_data$sampleID, filtered_data$plate_id, .before = 1)
 
