@@ -133,7 +133,7 @@ total_summed_ratio$sample[grep("LTR", total_summed_ratio$sampleID)] <- "LTR"
 p <- plot_ly(type = "scatter", mode   = 'markers', total_summed_ratio, x = ~sample_idx, y = ~summed_TIC, text = ~sampleID, color = ~sample, colors = c("red", "lightblue"))
 
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
+plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
 for (idx_line in 2:length(plate_idx)){
   p <- add_trace(p, x = plate_idx[idx_line], type = 'scatter', mode = 'lines', color = paste("plate_", plate_number[idx_line], sep=""), line = list(color = "grey", dash = "dash"), showlegend = FALSE)
 }
