@@ -64,9 +64,9 @@ saveWidget(tic_check_p, file = paste(project_dir, "/html_files/",project_name, "
 browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_TIC_check_plot.html", sep="")) #open plotly widget in internet browser
 
 #tic_qc_fail - ask the user if they wish to continue or change the threshold
-tic_check_status <- dlgInput("Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
+tic_check_status <- "blank"
 while(tic_check_status != "continue" & tic_check_status != "change"){
-  tic_check_status <- dlgInput("Error. Check the plot. Are you happy to continue? or do wish to change the exclusion threshold?", "continue/change")$res
+  tic_check_status <- dlgInput(paste(nrow(tic_qc_fail),  "samples FAILED summed TIC QC check - see plot. Continue? or change the exclusion threshold?"), "continue/change")$res
 }
 }
 
