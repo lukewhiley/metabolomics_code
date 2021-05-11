@@ -32,7 +32,7 @@ while(pca_check_status != "continue" & pca_check_status != "change"){
 }
 
 scale_used <- "blank"
-while(pca_check_status != "UV" & pca_check_status != "Pareto"){
-  pca_check_status <- dlgInput("What scaling type was used?", "UV/Pareto")$res
+while(scale_used != "UV" & scale_used != "Pareto"){
+  scale_used <- dlgInput("What scaling type was used?", "UV/Pareto")$res
 }
 

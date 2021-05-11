@@ -31,9 +31,9 @@ sil_check_status <- "change"
 while(sil_check_status == "change"){
 
 #flag samples with SIL x standard deviations below mean
-temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 3")$res
+temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
 while(is.na(as.numeric(temp_answer))){
-  temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 3")$res
+  temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
 }
 
 median_sil_tic <- median(total_summed_sil$SIL_TIC)
@@ -41,26 +41,71 @@ mad_sil_tic <- mad(total_summed_sil$SIL_TIC)
 sil_cut_off_lower <- median_sil_tic - (as.numeric(temp_answer)*mad_sil_tic)
 sil_cut_off_upper <- median_sil_tic + (as.numeric(temp_answer)*mad_sil_tic)
 
-#create lists of which samples have failed the SIL internalk standard check
+#create lists of which samples have failed the SIL internal standard check
 sil_qc_fail <- total_summed_sil$sampleID[which(total_summed_sil$SIL_TIC < sil_cut_off_lower | total_summed_sil$SIL_TIC > sil_cut_off_upper)] %>% as_tibble %>% rename(sampleID = value)
 sil_qc_fail$fail_point <- "sil"
 sil_qc_fail_ltr <- sil_qc_fail %>% filter(grepl("LTR", sampleID))
 sil_qc_fail_samples <- sil_qc_fail %>% filter(!grepl("LTR", sampleID))
 
-#visualise for reports
+# visualise for reports
 total_summed_sil$removed <- "pass_qc"
 total_summed_sil$removed[total_summed_sil$sampleID %in% sil_qc_fail$sampleID] <- "removed"
 
-p <- plot_ly(type = "scatter", mode = "markers", total_summed_sil, x = ~sample_idx, y = ~LOG_SIL_TIC, text = ~sampleID, color = ~removed, colors = c("lightblue3", "red"))
+total_summed_sil_removed <- total_summed_sil %>% filter(grepl("removed", removed))
+total_summed_sil_pass <- total_summed_sil %>% filter(grepl("pass_qc", removed))
 
+# create a plate list ID
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
 plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
-for (idx_line in 2:length(plate_idx)){
-  p <- add_trace(p, x = plate_idx[idx_line], type = 'scatter', mode = 'lines', color = paste("plate_", plate_number[idx_line], sep=""), line = list(color = "grey", dash = "dash"), showlegend = FALSE)
-}
-p <- add_trace(p, y = log(sil_cut_off_lower), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "red", dash = "dash"))
-p <- add_trace(p, y = log(median_sil_tic), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "black", dash = "dash"))
-p <- add_trace(p, y = log(sil_cut_off_upper), type = 'scatter', mode = 'lines', color = "SIL QC threshold", line = list(color = "red", dash = "dash"))
+
+# create a layout list of extra lines to add
+p_threshold_lines <- list(list(type='line', x0= min(total_summed_sil$sample_idx), x1= (max(total_summed_sil$sample_idx)+10), y0=log(sil_cut_off_lower), y1=log(sil_cut_off_lower),
+                          line=list(dash='dot', width=3, color = '#FF0000')),
+                     list(type='line', x0= min(total_summed_sil$sample_idx), x1= (max(total_summed_sil$sample_idx)+10), y0=log(sil_cut_off_upper), y1=log(sil_cut_off_upper),
+                          line=list(dash='dot', width=3, color = '#FF0000')),
+                     list(type='line', x0= min(total_summed_sil$sample_idx), x1= (max(total_summed_sil$sample_idx)+10), y0=log(median_sil_tic), y1=log(median_sil_tic),
+                          line=list(dash='dot', width=3, color = '#000000'))
+)
+p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
+   list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, y0=(min(total_summed_sil$LOG_SIL_TIC)-0.5), y1=(max(total_summed_sil$LOG_SIL_TIC)+0.5),
+            line=list(dash='dot', width=2, color = '#808080'))
+})
+
+p_plot_lines <- c(p_threshold_lines, p_plate_list)
+
+#create a list of axis settings for plot_ly
+x_axis_settings <- list(
+  zeroline = FALSE,
+  showline = TRUE,
+  linecolor = toRGB("black"),
+  linewidth = 2,
+  showgrid = FALSE,
+  range = c(0, max(total_summed_sil$sample_idx)),
+  title = "Sample index"
+)
+
+y_axis_settings <- list(
+  zeroline = FALSE,
+  showline = TRUE,
+  linecolor = toRGB("black"),
+  linewidth = 2,
+  showgrid = TRUE,
+  title = "Lipid total ion count (Log)"
+)
+
+p <- plot_ly(
+  type = "scatter", mode = "markers", data = total_summed_sil_pass, x = ~sample_idx, y = ~LOG_SIL_TIC, text = ~sampleID, color = ~removed, colors = c('#1E90FF', '#FF0000'), 
+  marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
+                line = list(color = '#000000',width = 1))
+ ) %>% 
+  add_trace(type = "scatter", data = total_summed_sil_removed, x = ~sample_idx, y = ~LOG_SIL_TIC, text = ~sampleID, color = ~removed, 
+            marker = list(size = 8, color = '#FF0000')
+            ) %>%
+  layout(title = paste(project_name, " internal standard QC check ", sep = ""),
+         xaxis = x_axis_settings,
+         yaxis = y_axis_settings
+         ) %>%
+  layout(shapes=p_plot_lines)
 
 #create html widget and display it in the users internet browser
 sil_check_p <- p
@@ -87,8 +132,8 @@ while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & 
 
 #tidy up environment
 
-remove_list <- c("idx_line", "mad_sil_tic", "median_sil_tic", "plate_number", "sil_check_status", "sil_cut_off_lower", "sil_cut_off_upper", "summed_SIL_checkR_script", "remove_list",
+ remove_list <- c("mad_sil_tic", "median_sil_tic", "plate_number", "sil_check_status", "sil_cut_off_lower", "sil_cut_off_upper", "remove_list",
                  "p", "total_summed_sil")
-rm(list = remove_list)
+ rm(list = remove_list)
       
 

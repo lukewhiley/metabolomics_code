@@ -23,7 +23,7 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
     }
     if(column_length == 0){ 
       pca_x <- multivariate_data %>%  select(all_of(lipid_class$value)) %>% as.matrix()
-      title_text <- "lipid family"
+      title_text <- "lipid class"
     }
     
     pca_x[pca_x == 0] <- NA #remove all 0 values

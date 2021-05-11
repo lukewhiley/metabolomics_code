@@ -71,36 +71,7 @@ lipid_exploreR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley
 eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 rm(lipid_exploreR_script)
 
-# SIL check - sums the intensity of all stable isotope labeled internal standards, visualizes the result. If IS have been added correctly should be within x deviations from the median. Allows visualization of outliers
-summed_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_SIL_checkR_script.r") %>% 
-   content(as = "text")
-eval(parse(text = summed_SIL_checkR_script), envir = .GlobalEnv)
-rm(summed_SIL_checkR_script)
-
-# TIC check - sums the intensity of all target lipids, visualizes the result. If samplehas been added to the well correctly should be within x deviations from the median. Allows visualization of outliers.
-summed_TIC_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-summed_TIC_checkR_script.R") %>% 
-   content(as = "text")
-eval(parse(text = summed_TIC_checkR_script), envir = .GlobalEnv)
-rm(summed_TIC_checkR_script)
-
-#intensity threshold filter
-
-intensity_threshold_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-intensity_threshold_checkR_script.R") %>% content(as = "text")
-  eval(parse(text = intensity_threshold_checkR_script), envir = .GlobalEnv)
-
-# Review individual SIL internal standards 
-# Create target lipid to stable isotope ratio internal standard and evaluate them in the pooled QC. Here we use Long Term Reference pool
-LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% 
-   content(as = "text")
-eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
-rm(LTR_SIL_checkR_script)
-
-# Produce a PCA to QC data. Allowws for visualization of LTR sample clustering
-PCA_QC_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
-eval(parse(text = PCA_QC_script), envir = .GlobalEnv)
-rm(PCA_QC_script)
-
-
+# produce a final report
 rmarkdown::render(input = "/Users/lukewhiley/OneDrive - Murdoch University/r_data_analysis/github/metabolomics_code/ANPC_lipidomics_tools/notebooks/2021-LGW-Lipid_ExploreR_QC_Report.Rmd",
                   output_format = "html_document",
                   output_dir = paste(project_dir, "/html_files/", sep=""),
@@ -117,7 +88,11 @@ dlg_message("PS. an official html report can be found in the project folder", ty
 #notes
 
 multiply by concentration factor
-report export
+loading PCA - make markers 0.5 opacity, grey and black line outer
+change plotly colours to match throughout
+plotly line markers - change to median
+report from github not local file
+
 
 
 

@@ -114,7 +114,6 @@ dlg_message("Now we calculate lipid concentrations from the internal standard", 
 dlg_message("Please select the concentration template", type = 'ok')
 
 
-
 # visualisation of normalized data
 # first - produce a plot of all normalized features to see if there are any overall trends in the data
 
@@ -130,13 +129,62 @@ sd(total_summed_ratio$summed_TIC*100)/mean(total_summed_ratio$summed_TIC)
 total_summed_ratio$sample <- "sample"
 total_summed_ratio$sample[grep("LTR", total_summed_ratio$sampleID)] <- "LTR"
 
-p <- plot_ly(type = "scatter", mode   = 'markers', total_summed_ratio, x = ~sample_idx, y = ~summed_TIC, text = ~sampleID, color = ~sample, colors = c("red", "lightblue"))
+# create a plotly plot to visualize
+total_summed_ratio$log_summed_TIC <- log(total_summed_ratio$summed_TIC+1)
 
+total_summed_ratio_samples <- total_summed_ratio %>% filter(!grepl("LTR", sampleID))
+total_summed_ratio_LTR <- total_summed_ratio %>% filter(grepl("LTR", sampleID))
+
+# create a plate list ID
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
-for (idx_line in 2:length(plate_idx)){
-  p <- add_trace(p, x = plate_idx[idx_line], type = 'scatter', mode = 'lines', color = paste("plate_", plate_number[idx_line], sep=""), line = list(color = "grey", dash = "dash"), showlegend = FALSE)
-}
+plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_tic$sampleID)[1]}) %>% unlist()
+
+# create a layout list of extra lines to add
+p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
+  list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, 
+       y0=log(min(total_summed_ratio_samples$summed_TIC)-(min(total_summed_ratio_samples$summed_TIC)/100*50)), 
+       y1=log(max(total_summed_ratio_samples$summed_TIC)+(max(total_summed_ratio_samples$summed_TIC)/100*25)),
+       line=list(dash='dot', width=2, color = '#808080'))
+})
+
+p_plot_lines <- p_plate_list
+
+#create a list of axis settings for plot_ly
+x_axis_settings <- list(
+  zeroline = FALSE,
+  showline = TRUE,
+  linecolor = toRGB("black"),
+  linewidth = 2,
+  showgrid = FALSE,
+  range = c(0, max(total_summed_ratio_samples$sample_idx)),
+  title = "Sample index"
+)
+
+y_axis_settings <- list(
+  zeroline = FALSE,
+  showline = TRUE,
+  linecolor = toRGB("black"),
+  linewidth = 2,
+  showgrid = TRUE,
+  range = c(log(min(total_summed_ratio_samples$summed_TIC)-(min(total_summed_ratio_samples$summed_TIC)/100*50)), 
+            log(max(total_summed_ratio_samples$summed_TIC)+(max(total_summed_ratio_samples$summed_TIC)/100*25))),
+  title = "Summed lipid target/internal standard ratio (Log)"
+)
+
+p <- plot_ly(
+  type = "scatter", mode = "markers", data = total_summed_ratio_samples, x = ~sample_idx, y = ~log_summed_TIC, text = ~sampleID, color = ~sample, colors = c('#1E90FF', '#FF0000'), 
+  marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
+                line = list(color = '#000000',width = 1))
+) %>% 
+  add_trace(type = "scatter", data = total_summed_ratio_LTR, x = ~sample_idx, y = ~log_summed_TIC, text = ~sampleID, color = ~sample, 
+            marker = list(size = 8, color = '#FF0000')
+  ) %>%
+  layout(title = paste(project_name, " internal standard ratio QC check", sep = ""),
+         xaxis = x_axis_settings,
+         yaxis = y_axis_settings
+  ) %>%
+  layout(shapes=p_plot_lines)
+
 normalized_check_p <- p
 
 #create html widget and display it in the users internet browser
@@ -145,8 +193,6 @@ saveWidget(normalized_check_p, file = paste(project_dir, "/html_files/",project_
 browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_plot.html", sep="")) #open plotly widget in internet browser
 
 dlg_message("Check plot for summed all normilized features. Press OK to continue", type = 'ok')
-
-
 
 # second - produce a plot of normalized features, summed by class to see if there are any overall trends in the lipid class data
 
@@ -172,7 +218,7 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   plate_id <- substr(plate_id, 0,15)
   plot_data$sample_index <- paste(plate_id, sub(".*\\_", "", plot_data$sampleID), sep="_")
   plot_data <- plot_data %>% arrange(sample_index)
-  plot_data$idx <- 1:nrow(plot_data)
+  plot_data$sample_idx <- 1:nrow(plot_data)
   
   plot_data_ltr <- plot_data %>% filter(is_ltr == "LTR")
   plot_data <- plot_data %>% filter(is_ltr == "sample")
@@ -181,18 +227,60 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
     grep(plateID, plot_data$sampleID)[1]
   }) %>% unlist
   
-  p <- plot_ly(type = 'scatter', mode   = 'markers', plot_data, x = ~idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE) %>% 
-    layout(xaxis = list(title = paste(lipidClass)))
+  # create a plate list ID
+  plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
+  plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_tic$sampleID)[1]}) %>% unlist()
   
-  p <- add_trace(p, data = plot_data_ltr, x = ~idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr,  colors = c("red", "lightblue3"), showlegend = FALSE)
+  # create a layout list of extra lines to add
+  p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
+    list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, 
+         y0=(log(min(plot_data$ms_response)+1)-(log(min(plot_data$ms_response)+1)/100*50)), 
+         y1=(log(max(plot_data$ms_response)+1)+(log(max(plot_data$ms_response)+1)/100*25)),
+         line=list(dash='dot', width=2, color = '#808080'))
+  })
   
-  plate_number <- unique(plate_id) %>% substr(14,14)
+  p_plot_lines <- p_plate_list
   
-  plot_limits <- log(c(min(plot_data$ms_response+1), max(plot_data$ms_response+1)))
   
-  for (idx_line in 2:length(plate_idx)){
-    p <- p %>% add_segments(x = plate_idx[idx_line], xend = plate_idx[idx_line], y = plot_limits[1], yend = plot_limits[2], line = list(color = "grey", dash = "dash"), showlegend = FALSE, text = plateid[plate_idx[idx_line]])
-  }
+  #create a list of axis settings for plot_ly
+  x_axis_settings <- list(
+    zeroline = FALSE,
+    showline = TRUE,
+    linecolor = toRGB("black"),
+    linewidth = 2,
+    showgrid = FALSE,
+    range = c(0, max(plot_data$sample_idx)),
+    title = paste(lipidClass)
+    )
+  
+  y_axis_settings <- list(
+    zeroline = FALSE,
+    showline = TRUE,
+    linecolor = toRGB("black"),
+    linewidth = 2,
+    showgrid = TRUE,
+    range = c(log(min(plot_data$ms_response)+1)-(log(min(plot_data$ms_response)+1)/100*50), 
+              log(max(plot_data$ms_response)+1)+(log(max(plot_data$ms_response)+1)/100*25)
+              ),
+    title = "Summed lipid target/internal standard ratio (Log)"
+  )
+
+  
+  p <- plot_ly(
+    type = "scatter", mode = "markers",  colors = c('#1E90FF', '#FF0000'), data = plot_data, x = ~sample_idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr, 
+    marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
+                  line = list(color = '#000000',width = 1)),
+    showlegend = FALSE
+  ) %>% 
+    add_trace(type = "scatter", data = plot_data_ltr, x = ~sample_idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr, 
+              marker = list(size = 8, color = '#FF0000'),
+              showlegend = FALSE
+    ) %>%
+    layout(title = paste(str_to_sentence(project_name), " lipid class internal standard ratio QC check", sep = ""),
+           xaxis = x_axis_settings,
+           yaxis = y_axis_settings
+           ) %>%
+    layout(shapes=p_plot_lines)
   p
 })
 
@@ -200,7 +288,7 @@ normalized_check_class_p <- subplot(plotlist, nrows = 4, titleX = TRUE, margin =
 
 if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
 saveWidget(normalized_check_class_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_class_plot.html", sep=""))# save plotly widget
-browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_class_plot.html", sep="")) #open plotly widget in internet browser
+browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_normalized_check_class_plot.html", sep="")) #open plot_ly widget in internet browser
 
 dlg_message("Check plot for summed lipid class normilized features. Press OK to continue", type = 'ok')
 
