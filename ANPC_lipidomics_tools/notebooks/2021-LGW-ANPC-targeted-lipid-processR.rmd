@@ -72,8 +72,9 @@ eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 rm(lipid_exploreR_script)
 
 # produce a final report
-report_script <- GET("https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/notebooks/2021-LGW-Lipid_ExploreR_QC_Report.Rmd") %>% content(as = "text")
-rmarkdown::render(input = report_script,
+report_script <- GET("https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/notebooks/2021-LGW-Lipid_ExploreR_QC_Report.Rmd") %>% content(as = "parsed")
+ 
+rmarkdown::render(input = "/Users/lukewhiley/Downloads/test_render.r",
                   output_format = "html_document",
                   output_dir = paste(project_dir, "/html_files/", sep=""),
                   output_file = paste(user_name, "_", project_name, "_lipid_exploreR_QC_report.html", sep="")
@@ -89,9 +90,6 @@ dlg_message("PS. an official html report can be found in the project folder", ty
 #notes
 
 multiply by concentration factor
-loading PCA - make markers 0.5 opacity, grey and black line outer
-change plotly colours to match throughout
-plotly line markers - change to median
 report from github not local file
 
 

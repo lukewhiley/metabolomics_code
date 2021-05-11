@@ -99,6 +99,7 @@ ltr_rsd <- apply(as_tibble(colnames(lipid_data)), 1, function(LTR_RSD){
 }) %>% as_tibble() %>% add_column(colnames(lipid_data), .before = 1)
 
 colnames(ltr_rsd) <- c("lipid", "RSD")
+dlg_message(paste(nrow(ltr_rsd)-length(which(ltr_rsd$RSD < 30)), " lipid targets had a LTR RSD of > 30% so were removed from the dataset", sep=""))
 dlg_message(paste("number of feature ratios with with an LTR RSD of <30% =", length(which(ltr_rsd$RSD < 30))), type = 'ok')
 dlg_message(paste("number of feature ratios with with an LTR RSD of <20% =", length(which(ltr_rsd$RSD < 20))), type = 'ok')
 dlg_message(paste("number of feature ratios with with an LTR RSD of <15% =", length(which(ltr_rsd$RSD < 15))), type = 'ok')
@@ -168,7 +169,7 @@ y_axis_settings <- list(
   showgrid = TRUE,
   range = c(log(min(total_summed_ratio_samples$summed_TIC)-(min(total_summed_ratio_samples$summed_TIC)/100*50)), 
             log(max(total_summed_ratio_samples$summed_TIC)+(max(total_summed_ratio_samples$summed_TIC)/100*25))),
-  title = "Summed lipid target/internal standard ratio (Log)"
+  title = "Summed lipid target response ratio (Log)"
 )
 
 p <- plot_ly(
@@ -179,8 +180,7 @@ p <- plot_ly(
   add_trace(type = "scatter", data = total_summed_ratio_LTR, x = ~sample_idx, y = ~log_summed_TIC, text = ~sampleID, color = ~sample, 
             marker = list(size = 8, color = '#FF0000')
   ) %>%
-  layout(title = paste(project_name, " internal standard ratio QC check", sep = ""),
-         xaxis = x_axis_settings,
+  layout(xaxis = x_axis_settings,
          yaxis = y_axis_settings
   ) %>%
   layout(shapes=p_plot_lines)
@@ -268,16 +268,15 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   
   p <- plot_ly(
     type = "scatter", mode = "markers",  colors = c('#1E90FF', '#FF0000'), data = plot_data, x = ~sample_idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr, 
-    marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
+    marker = list(size = 5, color = '#1E90FF', opacity = 0.5,
                   line = list(color = '#000000',width = 1)),
     showlegend = FALSE
   ) %>% 
     add_trace(type = "scatter", data = plot_data_ltr, x = ~sample_idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr, 
-              marker = list(size = 8, color = '#FF0000'),
+              marker = list(size = 6, color = '#FF0000'),
               showlegend = FALSE
     ) %>%
-    layout(title = paste(str_to_sentence(project_name), " lipid class internal standard ratio QC check", sep = ""),
-           xaxis = x_axis_settings,
+    layout(xaxis = x_axis_settings,
            yaxis = y_axis_settings
            ) %>%
     layout(shapes=p_plot_lines)

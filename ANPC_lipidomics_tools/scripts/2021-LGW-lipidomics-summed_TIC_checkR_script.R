@@ -95,10 +95,9 @@ p <- plot_ly(
   add_trace(type = "scatter", data = total_summed_tic_removed, x = ~sample_idx, y = ~LOG_summed_TIC, text = ~sampleID, color = ~removed, 
             marker = list(size = 8, color = '#FF0000')
   ) %>%
-  layout(title = paste(project_name, " total ion count QC check ", sep = ""),
-         xaxis = x_axis_settings,
+  layout(xaxis = x_axis_settings,
          yaxis = y_axis_settings
-  ) %>%
+         ) %>%
   layout(shapes=p_plot_lines)
 
 #create html widget and display it in the users internet browser
