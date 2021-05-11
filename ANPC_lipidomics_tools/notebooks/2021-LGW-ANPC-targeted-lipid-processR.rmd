@@ -56,7 +56,7 @@ eval(parse(text = skylineR_script), envir = .GlobalEnv)
 
 Section 2 - lipid_exploreR
 
-This notebook is designed to explore the dataset and QC check it. The script generates a report and a final dataset that can be used for data modelling.
+This notebook is designed to explore the dataset and QC check it. The script generates a report and a final dataset that can be used for data modeling.
 
 ```{r, lipid_exploreR,  eval = FALSE, echo = FALSE, results = FALSE, warning=FALSE, message=FALSE}
 package_list <- c("plyr", "tidyverse", "janitor", "httr")
@@ -72,7 +72,8 @@ eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 rm(lipid_exploreR_script)
 
 # produce a final report
-rmarkdown::render(input = "/Users/lukewhiley/OneDrive - Murdoch University/r_data_analysis/github/metabolomics_code/ANPC_lipidomics_tools/notebooks/2021-LGW-Lipid_ExploreR_QC_Report.Rmd",
+report_script <- GET("https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/notebooks/2021-LGW-Lipid_ExploreR_QC_Report.Rmd") %>% content(as = "text")
+rmarkdown::render(input = report_script,
                   output_format = "html_document",
                   output_dir = paste(project_dir, "/html_files/", sep=""),
                   output_file = paste(user_name, "_", project_name, "_lipid_exploreR_QC_report.html", sep="")

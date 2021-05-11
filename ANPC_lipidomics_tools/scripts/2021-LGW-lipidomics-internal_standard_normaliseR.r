@@ -137,7 +137,7 @@ total_summed_ratio_LTR <- total_summed_ratio %>% filter(grepl("LTR", sampleID))
 
 # create a plate list ID
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_tic$sampleID)[1]}) %>% unlist()
+plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
 
 # create a layout list of extra lines to add
 p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
@@ -229,7 +229,7 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   
   # create a plate list ID
   plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-  plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_tic$sampleID)[1]}) %>% unlist()
+  plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
   
   # create a layout list of extra lines to add
   p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){

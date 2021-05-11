@@ -2,9 +2,9 @@
 
 lipids_pca <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label){
   
-  temp_answer <- "blank"
-  while(temp_answer != "UV" & temp_answer != "Pareto"){
-    temp_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
+  scale_answer <- "blank"
+  while(scale_answer != "UV" & scale_answer != "Pareto"){
+    scale_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
   }
   
   lipid <- individual_multivariate_data %>% select(contains("(")) %>% colnames()
@@ -36,7 +36,7 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
     pca_class[is.na(pca_class)] <- "none"
     sampleID <- multivariate_data %>% select(sampleID)
     
-    pca_model <- pca(pca_x, scale = paste(temp_answer), center = TRUE)
+    pca_model <- pca(pca_x, scale = paste(scale_answer), center = TRUE)
     PC1 <- as.numeric(as.matrix(pca_model@t[,1]))
     PC2 <- as.numeric(as.matrix(pca_model@t[,2]))
     
@@ -57,13 +57,20 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
                                           color = '#000000',
                                           width = 1)
                                         )) %>% 
-      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = "")) %>% 
-      add_trace(type = "scatter", mode = "markers", data = plot_Val_ltr, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, marker = list(size = 7, color = '#FF0000'))
+      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = "")
+             ) %>% 
+      add_trace(type = "scatter", mode = "markers", data = plot_Val_ltr, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, 
+                marker = list(size = 7, color = '#FF0000', opacity = 0.5,
+                              line = list(color = '#000000', width = 1)
+                ))
     
     
     
     
-    plotly_loadings <- plot_ly(type = "scatter", mode = "markers", plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, marker = list(color = "black")) %>% 
+    plotly_loadings <- plot_ly(type = "scatter", mode = "markers", data = plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, 
+                               marker = list(size = 7, color = '#808080', opacity = 0.5,
+                                             line = list(color = '#000000', width = 1)
+                               )) %>% 
       layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
     
     combined_plotly <- subplot(plotly_pca, plotly_loadings, 
@@ -74,7 +81,11 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
     
   })
   
+  pca_plot_list <- c(pca_plot_list,
+                     list(scale_answer)
+                     )
   pca_plot_list
+  
   
   
 }
