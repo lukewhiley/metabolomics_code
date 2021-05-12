@@ -48,9 +48,12 @@ while(sil_check_status == "change"){
  }
  
   median_sil_tic <- median(total_summed_sil$SIL_TIC)
-  inter_quantile_range <- as.numeric(quantile(total_summed_sil$SIL_TIC, 0.75)) - as.numeric(quantile(total_summed_sil$SIL_TIC, 0.25))
-  sil_cut_off_lower <- median_sil_tic - (as.numeric(temp_answer)*inter_quantile_range)
-  sil_cut_off_upper <- median_sil_tic + (as.numeric(temp_answer)*inter_quantile_range)
+  #inter_quantile_range <- as.numeric(quantile(total_summed_sil$SIL_TIC, 0.75)) - as.numeric(quantile(total_summed_sil$SIL_TIC, 0.25))
+  # sil_cut_off_lower <- median_sil_tic - (as.numeric(temp_answer)*inter_quantile_range)
+  # sil_cut_off_upper <- median_sil_tic + (as.numeric(temp_answer)*inter_quantile_range)
+  
+  sil_cut_off_lower <- median_sil_tic - (median_sil_tic*as.numeric(temp_answer)/100)
+  sil_cut_off_upper <- median_sil_tic + (median_sil_tic*as.numeric(temp_answer)/100)
 
 #create lists of which samples have failed the SIL internal standard check
 sil_qc_fail <- total_summed_sil$sampleID[which(total_summed_sil$SIL_TIC < sil_cut_off_lower | total_summed_sil$SIL_TIC > sil_cut_off_upper)] %>% as_tibble %>% rename(sampleID = value)
@@ -128,7 +131,8 @@ y_axis_settings <- list(
   linewidth = 2,
   showgrid = TRUE,
   title = "Lipid total ion count (Log)",
-  range = c(y_limit_lower, y_limit_upper)
+  range = c(y_limit_lower-log(median_sil_tic)*.05, 
+            y_limit_upper+log(median_sil_tic)*.05)
 )
 
 p <- plot_ly(

@@ -37,14 +37,18 @@ while(tic_check_status == "change"){
 # tic_cut_off_lower <- median_summed_tic - (as.numeric(temp_answer)*mad_summed_tic)
   
   
-  temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of lower interquartile ranges from the median", "e.g. recommended default x = 2")$res
+  temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x % from the median", "e.g. recommended default x = 50")$res
   while(is.na(as.numeric(temp_answer))){
-    temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.   x number of lower interquartile ranges from the median", "e.g. recommended default x = 2")$res
+    temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x % from the median", "e.g. recommended default x = 50")$res
   }
   
   median_summed_tic <- median(total_summed_tic$summed_TIC)
-  inter_quantile_range <- as.numeric(quantile(total_summed_tic$summed_TIC, 0.50)) - as.numeric(quantile(total_summed_tic$summed_TIC, 0.25))
-  tic_cut_off_lower <- median_summed_tic - (as.numeric(temp_answer)*inter_quantile_range)
+  # inter_quantile_range <- as.numeric(quantile(total_summed_tic$summed_TIC, 0.50)) - as.numeric(quantile(total_summed_tic$summed_TIC, 0.25))
+  # tic_cut_off_lower <- median_summed_tic - (as.numeric(temp_answer)*inter_quantile_range)
+  
+  median_summed_tic <- median(total_summed_tic$summed_TIC)
+  tic_cut_off_lower <- median_summed_tic - (median_summed_tic*as.numeric(temp_answer)/100)
+
 
 tic_qc_fail <- total_summed_tic$sampleID[which(total_summed_tic$summed_TIC < tic_cut_off_lower)] %>% as_tibble %>% rename(sampleID = value)
 tic_qc_fail$fail_point <- "tic"
@@ -117,6 +121,8 @@ y_axis_settings <- list(
   linecolor = toRGB("black"),
   linewidth = 2,
   showgrid = TRUE,
+  range = c(y_limit_lower-log(median_summed_tic)*0.1, 
+            y_limit_upper),
   title = "Lipid total ion count (Log)"
 )
 
