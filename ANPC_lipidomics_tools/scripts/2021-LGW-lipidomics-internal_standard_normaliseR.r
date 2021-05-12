@@ -148,7 +148,18 @@ p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIS
        line=list(dash='dot', width=2, color = '#808080'))
 })
 
-p_plot_lines <- p_plate_list
+#only add plate lines if multiple plates exist
+if(is.na(plate_idx)){
+  p_plot_lines <- NULL
+}
+
+if(length(plate_idx) == 1){
+  p_plot_lines <- NULL
+}
+
+if(length(plate_idx) > 1){
+  p_plot_lines <- c(p_plate_list)
+} 
 
 #create a list of axis settings for plot_ly
 x_axis_settings <- list(
@@ -239,7 +250,19 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
          line=list(dash='dot', width=2, color = '#808080'))
   })
   
-  p_plot_lines <- p_plate_list
+  #only add plate lines if multiple plates exist
+  if(is.na(plate_idx)){
+    p_plot_lines <- NULL
+  }
+  
+  if(length(plate_idx) == 1){
+    p_plot_lines <- NULL
+  }
+  
+  if(length(plate_idx) > 1){
+    p_plot_lines <- c(p_plate_list)
+  } 
+  
   
   
   #create a list of axis settings for plot_ly

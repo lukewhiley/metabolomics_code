@@ -26,15 +26,25 @@ tic_check_status <- "change"
 while(tic_check_status == "change"){
 
 #flag samples with SIL x number of standard deviations below mean
-temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
-while(is.na(as.numeric(temp_answer))){
-  temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
-}
-
-temp_answer <- as.numeric(temp_answer)
-median_summed_tic <- median(total_summed_tic$summed_TIC)
-mad_summed_tic <- mad(total_summed_tic$summed_TIC)
-tic_cut_off_lower <- median_summed_tic - (as.numeric(temp_answer)*mad_summed_tic)
+# temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
+# while(is.na(as.numeric(temp_answer))){
+#   temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
+# }
+# 
+# temp_answer <- as.numeric(temp_answer)
+# median_summed_tic <- median(total_summed_tic$summed_TIC)
+# mad_summed_tic <- mad(total_summed_tic$summed_TIC)
+# tic_cut_off_lower <- median_summed_tic - (as.numeric(temp_answer)*mad_summed_tic)
+  
+  
+  temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of lower interquartile ranges from the median", "e.g. recommended default x = 2")$res
+  while(is.na(as.numeric(temp_answer))){
+    temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.   x number of lower interquartile ranges from the median", "e.g. recommended default x = 2")$res
+  }
+  
+  median_summed_tic <- median(total_summed_tic$summed_TIC)
+  inter_quantile_range <- as.numeric(quantile(total_summed_tic$summed_TIC, 0.50)) - as.numeric(quantile(total_summed_tic$summed_TIC, 0.25))
+  tic_cut_off_lower <- median_summed_tic - (as.numeric(temp_answer)*inter_quantile_range)
 
 tic_qc_fail <- total_summed_tic$sampleID[which(total_summed_tic$summed_TIC < tic_cut_off_lower)] %>% as_tibble %>% rename(sampleID = value)
 tic_qc_fail$fail_point <- "tic"
@@ -53,6 +63,18 @@ total_summed_tic_pass <- total_summed_tic %>% filter(grepl("pass_qc", removed))
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
 plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_tic$sampleID)[1]}) %>% unlist()
 
+#set y axis limits
+if(tic_cut_off_lower < min(total_summed_tic$summed_TIC)){
+  y_limit_lower <- log(tic_cut_off_lower-(tic_cut_off_lower/100*25))
+}
+if(tic_cut_off_lower > min(total_summed_tic$summed_TIC)){
+  y_limit_lower <- log(min(total_summed_tic$summed_TIC)-(min(total_summed_tic$summed_TIC)/100*25))
+}
+
+y_limit_upper <- log(max(total_summed_tic$summed_TIC)+(max(total_summed_tic$summed_TIC)/100*25))
+
+
+
 # create a layout list of extra lines to add
 p_threshold_lines <- list(list(type='line', x0= min(total_summed_tic$sample_idx), x1= (max(total_summed_tic$sample_idx)+10), y0=log(tic_cut_off_lower), y1=log(tic_cut_off_lower),
                                line=list(dash='dot', width=3, color = '#FF0000')),
@@ -65,7 +87,18 @@ p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIS
        line=list(dash='dot', width=2, color = '#808080'))
 })
 
-p_plot_lines <- c(p_threshold_lines, p_plate_list)
+#only add plate lines if multiple plates exist
+if(is.na(plate_idx)){
+  p_plot_lines <- p_threshold_lines
+}
+
+if(length(plate_idx) == 1){
+  p_plot_lines <- p_threshold_lines
+}
+
+if(length(plate_idx) > 1){
+  p_plot_lines <- c(p_threshold_lines, p_plate_list)
+}
 
 #create a list of axis settings for plot_ly
 x_axis_settings <- list(
@@ -124,5 +157,5 @@ while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & 
 }
 
 #tidy up environment
- remove_list <- c("idx_line", "mad_summed_tic", "median_summed_tic", "plate_number", "tic_check_status", "tic_cut_off_lower","p", "total_summed_tic", "remove_list")
- rm(list = remove_list)
+ # remove_list <- c("idx_line", "mad_summed_tic", "median_summed_tic", "plate_number", "tic_check_status", "tic_cut_off_lower","p", "total_summed_tic", "remove_list")
+ # rm(list = remove_list)

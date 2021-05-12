@@ -30,16 +30,27 @@ total_summed_sil$LOG_SIL_TIC <- log(total_summed_sil$SIL_TIC)
 sil_check_status <- "change"
 while(sil_check_status == "change"){
 
-#flag samples with SIL x standard deviations below mean
-temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
-while(is.na(as.numeric(temp_answer))){
-  temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
-}
+# #flag samples with SIL x standard deviations below mean
+# temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
+# while(is.na(as.numeric(temp_answer))){
+#   temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.  x number of median absolute deviations from the median", "e.g. recommended default x = 4")$res
+# }
+# 
+#  median_sil_tic <- median(total_summed_sil$SIL_TIC)
+# mad_sil_tic <- mad(total_summed_sil$SIL_TIC)
+# sil_cut_off_lower <- median_sil_tic - (as.numeric(temp_answer)*mad_sil_tic)
+# sil_cut_off_upper <- median_sil_tic + (as.numeric(temp_answer)*mad_sil_tic)
 
-median_sil_tic <- median(total_summed_sil$SIL_TIC)
-mad_sil_tic <- mad(total_summed_sil$SIL_TIC)
-sil_cut_off_lower <- median_sil_tic - (as.numeric(temp_answer)*mad_sil_tic)
-sil_cut_off_upper <- median_sil_tic + (as.numeric(temp_answer)*mad_sil_tic)
+ 
+ temp_answer <- dlgInput("What do you wish to set for the fail cut off filter.  x number of interquartile ranges from the median", "e.g. recommended default x = 3")$res
+ while(is.na(as.numeric(temp_answer))){
+   temp_answer <- dlgInput("You did not enter a numeric value.  What do you wish to set for the fail cut off filter.   x number of interquartile ranges from the median", "e.g. recommended default x = 3")$res
+ }
+ 
+  median_sil_tic <- median(total_summed_sil$SIL_TIC)
+  inter_quantile_range <- as.numeric(quantile(total_summed_sil$SIL_TIC, 0.75)) - as.numeric(quantile(total_summed_sil$SIL_TIC, 0.25))
+  sil_cut_off_lower <- median_sil_tic - (as.numeric(temp_answer)*inter_quantile_range)
+  sil_cut_off_upper <- median_sil_tic + (as.numeric(temp_answer)*inter_quantile_range)
 
 #create lists of which samples have failed the SIL internal standard check
 sil_qc_fail <- total_summed_sil$sampleID[which(total_summed_sil$SIL_TIC < sil_cut_off_lower | total_summed_sil$SIL_TIC > sil_cut_off_upper)] %>% as_tibble %>% rename(sampleID = value)
@@ -58,6 +69,21 @@ total_summed_sil_pass <- total_summed_sil %>% filter(grepl("pass_qc", removed))
 plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
 plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
 
+
+#set y axis limits
+if(sil_cut_off_lower < min(total_summed_sil$SIL_TIC)){
+  y_limit_lower <- log(sil_cut_off_lower-(sil_cut_off_lower/100*25))
+}
+if(sil_cut_off_lower > min(total_summed_sil$SIL_TIC)){
+  y_limit_lower <- log(min(total_summed_sil$SIL_TIC)-(min(total_summed_sil$SIL_TIC)/100*25))
+}
+if(sil_cut_off_upper > max(total_summed_sil$SIL_TIC)){
+  y_limit_upper <- log(max(total_summed_sil$SIL_TIC)+(max(total_summed_sil$SIL_TIC)/100*25))
+}
+if(sil_cut_off_upper < max(total_summed_sil$SIL_TIC)){
+  y_limit_upper <- log(max(total_summed_sil$SIL_TIC)+(max(total_summed_sil$SIL_TIC)/100*25))
+}
+
 # create a layout list of extra lines to add
 p_threshold_lines <- list(list(type='line', x0= min(total_summed_sil$sample_idx), x1= (max(total_summed_sil$sample_idx)+10), y0=log(sil_cut_off_lower), y1=log(sil_cut_off_lower),
                           line=list(dash='dot', width=3, color = '#FF0000')),
@@ -67,11 +93,22 @@ p_threshold_lines <- list(list(type='line', x0= min(total_summed_sil$sample_idx)
                           line=list(dash='dot', width=3, color = '#000000'))
 )
 p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
-   list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, y0=(min(total_summed_sil$LOG_SIL_TIC)-0.5), y1=(max(total_summed_sil$LOG_SIL_TIC)+0.5),
+   list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, y0=y_limit_lower, y1=y_limit_upper,
             line=list(dash='dot', width=2, color = '#808080'))
 })
 
-p_plot_lines <- c(p_threshold_lines, p_plate_list)
+#only add plate lines if multiple plates exist
+if(is.na(plate_idx)){
+  p_plot_lines <- p_threshold_lines
+}
+
+if(length(plate_idx) == 1){
+p_plot_lines <- p_threshold_lines
+}
+
+if(length(plate_idx) > 1){
+  p_plot_lines <- c(p_threshold_lines, p_plate_list)
+}
 
 #create a list of axis settings for plot_ly
 x_axis_settings <- list(
@@ -90,7 +127,8 @@ y_axis_settings <- list(
   linecolor = toRGB("black"),
   linewidth = 2,
   showgrid = TRUE,
-  title = "Lipid total ion count (Log)"
+  title = "Lipid total ion count (Log)",
+  range = c(y_limit_lower, y_limit_upper)
 )
 
 p <- plot_ly(
@@ -131,8 +169,8 @@ while(temp_answer != "all" & temp_answer != "none" & temp_answer != "samples" & 
 
 #tidy up environment
 
- remove_list <- c("mad_sil_tic", "median_sil_tic", "plate_number", "sil_check_status", "sil_cut_off_lower", "sil_cut_off_upper", "remove_list",
-                 "p", "total_summed_sil")
- rm(list = remove_list)
+ # remove_list <- c("mad_sil_tic", "median_sil_tic", "plate_number", "sil_check_status", "sil_cut_off_lower", "sil_cut_off_upper", "remove_list",
+ #                 "p", "total_summed_sil")
+ # rm(list = remove_list)
       
 
