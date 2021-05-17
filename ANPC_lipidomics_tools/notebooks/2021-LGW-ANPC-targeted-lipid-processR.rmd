@@ -72,20 +72,20 @@ eval(parse(text = lipid_exploreR_script), envir = .GlobalEnv)
 rm(lipid_exploreR_script)
 
 # produce a final report
-fileConn<-file(paste(project_dir, "/html_files/ANPC_lipidomics-report-generatoR.r", sep=""))
+fileConn<-file(paste(project_dir_html, "/ANPC_lipidomics-report-generatoR.r", sep=""))
 writeLines(GET("https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-report_generatoR_script.R") %>% 
   content(as = "text"), fileConn)
 close(fileConn)
 
-rmarkdown::render(input = paste(project_dir, "/html_files/ANPC_lipidomics-report-generatoR.r", sep=""),
+rmarkdown::render(input = paste(project_dir_html, "/ANPC_lipidomics-report-generatoR.r", sep=""),
                   output_format = "html_document",
-                  output_dir = paste(project_dir, "/html_files/", sep=""),
+                  output_dir = paste(project_dir_html),
                   output_file = paste(project_name, "_", user_name, "_lipid_exploreR_QC_report.html", sep="")
                   )
 
-file.remove(paste(project_dir, "/html_files/ANPC_lipidomics-report-generatoR.r", sep=""))
+file.remove(paste(paste(project_dir_html, "/ANPC_lipidomics-report-generatoR.r", sep=""))
 
-browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_lipid_exploreR_QC_report.html", sep="")) #open plotly widget in internet browser
+browseURL(paste(project_dir_html, "/",project_name, "_", user_name, "_lipid_exploreR_QC_report.html", sep="")) #open plotly widget in internet browser
 
 dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skylineR and lipid exploreR. TTFN.", type = 'ok')
 dlg_message("PS. an official html report can be found in the project folder", type = 'ok')
