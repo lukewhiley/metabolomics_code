@@ -17,6 +17,13 @@ dlg_message("Please select your project folder", type = 'ok')
 project_dir <- rstudioapi::selectDirectory() # save project directory root location
 setwd(project_dir) # switch the project directory
 
+#create html widget and display it in the users internet browser
+if(!dir.exists(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))){
+  dir.create(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))
+} # create a new directory to store html widgets
+
+project_dir_html <- paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep="")
+
 #user input here for project name and user initials
 temp_answer <- "blank"
 if(exists("project_name") == TRUE){temp_answer <- dlgInput(paste("the project name is ", project_name, "is this correct?", sep=" "), "yes/no")$res}
