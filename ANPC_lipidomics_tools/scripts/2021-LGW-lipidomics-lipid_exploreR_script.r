@@ -83,6 +83,7 @@ rm(summed_TIC_checkR_script)
 #intensity threshold filter
 intensity_threshold_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-intensity_threshold_checkR_script.R") %>% content(as = "text")
 eval(parse(text = intensity_threshold_checkR_script), envir = .GlobalEnv)
+rm(intensity_threshold_checkR_script)
 
 # Review individual SIL internal standards 
 # Create target lipid to stable isotope ratio internal standard and evaluate them in the pooled QC. Here we use Long Term Reference pool
