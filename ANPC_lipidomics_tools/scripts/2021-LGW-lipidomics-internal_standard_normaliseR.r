@@ -97,7 +97,7 @@ while(is.na(as.numeric(sil_batch))){
 
 
 ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(FUNC_IS_RATIO){
-  browser()
+  #browser()
   # step 1 - create a ratio between lipid target and the appropriate internal standard as pre-defined in the reference file
   func_data <- lipid_data %>% select(all_of(FUNC_IS_RATIO))
   sil_to_use <- sil_target_list$note[which(sil_target_list$precursor_name==FUNC_IS_RATIO)]
