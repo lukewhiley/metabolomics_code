@@ -150,9 +150,11 @@ p <- plot_ly(
 
 #create html widget and display it in the users internet browser
 sil_check_p <- p
-if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
-saveWidget(sil_check_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep=""))# save plotly widget
-browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_SIL_check_plot.html", sep="")) #open plotly widget in internet browser
+if(!dir.exists(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))){
+  dir.create(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))
+  } # create a new directory to store html widgets
+saveWidget(sil_check_p, file = paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), project_name, "_", user_name, "_SIL_check_plot.html", sep=""))# save plotly widget
+browseURL(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), project_name, "_", user_name, "_SIL_check_plot.html", sep="")) #open plotly widget in internet browser
 
 #sil_qc_fail - ask the user if they wish to continue or change the threshold
 sil_check_status <- "blank"

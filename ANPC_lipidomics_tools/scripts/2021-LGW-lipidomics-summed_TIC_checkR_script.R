@@ -141,9 +141,11 @@ p <- plot_ly(
 
 #create html widget and display it in the users internet browser
 tic_check_p <- p
-if(!dir.exists(paste(project_dir, "/html_files", sep=""))){dir.create(paste(project_dir, "/html_files", sep=""))} # create a new directory to store html widgets
-saveWidget(tic_check_p, file = paste(project_dir, "/html_files/",project_name, "_", user_name, "_TIC_check_plot.html", sep=""))# save plotly widget
-browseURL(paste(project_dir, "/html_files/",project_name, "_", user_name, "_TIC_check_plot.html", sep="")) #open plotly widget in internet browser
+if(!dir.exists(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))){
+  dir.create(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))
+  } # create a new directory to store html widgets
+saveWidget(tic_check_p, file = paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), project_name, "_", user_name, "_TIC_check_plot.html", sep=""))# save plotly widget
+browseURL(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), project_name, "_", user_name, "_TIC_check_plot.html", sep="")) #open plotly widget in internet browser
 
 #tic_qc_fail - ask the user if they wish to continue or change the threshold
 tic_check_status <- "blank"
