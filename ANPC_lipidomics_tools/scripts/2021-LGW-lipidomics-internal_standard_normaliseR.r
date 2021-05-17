@@ -6,7 +6,13 @@
 # Requires a template guide with internal standard transition for each target lipid SRM transition
 
 dlg_message("Time for normalization using the internal standards :-)", type = 'ok')
-dlg_message("REQUIRES - a reference csv file listing each lipid target and the assigned internal standard. Column headings required are 'Precursor Name' containing the lipid target  and 'Note' containing the IS name", type = 'ok')
+
+ratio_concentration_choice <- "blank"
+while(ratio_concentration_choice != "ratio" & ratio_concentration_choice != "concentration"){
+ratio_concentration_choice <- dlgInput("Do you want to create ratios or estimate the concentrations?", "ratio/concentration")$res
+}
+
+dlg_message("1 - please prepare a reference csv file listing each lipid target and the assigned internal standard. Column headings required are 'Precursor Name' containing the lipid target  and 'Note' containing the IS name", type = 'ok')
 
 #import transition report 3
 filtered_data <- individual_lipid_data_sil_tic_intensity_filtered %>% filter(!grepl("conditioning", sampleID))
@@ -79,6 +85,8 @@ if(temp_answer == "change"){
 }
 }
 
+if(ratio_concentration_choice == "concentration"){
+
 # now multiply by the IS concentration to create a concentration factor
 dlg_message("We also need to calculate lipid concentrations from the internal standard. Please select the concentration template csv - NOTE: use the correct lot for your analysis", type = 'ok')
 
@@ -89,12 +97,12 @@ sil_batch <- "blank"
 while(is.na(as.numeric(sil_batch))){
   sil_batch <- dlgInput("What batch did you use?", "101/102/103")$res
 }
+}
 
 
 # this apply function creates:
 # 1. a response ratio by dividing the signal area for each target lipid by the peak area from the appropriate SIL IS metabolite. 
 # 2. a final estimated concentration using the pre-defined internal standard as a single point calibration
-
 
 ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(FUNC_IS_RATIO){
   #browser()
@@ -103,12 +111,15 @@ ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(FUNC_IS_RATIO){
   sil_to_use <- sil_target_list$note[which(sil_target_list$precursor_name==FUNC_IS_RATIO)]
   func_data_sil <- sil_data %>% select(all_of(sil_to_use))
   normalised_data <- func_data/func_data_sil
-  
+  concentration_data <- normalised_data
+ 
   #step 2 - select concentration factor from csv template and multiply normalised data by concentration factor
+  if(ratio_concentration_choice == "concentration"){
   func_concentration_factor <- sil_concentrations %>% filter(sil_name == sil_to_use) %>% select(concentration_factor) %>% as.numeric()
   concentration_data <- normalised_data*func_concentration_factor
-  concentration_data
+  }
   
+  concentration_data
 }) %>% bind_cols() %>% add_column(filtered_data$sampleID, filtered_data$plate_id, .before = 1)
 
 colnames(ratio_data) <- c("sampleID", "plateID", colnames(lipid_data))
