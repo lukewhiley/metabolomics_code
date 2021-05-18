@@ -32,3 +32,4 @@ while(pca_check_status != "continue" & pca_check_status != "change"){
 
 scale_used <- pca_p[[3]][1]
 
+

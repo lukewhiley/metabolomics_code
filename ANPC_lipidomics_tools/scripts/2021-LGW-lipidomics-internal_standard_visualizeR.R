@@ -1,10 +1,10 @@
 #visualise the RSD of the ltrs
 
-ltr_rsd <- apply(as_tibble(colnames(lipid_data)), 1, function(LTR_RSD){
+ltr_rsd <- apply(as_tibble(colnames(ratio_data %>% select(contains("(")))), 1, function(FUNC_LTR_RSD){
   #browser()
-  func_data <- ratio_data %>% filter(grepl("LTR", sampleID)) %>% select(all_of(LTR_RSD))
+  func_data <- ratio_data %>% filter(grepl("LTR", sampleID)) %>% select(all_of(FUNC_LTR_RSD))
   (sd(func_data$value)*100)/mean(func_data$value)
-}) %>% as_tibble() %>% add_column(colnames(lipid_data), .before = 1)
+}) %>% as_tibble() %>% add_column(colnames(ratio_data %>% select(contains("("))), .before = 1)
 
 colnames(ltr_rsd) <- c("lipid", "RSD")
 dlg_message(paste(nrow(ltr_rsd)-length(which(ltr_rsd$RSD < 30)), " lipid targets had a LTR RSD of > 30% so were removed from the dataset", sep=""))
