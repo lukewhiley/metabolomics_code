@@ -87,6 +87,10 @@ file.remove(paste(paste(project_dir_html, "/ANPC_lipidomics-report-generatoR.r",
 
 browseURL(paste(project_dir_html, "/",project_name, "_", user_name, "_lipid_exploreR_QC_report.html", sep="")) #open plotly widget in internet browser
 
+write_csv(final_corrected_data, 
+          paste(project_dir, "/", project_name, "_", user_name, "_processed_lipid_data.csv", sep="")
+          )
+
 dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skylineR and lipid exploreR. TTFN.", type = 'ok')
 dlg_message("PS. an official html report can be found in the project folder", type = 'ok')
 
