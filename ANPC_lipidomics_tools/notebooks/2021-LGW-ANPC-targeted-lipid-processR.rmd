@@ -97,9 +97,7 @@ dlg_message("PS. an official html report can be found in the project folder", ty
 
 ```
 
-#notes
 
-multiply by concentration factor
 
 
 
