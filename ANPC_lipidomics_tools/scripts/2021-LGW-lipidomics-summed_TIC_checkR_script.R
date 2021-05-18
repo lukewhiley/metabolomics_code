@@ -87,7 +87,7 @@ p_threshold_lines <- list(list(type='line', x0= min(total_summed_tic$sample_idx)
 )
 
 p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
-  list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, y0=(min(total_summed_tic$LOG_summed_TIC)-0.5), y1=(max(total_summed_tic$LOG_summed_TIC)+0.5),
+  list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, y0=y_limit_lower-log(median_summed_tic)*0.1, y1=y_limit_upper,
        line=list(dash='dot', width=2, color = '#808080'))
 })
 
