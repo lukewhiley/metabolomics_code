@@ -26,7 +26,7 @@ sil_target_list <- read_csv(file = file.choose(.)) %>% clean_names
 lipid_data <- filtered_data %>% select(-sampleID, - plate_id) %>% select(!contains("SIL"))
 sil_data <- filtered_data %>% select(-sampleID, - plate_id) %>% select(contains("SIL"))
 
-# this section checks each of the SIL IS used in the target list template in the LTRS. It evaluates if:
+# this section checks each of the SIL IS used in the target list template in the LTRs. It evaluates if:
 ##  a: is the internal standard present in the LTR samples? Some batches of IS do not contain every IS availible. This alos prevents user error if the IS batch has not been made correctly.
 ##  b: the RSD of the internal standard signal intensity in LTRs. If the SIL IS is suitable for use in the dataset its signal should be stable in the LTRs. (raises a warning for >30%)
 
@@ -85,6 +85,7 @@ if(temp_answer == "change"){
 }
 }
 
+
 if(ratio_concentration_choice == "concentration"){
 
 # now multiply by the IS concentration to create a concentration factor
@@ -141,11 +142,6 @@ lipid_keep_list <- ltr_rsd %>% filter(RSD < 30)
 
 final_dataset <- ratio_data %>% select(sampleID, plateID, all_of(lipid_keep_list$lipid))
 final_dataset[is.na(final_dataset)] <- 0
-
-
-
-
-
 
 # visualisation of normalized data
 # first - produce a plot of all normalized features to see if there are any overall trends in the data
