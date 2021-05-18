@@ -97,12 +97,39 @@ rm(intensity_threshold_checkR_script)
 LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% 
   content(as = "text")
 eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
-rm(LTR_SIL_checkR_script)
+#rm(LTR_SIL_checkR_script)
 
-# Produce a PCA to QC data. Allowws for visualization of LTR sample clustering
+# Create target lipid to stable isotope ratio internal standard and evaluate them in the pooled QC. Here we use Long Term Reference pool
+LTR_SIL_visualizeR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_visualizeR.r") %>% 
+  content(as = "text")
+eval(parse(text = LTR_SIL_visualizeR_script), envir = .GlobalEnv)
+#rm(LTR_SIL_checkR_script)
+
+# Produce a PCA to QC data. Allows for visualization of LTR sample clustering
 PCA_QC_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-PCA_QC_checkR_script.r") %>% content(as = "text")
 eval(parse(text = PCA_QC_script), envir = .GlobalEnv)
-rm(PCA_QC_script)
+#rm(PCA_QC_script)
+
+#perform signal correction and repeat plots
+
+signal_drift_correct_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-signal_driftR_script.r") %>% content(as = "text")
+eval(parse(text = signal_drift_correct_script), envir = .GlobalEnv)
+
+#replot with corrected data
+
+re_plot_answer <- "blank"
+while(re_plot_answer != "yes" & re_plot_answer != "no"){
+  re_plot_answer <- dlgInput("Do you want to replot the visualizations with the corrected data?", "yes/no")$res
+}
+
+if(re_plot_answer == "yes"){
+  ratio_data <- final_corrected_data
+  eval(parse(text = LTR_SIL_visualizeR_script), envir = .GlobalEnv)
+  
+  final_individual_lipid_data <- final_corrected_data
+  final_class_lipid_data <- create_lipid_class_data_summed(final_individual_lipid_data)
+  eval(parse(text = PCA_QC_script), envir = .GlobalEnv)
+}
 
 
 

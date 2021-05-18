@@ -13,7 +13,7 @@ library(statTarget)
 dir.create(paste(project_dir, "/", Sys.Date(), "_signal_correction_results", sep=""))
 setwd(paste(project_dir, "/", Sys.Date(), "_signal_correction_results", sep=""))
 
-sil_trend <- final_individual_lipid_data %>% select(-plateID, -sample_class) %>% as_tibble()
+sil_trend <- final_individual_lipid_data %>%  as_tibble() %>% select(-plateID, -sample_class) 
 
 #this section creates the required metadata file for statTarget::shiftCor
 
@@ -97,9 +97,21 @@ if(signal_drift_method == "loess"){
 corrected_data <- read_csv(paste(project_dir, "/", Sys.Date(), "_signal_correction_results", "/statTarget/shiftCor/After_shiftCor/shift_all_cor.csv", sep=""))
 corrected_data <- sil_trend_cor_meta %>% select(sampleID, sample) %>% right_join(corrected_data, by = 'sample') %>% select(-sample, -class) %>% arrange(sampleID)
 colnames(corrected_data) <- colnames(sil_trend)
-corrected_data
+corrected_data <- final_individual_lipid_data %>% as_tibble() %>% select(sampleID, plateID) %>% right_join(corrected_data, by = "sampleID")
 }
 
+corrected_lipid_list <- corrected_data %>% select(contains("(")) %>% colnames()
 
+#because the correction changes the concentrations of the lipids, this next section re-scales the values based on the change (ratio) between pre and post corrected signal mean in the LTR QCs
+final_corrected_data <- lapply(corrected_lipid_list, function(FUNC_LIPID_NORM){
+  #browser()
+  corrected_data_mean <- corrected_data %>% filter(grepl("LTR", sampleID)) %>% select(FUNC_LIPID_NORM) %>% as.matrix() %>% mean()
+  pre_corrected_data_mean <- final_individual_lipid_data %>% as_tibble() %>% filter(grepl("LTR", sampleID)) %>% select(FUNC_LIPID_NORM) %>% as.matrix() %>% mean()
+  normalization_ratio <- corrected_data_mean/pre_corrected_data_mean
+  corrected_data_norm <- corrected_data %>% select(FUNC_LIPID_NORM)/normalization_ratio
+  corrected_data_norm
+}) %>% bind_cols %>% as_tibble()
+
+final_corrected_data <- final_corrected_data %>% add_column(select(corrected_data, sampleID, plateID), .before = 1)
 
 
