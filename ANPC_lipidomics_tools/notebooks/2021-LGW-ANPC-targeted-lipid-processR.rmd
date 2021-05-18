@@ -83,7 +83,7 @@ rmarkdown::render(input = paste(project_dir_html, "/ANPC_lipidomics-report-gener
                   output_file = paste(project_name, "_", user_name, "_lipid_exploreR_QC_report.html", sep="")
                   )
 
-file.remove(paste(paste(project_dir_html, "/ANPC_lipidomics-report-generatoR.r", sep=""))
+file.remove(paste(paste(project_dir_html, "/ANPC_lipidomics-report-generatoR.r", sep="")))
 
 browseURL(paste(project_dir_html, "/",project_name, "_", user_name, "_lipid_exploreR_QC_report.html", sep="")) #open plotly widget in internet browser
 
