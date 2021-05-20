@@ -70,8 +70,9 @@ results_2$area <- sapply(results_2$area, as.numeric) #ensure area column is nume
 rt_boundary_output <- lapply(metabolite_target_list$precursor_name, function(idx_m){
   #browser()
   rt_boundary <-  filter(results_1, precursor_name == idx_m) %>% filter(!is.na(area))
-  start_time <- min(c(rt_boundary$start_time, (rt_boundary$start_time %>% sapply(as.numeric) %>% summary())[2] %>% as.numeric()))
-  end_time <- max(c(rt_boundary$end_time, (rt_boundary$end_time %>% sapply(as.numeric) %>% summary())[5] %>% as.numeric()))
+  start_time <- rt_boundary %>% select(start_time) %>% sapply(as.numeric) %>% min()
+  start_time <- rt_boundary %>% select(end_time) %>% sapply(as.numeric) %>% max()
+  #end_time <- max(c(rt_boundary$end_time, (rt_boundary$end_time %>% sapply(as.numeric) %>% summary())[5] %>% as.numeric()))
   rt_boundary_filelist <- filenames
   rt_boundary_filelist$FullPeptideName <- idx_m
   rt_boundary_filelist$MinStartTime <- round(start_time,2)
