@@ -18,11 +18,8 @@ total_summed_sil <- apply(individual_lipid_data %>% select(sampleID), 1, functio
 }) %>% c() %>% as_tibble() %>%  add_column(individual_lipid_data$sampleID, .before = 1) %>% 
   rename(SIL_TIC = value, sampleID = "individual_lipid_data$sampleID")
 
-plateid <- str_extract(individual_lipid_data$sampleID, "PLIP.*")
-plateid <- substr(plateid, 0,15)
-plate_id <- paste(plateid, sub(".*\\_", "", individual_lipid_data$sampleID), sep="_")
 
-total_summed_sil <- total_summed_sil %>% add_column(plate_id, .before = 2) %>% arrange(plate_id)
+total_summed_sil <- total_summed_sil %>% add_column(plateID, run_order, .before = 2) %>% arrange(run_order)
 total_summed_sil$sample_idx <- c(1:nrow(total_summed_sil))
 total_summed_sil$LOG_SIL_TIC <- log(total_summed_sil$SIL_TIC)
 
@@ -69,8 +66,8 @@ total_summed_sil_removed <- total_summed_sil %>% filter(grepl("removed", removed
 total_summed_sil_pass <- total_summed_sil %>% filter(grepl("pass_qc", removed))
 
 # create a plate list ID
-plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
+plate_number <- unique(plateID) %>% substr(14,14) %>% unique()
+plateIDx <- lapply(unique(plateID), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
 
 
 #set y axis limits
@@ -95,21 +92,21 @@ p_threshold_lines <- list(list(type='line', x0= min(total_summed_sil$sample_idx)
                      list(type='line', x0= min(total_summed_sil$sample_idx), x1= (max(total_summed_sil$sample_idx)+10), y0=log(median_sil_tic), y1=log(median_sil_tic),
                           line=list(dash='dot', width=3, color = '#000000'))
 )
-p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
+p_plate_list <- lapply(plateIDx[2:length(plateIDx)], function(FUNC_P_PLATE_LIST){
    list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, y0=y_limit_lower-log(median_sil_tic)*.05, y1=y_limit_upper+log(median_sil_tic)*.05,
             line=list(dash='dot', width=2, color = '#808080'))
 })
 
 #only add plate lines if multiple plates exist
-if(is.na(plate_idx)){
+if(is.na(plateIDx)){
   p_plot_lines <- p_threshold_lines
 }
 
-if(length(plate_idx) == 1){
+if(length(plateIDx) == 1){
 p_plot_lines <- p_threshold_lines
 }
 
-if(length(plate_idx) > 1){
+if(length(plateIDx) > 1){
   p_plot_lines <- c(p_threshold_lines, p_plate_list)
 }
 
@@ -120,7 +117,7 @@ x_axis_settings <- list(
   linecolor = toRGB("black"),
   linewidth = 2,
   showgrid = FALSE,
-  range = c(0, max(total_summed_sil$sample_idx)),
+  range = c(0, max(total_summed_sil$sample_idx)+1),
   title = "Sample index"
 )
 

@@ -1,8 +1,7 @@
 #ANPC Lipidomics PCA quality control visualisation
 
 lipids_pca <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label){
-  
-  scale_answer <- "blank"
+   scale_answer <- "blank"
   while(scale_answer != "UV" & scale_answer != "Pareto"){
     scale_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
   }
@@ -14,15 +13,18 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
   multivariate_data_list <- list(individual_multivariate_data, family_multivariate_data)
   
   pca_plot_list <- lapply(multivariate_data_list, function(func_list){
+    #browser()
     multivariate_data <- func_list
     column_length <- multivariate_data %>% select(contains("(")) %>% ncol()
     
     if(column_length > 0){ 
-      pca_x <- multivariate_data %>%  select(all_of(lipid)) %>% as.matrix()
+      pca_x <- multivariate_data %>%  select(all_of(lipid)) %>% as.matrix()+1 
+      pca_x <- log(pca_x)
       title_text <- "individual lipid species"
     }
     if(column_length == 0){ 
-      pca_x <- multivariate_data %>%  select(all_of(lipid_class$value)) %>% as.matrix()
+      pca_x <- multivariate_data %>%  select(all_of(lipid_class$value)) %>% as.matrix()+1 
+      pca_x <- log(pca_x)
       title_text <- "lipid class"
     }
     
@@ -51,13 +53,33 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
     
     plotly_loadings_data <- pca_model@p %>% as_tibble(rownames = "lipid") %>% rename(PC1 = V1, PC2 = V2)
     
+    x_axis_settings_scores <- list(
+      zeroline = TRUE,
+      showline = TRUE,
+      linecolor = toRGB("black"),
+      linewidth = 2,
+      showgrid = TRUE,
+      title = paste("PC1 (", round(pca_model@Parameters$R2[1]*100,1), " %)", sep = "")
+    )
+    
+    y_axis_settings_scores <- list(
+      zeroline = TRUE,
+      showline = TRUE,
+      linecolor = toRGB("black"),
+      linewidth = 2,
+      showgrid = TRUE,
+      title = paste("PC2 (", round(pca_model@Parameters$R2[2]*100,1), " %)", sep = "")
+      )
+    
     plotly_pca <- plot_ly(type = "scatter", mode = "markers", data = plot_Val_samples, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = c('#1E90FF', '#FF0000'), 
                           marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
                                         line = list(
                                           color = '#000000',
                                           width = 1)
                                         )) %>% 
-      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = "")
+      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""),
+             xaxis = x_axis_settings_scores,
+             yaxis = y_axis_settings_scores
              ) %>% 
       add_trace(type = "scatter", mode = "markers", data = plot_Val_ltr, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, 
                 marker = list(size = 7, color = '#FF0000', opacity = 0.5,
@@ -66,15 +88,39 @@ lipids_pca <- function(individual_multivariate_data, family_multivariate_data, m
     
     
     
+    x_axis_settings_loading <- list(
+      zeroline = TRUE,
+      showline = TRUE,
+      linecolor = toRGB("black"),
+      linewidth = 2,
+      showgrid = TRUE,
+      title = paste("")
+    )
+    
+    y_axis_settings_loading <- list(
+      zeroline = TRUE,
+      showline = TRUE,
+      linecolor = toRGB("black"),
+      linewidth = 2,
+      showgrid = TRUE,
+      title = paste("")
+    )
+    
     
     plotly_loadings <- plot_ly(type = "scatter", mode = "markers", data = plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, 
                                marker = list(size = 7, color = '#808080', opacity = 0.5,
                                              line = list(color = '#000000', width = 1)
                                )) %>% 
-      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""))
+      layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""),
+             xaxis = x_axis_settings_loading,
+             yaxis = y_axis_settings_loading
+      )
     
     combined_plotly <- subplot(plotly_pca, plotly_loadings, 
-                               margin = c(0.01, 0.01, 0.2, 0.01)) %>% layout(showlegend = FALSE, title =  "Plotly PCA")
+                               margin = c(0.01, 0.01, 0.2, 0.01),
+                               titleX = TRUE,
+                               titleY = TRUE
+                               ) %>% layout(showlegend = FALSE, title =  "Plotly PCA")
     
     pca_plot_list <- c(list(combined_plotly))
     #print(pca_plot_list)

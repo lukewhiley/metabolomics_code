@@ -7,12 +7,9 @@
 
 dlg_message("Time for normalization using the internal standards :-)", type = 'ok')
 
-ratio_concentration_choice <- "blank"
-while(ratio_concentration_choice != "ratio" & ratio_concentration_choice != "concentration"){
-ratio_concentration_choice <- dlgInput("Do you want to create ratios or estimate the concentrations?", "ratio/concentration")$res
-}
+dlg_message("First we need to create response ratios by dividing the lipid target peak area by the peak area for the appropiate internal standard", type = 'ok')
 
-dlg_message("1 - please prepare a reference csv file listing each lipid target and the assigned internal standard. Column headings required are 'Precursor Name' containing the lipid target  and 'Note' containing the IS name", type = 'ok')
+dlg_message("Step 1 - please prepare a reference csv file listing each lipid target and the assigned internal standard. Column headings required are 'Precursor Name' containing the lipid target  and 'Note' containing the IS name", type = 'ok')
 
 #import transition report 3
 filtered_data <- individual_lipid_data_sil_tic_intensity_filtered %>% filter(!grepl("conditioning", sampleID))
@@ -23,8 +20,8 @@ dlg_message("Please select this template file now.", type = 'ok')
 temp_answer <- "change"
 while(temp_answer == "change"){
 sil_target_list <- read_csv(file = file.choose(.)) %>% clean_names
-lipid_data <- filtered_data %>% select(-sampleID, - plate_id) %>% select(!contains("SIL"))
-sil_data <- filtered_data %>% select(-sampleID, - plate_id) %>% select(contains("SIL"))
+lipid_data <- filtered_data %>% select(contains("(")) %>% select(!contains("SIL"))
+sil_data <- filtered_data %>% select(-sampleID, - plateID) %>% select(contains("SIL"))
 
 # this section checks each of the SIL IS used in the target list template in the LTRs. It evaluates if:
 ##  a: is the internal standard present in the LTR samples? Some batches of IS do not contain every IS availible. This alos prevents user error if the IS batch has not been made correctly.
@@ -32,7 +29,7 @@ sil_data <- filtered_data %>% select(-sampleID, - plate_id) %>% select(contains(
 
 dlg_message("Checks to see if all internal standards are present in the SIL internal standard mix", type = 'ok')
 
-sil_data_check <- individual_lipid_data_sil_tic_filtered %>% select(sampleID, plate_id, contains("SIL")) %>% filter(grepl("LTR", sampleID))
+sil_data_check <- individual_lipid_data_sil_tic_filtered %>% select(sampleID, plateID, contains("SIL")) %>% filter(grepl("LTR", sampleID))
 
 sil_list <- sil_target_list %>% filter(grepl("SIL", note)) %>% select(note) %>% unique() 
 
@@ -85,6 +82,11 @@ if(temp_answer == "change"){
 }
 }
 
+ratio_concentration_choice <- "blank"
+while(ratio_concentration_choice != "ratio" & ratio_concentration_choice != "concentration"){
+  ratio_concentration_choice <- dlgInput("Do you also want to estimate the concentrations or just continue to use the response ratio?", "ratio/concentration")$res
+}
+
 
 if(ratio_concentration_choice == "concentration"){
 
@@ -97,6 +99,7 @@ sil_concentrations <- read_csv(file = file.choose(.)) %>% clean_names
 sil_batch <- "blank"
 while(is.na(as.numeric(sil_batch))){
   sil_batch <- dlgInput("What batch did you use?", "101/102/103")$res
+  sil_batch <- as.numeric(sil_batch)
 }
 }
 
@@ -105,7 +108,7 @@ while(is.na(as.numeric(sil_batch))){
 # 1. a response ratio by dividing the signal area for each target lipid by the peak area from the appropriate SIL IS metabolite. 
 # 2. a final estimated concentration using the pre-defined internal standard as a single point calibration
 
-ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(FUNC_IS_RATIO){
+ratio_data <- lapply(colnames(lipid_data), function(FUNC_IS_RATIO){
   #browser()
   # step 1 - create a ratio between lipid target and the appropriate internal standard as pre-defined in the reference file
   func_data <- lipid_data %>% select(all_of(FUNC_IS_RATIO))
@@ -114,15 +117,20 @@ ratio_data <- apply(as_tibble(colnames(lipid_data)), 1, function(FUNC_IS_RATIO){
   normalised_data <- func_data/func_data_sil
   concentration_data <- normalised_data
  
+  
+  if(ratio_concentration_choice == "ratio"){
+    normalised_data
+  }
+  
   #step 2 - select concentration factor from csv template and multiply normalised data by concentration factor
   if(ratio_concentration_choice == "concentration"){
   func_concentration_factor <- sil_concentrations %>% filter(sil_name == sil_to_use) %>% select(concentration_factor) %>% as.numeric()
   concentration_data <- normalised_data*func_concentration_factor
+  concentration_data
   }
   
-  concentration_data
-}) %>% bind_cols() %>% add_column(filtered_data$sampleID, filtered_data$plate_id, .before = 1)
+}) %>% bind_cols %>% as_tibble() %>% add_column(filtered_data$sampleID, filtered_data$plateID, .before = 1)
 
-colnames(ratio_data) <- c("sampleID", "plateID", colnames(lipid_data))
+colnames(ratio_data) <- c("sampleID", "plateID", "run_order", colnames(lipid_data))
 
 

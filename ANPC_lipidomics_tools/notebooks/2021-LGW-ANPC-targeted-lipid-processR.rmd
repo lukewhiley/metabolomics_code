@@ -59,9 +59,10 @@ Section 2 - lipid_exploreR
 This notebook is designed to explore the dataset and QC check it. The script generates a report and a final dataset that can be used for data modeling.
 
 ```{r, lipid_exploreR,  eval = FALSE, echo = FALSE, results = FALSE, warning=FALSE, message=FALSE}
-package_list <- c("plyr", "tidyverse", "janitor", "httr")
+package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "stats", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr")
 loaded_packages <- lapply(package_list, require, character.only = TRUE)
-rm(loaded_packages)
+rm(loaded_packages, package_list)
+
 #lipidomics_functions_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/LGW_function_lipidomics_tools.r") %>% content(as = "text")
 #eval(parse(text = lipidomics_functions_script), envir = .GlobalEnv)
 #rm(lipidomics_functions_script)

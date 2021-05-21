@@ -40,8 +40,8 @@ total_summed_ratio_samples <- total_summed_ratio %>% filter(!grepl("LTR", sample
 total_summed_ratio_LTR <- total_summed_ratio %>% filter(grepl("LTR", sampleID))
 
 # create a plate list ID
-plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
+plate_number <- unique(plateID) 
+plate_idx <- lapply(unique(plateID), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
 
 # create a layout list of extra lines to add
 p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
@@ -129,7 +129,6 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   plate_id <- str_extract(plot_data$sampleID, "PLIP.*")
   plate_id <- substr(plate_id, 0,15)
   plot_data$sample_index <- paste(plate_id, sub(".*\\_", "", plot_data$sampleID), sep="_")
-  plot_data <- plot_data %>% arrange(sample_index)
   plot_data$sample_idx <- 1:nrow(plot_data)
   
   plot_data_ltr <- plot_data %>% filter(is_ltr == "LTR")
@@ -141,7 +140,7 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   
   # create a plate list ID
   plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-  plate_idx <- lapply(unique(plateid), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
+  plate_idx <- lapply(unique(plateID), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
   
   # create a layout list of extra lines to add
   p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){

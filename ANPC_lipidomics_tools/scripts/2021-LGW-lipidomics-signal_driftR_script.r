@@ -26,12 +26,20 @@ sil_trend_cor_meta <- as_tibble(sil_trend_cor_meta)
 
 #ensure an LTR is "first" and "last" in the worklist order. Required for statTarget::shiftCor
 LTR_locations <- grep("LTR", sil_trend_cor_meta$sampleID)
+
+
 #create first LTR
+if(LTR_locations[1] > 1){
 sil_trend_cor_meta$order[LTR_locations[1]] <- 1
 sil_trend_cor_meta$order[1:(LTR_locations[1]-1)] <- sil_trend_cor_meta$order[1:(LTR_locations[1]-1)] +1 # re-label the samples
+}
+
 #create last LTR
+if(LTR_locations[length(LTR_locations)] < nrow(sil_trend_cor_meta)){
 sil_trend_cor_meta$order[LTR_locations[length(LTR_locations)]] <- nrow(sil_trend_cor_meta)
 sil_trend_cor_meta$order[(LTR_locations[length(LTR_locations)]+1):nrow(sil_trend_cor_meta)] <- sil_trend_cor_meta$order[(LTR_locations[length(LTR_locations)]+1):nrow(sil_trend_cor_meta)]-1
+}
+
 
 #create new labels simply QCx and samples
 sil_trend_cor_meta$sample <- NA

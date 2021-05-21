@@ -1,9 +1,10 @@
 ######### read in data etc
 
-# load required packages
-package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "stats", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr")
-loaded_packages <- lapply(package_list, require, character.only = TRUE)
-rm(loaded_packages, package_list)
+# # load required packages not required if running as part of the notebook
+
+# package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "stats", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr")
+# loaded_packages <- lapply(package_list, require, character.only = TRUE)
+# rm(loaded_packages, package_list)
 
 # load custom functions from github
 lipidomics_class_sum_function <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/2021-LGW-lipidomics-class_sumR_function.r") %>% content(as = "text")
@@ -17,11 +18,10 @@ dlg_message("Please select your project folder", type = 'ok')
 project_dir <- rstudioapi::selectDirectory() # save project directory root location
 setwd(project_dir) # switch the project directory
 
-#create html widget and display it in the users internet browser
+# create a new directory to store html widgets
 if(!dir.exists(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))){
   dir.create(paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep=""))
-} # create a new directory to store html widgets
-
+} 
 project_dir_html <- paste(project_dir, paste("/",Sys.Date(), "_html_files", sep=""), sep="")
 
 #user input here for project name and user initials
@@ -38,7 +38,6 @@ while(temp_answer != "yes"){
   user_name <- dlgInput("Insert your initials", "example_initials")$res
   temp_answer <- dlgInput(paste("the user is ", user_name, "is this correct?", sep=" "), "yes/no")$res
 }
-
 
 # read in master data
 temp_answer <- "blank"
@@ -62,15 +61,67 @@ individual_lipid_data <- apply(as_tibble(lipid), 1, function(lip){
   #temp_data <- temp_data %>% select(lip)
 }) %>% bind_cols() %>% select(all_of(lipid)) %>% add_column(sampleID, .before = 1)
 
-plate_id <- str_extract(individual_lipid_data$sampleID, "PLIP.*")
-plate_id <- substr(plate_id, 0,15)
-plate_id <- paste(plate_id, sub(".*\\_", "", individual_lipid_data$sampleID), sep="_")
+plateID <- str_extract(individual_lipid_data$sampleID, "PLIP.*")
+plateID <- substr(plateID, 0,15)
+plateID <- paste(plateID, sub(".*\\_", "", individual_lipid_data$sampleID), sep="_")
+
+individual_lipid_data <- individual_lipid_data %>% add_column(plateID, .before = 2) %>% arrange(plateID)
 
 
-individual_lipid_data <- individual_lipid_data %>% add_column(plate_id, .before = 2) %>% arrange(plate_id)
+project_run_order <- individual_lipid_data %>% select(sampleID, plateID)
+project_run_order <- htmlTable(project_run_order)
+
+htmltools::save_html(project_run_order, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
+browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep="")) #open plotly widget in internet browser
+
+temp_answer <- "blank"
+temp_answer_2 <- "blank"
+while(temp_answer_2 != "yes"){
+while(temp_answer != "yes" & temp_answer != "no"){
+  temp_answer <- dlgInput("A worklist has just opened in your browser.  Does this match the run order of your analysis?", "yes/no")$res
+}
+
+if(temp_answer == "no"){
+  dlg_message("OK. Please upload a worklist template csv file now. It will need 3x columns: sampleID, PlateID and injection_order. A template file has been created in your project directory (run_order_template.csv)", type = 'ok')
+  temp_tibble <- c("example_file_name_1", "plate_1", 1) %>% t() %>% as_tibble(.name_repair = "minimal")
+  colnames(temp_tibble) <- c("sampleID", "PlateID", "injection_order")
+  write_csv(temp_tibble, 
+            file = paste(project_dir, "/", Sys.Date(), "_run_order_template.csv", sep=""))
+  dlg_message("Select this file now", type = 'ok')
+  run_order <- file.choose(.) %>% read_csv()
+}
+
+individual_lipid_data$run_order <- NA
+for(idx_ro in 1:nrow(run_order)){
+  #browser()
+  #add run order value from worklist template to individual_lipid_data 
+  individual_lipid_data$run_order[grep(run_order$sampleID[idx_ro], individual_lipid_data$sampleID)] <- run_order$injection_order[which(run_order$sampleID==run_order$sampleID[idx_ro])]
+  #add plate number order value from worklist template to individual_lipid_data 
+  individual_lipid_data$plateID[grep(run_order$sampleID[idx_ro], individual_lipid_data$sampleID)] <- run_order$PlateID[which(run_order$sampleID==run_order$sampleID[idx_ro])]
+}
+
+individual_lipid_data <- individual_lipid_data %>% arrange(run_order)
+
+project_run_order <- individual_lipid_data %>% select(sampleID, plateID)
+project_run_order <- htmlTable(project_run_order)
+
+htmltools::save_html(project_run_order, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
+browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep="")) #open plotly widget in internet browser
+
+temp_answer_2 <- dlgInput("A new worklist order has just opened in your browser.  Does this match the run order of your analysis?", "yes/no")$res
+if(temp_answer_2 == "no"){
+  temp_answer <- "no"
+}
+}
+
+individual_lipid_data <- individual_lipid_data %>% add_column(individual_lipid_data$run_order, .before = 3, .name_repair = "minimal") %>% select(-run_order)
+colnames(individual_lipid_data)[3] <- "run_order"
+
+plateID <- individual_lipid_data$plateID
+run_order <- individual_lipid_data$run_order
+
 individual_lipid_data <- individual_lipid_data %>% filter(!grepl("conditioning", sampleID))
 class_lipid_data <- create_lipid_class_data_summed(individual_lipid_data)
-
 
 
 ##################### Run the rest of the QC exploreR sub-scripts from here
@@ -122,12 +173,12 @@ eval(parse(text = signal_drift_correct_script), envir = .GlobalEnv)
 
 #re-plot with corrected data
 
-re_plot_answer <- "blank"
-while(re_plot_answer != "yes" & re_plot_answer != "no"){
-  re_plot_answer <- dlgInput("Do you want to replot the visualizations with the corrected data?", "yes/no")$res
+re-plot_answer <- "blank"
+while(re-plot_answer != "yes" & re-plot_answer != "no"){
+  re-plot_answer <- dlgInput("Do you want to replot the visualizations with the corrected data?", "yes/no")$res
 }
 
-if(re_plot_answer == "yes"){
+if(re-plot_answer == "yes"){
   ratio_data <- final_corrected_data
   eval(parse(text = LTR_SIL_visualizeR_script), envir = .GlobalEnv)
   ltr_rsd_2 <- ltr_rsd 

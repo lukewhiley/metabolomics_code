@@ -10,7 +10,7 @@ create_lipid_class_data_summed <- function(individual_lipid_data){
   temp_class_data <- apply(lipid_class, 1, function(func_lipid_class){
     #browser()
     class_targets <- which(sub("\\(.*", "", colnames(individual_lipid_data)) == func_lipid_class) # find the columns in each lipid class
-    temp_class_data <- individual_lipid_data %>% select(all_of(class_targets))  %>% mutate(rowsum = rowSums(.)) %>% select(rowsum)
+    temp_class_data <- individual_lipid_data %>% select(all_of(class_targets))  %>% mutate(rowsum = rowSums(., na.rm = TRUE)) %>% select(rowsum)
     colnames(temp_class_data) <- func_lipid_class
     temp_class_data
   }) %>% bind_cols()
