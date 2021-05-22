@@ -67,7 +67,9 @@ total_summed_sil_pass <- total_summed_sil %>% filter(grepl("pass_qc", removed))
 
 # create a plate list ID
 plate_number <- unique(plateID) %>% substr(14,14) %>% unique()
-plateIDx <- lapply(unique(plateID), function(plateID){grep(plateID, total_summed_sil$sampleID)[1]}) %>% unlist()
+plateIDx <- lapply(unique(plateID), function(FUNC_plateID){
+  #browser()
+  grep(FUNC_plateID, total_summed_sil$plateID)[1]}) %>% unlist()
 
 
 #set y axis limits
@@ -98,9 +100,9 @@ p_plate_list <- lapply(plateIDx[2:length(plateIDx)], function(FUNC_P_PLATE_LIST)
 })
 
 #only add plate lines if multiple plates exist
-if(is.na(plateIDx)){
-  p_plot_lines <- p_threshold_lines
-}
+# if(is.na(plateIDx)){
+#   p_plot_lines <- p_threshold_lines
+# }
 
 if(length(plateIDx) == 1){
 p_plot_lines <- p_threshold_lines

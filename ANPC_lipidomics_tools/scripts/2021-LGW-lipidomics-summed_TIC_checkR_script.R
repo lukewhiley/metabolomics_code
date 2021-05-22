@@ -61,7 +61,9 @@ total_summed_tic_pass <- total_summed_tic %>% filter(grepl("pass_qc", removed))
 
 # create a plate list ID
 plate_number <- unique(plateID) %>% substr(14,14) %>% unique()
-plateIDx <- lapply(unique(plateID), function(plateID){grep(plateID, total_summed_tic$sampleID)[1]}) %>% unlist()
+plateIDx <- plateIDx <- lapply(unique(plateID), function(FUNC_plateID){
+  #browser()
+  grep(FUNC_plateID, total_summed_tic$plateID)[1]}) %>% unlist()
 
 #set y axis limits
 if(tic_cut_off_lower < min(total_summed_tic$summed_TIC)){

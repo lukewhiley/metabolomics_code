@@ -41,10 +41,13 @@ total_summed_ratio_LTR <- total_summed_ratio %>% filter(grepl("LTR", sampleID))
 
 # create a plate list ID
 plate_number <- unique(plateID) 
-plate_idx <- lapply(unique(plateID), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
+plateIDx <- lapply(unique(plateID), function(FUNC_plateID){
+  #browser()
+  grep(FUNC_plateID, total_summed_ratio$plateID)[1]}) %>% unlist()
+  
 
 # create a layout list of extra lines to add
-p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
+p_plate_list <- lapply(plateIDx[2:length(plateIDx)], function(FUNC_P_PLATE_LIST){
   list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, 
        y0=log(min(total_summed_ratio_samples$summed_TIC)-(min(total_summed_ratio_samples$summed_TIC)/100*50)), 
        y1=log(max(total_summed_ratio_samples$summed_TIC)+(max(total_summed_ratio_samples$summed_TIC)/100*25)),
@@ -52,15 +55,15 @@ p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIS
 })
 
 #only add plate lines if multiple plates exist
-if(is.na(plate_idx)){
+# if(is.na(plateIDx)){
+#   p_plot_lines <- NULL
+# }
+
+if(length(plateIDx) == 1){
   p_plot_lines <- NULL
 }
 
-if(length(plate_idx) == 1){
-  p_plot_lines <- NULL
-}
-
-if(length(plate_idx) > 1){
+if(length(plateIDx) > 1){
   p_plot_lines <- c(p_plate_list)
 } 
 
@@ -134,16 +137,18 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   plot_data_ltr <- plot_data %>% filter(is_ltr == "LTR")
   plot_data <- plot_data %>% filter(is_ltr == "sample")
   
-  plate_idx <- lapply(unique(plate_id), function(plateID){
-    grep(plateID, plot_data$sampleID)[1]
-  }) %>% unlist
+  # plateIDx <- lapply(unique(plateID), function(FUNC_plateID){
+  #   #browser()
+  #   grep(FUNC_plateID, plot_data$plateID)[1]}) %>% unlist()
   
   # create a plate list ID
   plate_number <- unique(plate_id) %>% substr(14,14) %>% unique()
-  plate_idx <- lapply(unique(plateID), function(plateID){grep(plateID, total_summed_ratio$sampleID)[1]}) %>% unlist()
+  plateIDx <- lapply(unique(plateID), function(FUNC_plateID){
+    #browser()
+    grep(FUNC_plateID, total_summed_ratio$plateID)[1]}) %>% unlist()
   
   # create a layout list of extra lines to add
-  p_plate_list <- lapply(plate_idx[2:length(plate_idx)], function(FUNC_P_PLATE_LIST){
+  p_plate_list <- lapply(plateIDx[2:length(plateIDx)], function(FUNC_P_PLATE_LIST){
     list(type='line', x0 = FUNC_P_PLATE_LIST, x1= FUNC_P_PLATE_LIST, 
          y0=(log(min(plot_data$ms_response)+1)-(log(min(plot_data$ms_response)+1)/100*50)), 
          y1=(log(max(plot_data$ms_response)+1)+(log(max(plot_data$ms_response)+1)/100*25)),
@@ -151,15 +156,15 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
   })
   
   #only add plate lines if multiple plates exist
-  if(is.na(plate_idx)){
+  # if(is.na(plateIDx)){
+  #   p_plot_lines <- NULL
+  # }
+  
+  if(length(plateIDx) == 1){
     p_plot_lines <- NULL
   }
   
-  if(length(plate_idx) == 1){
-    p_plot_lines <- NULL
-  }
-  
-  if(length(plate_idx) > 1){
+  if(length(plateIDx) > 1){
     p_plot_lines <- c(p_plate_list)
   } 
   
