@@ -13,7 +13,7 @@ total_summed_tic <- apply(individual_lipid_data_sil_filtered %>% select(sampleID
 }) %>% c() %>% as_tibble() %>%  add_column(individual_lipid_data_sil_filtered$sampleID, .before = 1) %>% 
   rename(summed_TIC = value, sampleID = "individual_lipid_data_sil_filtered$sampleID")
 
-total_summed_tic <- total_summed_tic %>% add_column(plateID, .before = 2) %>% arrange(plateID)
+total_summed_tic <- new_project_run_order %>% left_join(total_summed_tic, by = "sampleID") %>% arrange(injection_order) %>% filter(!is.na(summed_TIC))
 total_summed_tic$sample_idx <- c(1:nrow(total_summed_tic))
 total_summed_tic$LOG_summed_TIC <- log(total_summed_tic$summed_TIC)
 
