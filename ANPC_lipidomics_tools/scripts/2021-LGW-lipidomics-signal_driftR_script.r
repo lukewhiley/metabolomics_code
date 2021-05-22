@@ -122,4 +122,4 @@ final_corrected_data <- lapply(corrected_lipid_list, function(FUNC_LIPID_NORM){
 
 final_corrected_data <- final_corrected_data %>% add_column(select(corrected_data, sampleID, plateID), .before = 1)
 final_corrected_class_lipid_data <- create_lipid_class_data_summed(final_corrected_data)
-#final_corrected_data <- corrected_data
+
