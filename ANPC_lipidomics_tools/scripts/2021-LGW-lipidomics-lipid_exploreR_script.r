@@ -175,14 +175,14 @@ pca_p_1 <- pca_p
 signal_drift_correct_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-signal_driftR_script.r") %>% content(as = "text")
 eval(parse(text = signal_drift_correct_script), envir = .GlobalEnv)
 
-#re-plot with corrected data
+#replot with corrected data
 
-re-plot_answer <- "blank"
-while(re-plot_answer != "yes" & re-plot_answer != "no"){
-  re-plot_answer <- dlgInput("Do you want to replot the visualizations with the corrected data?", "yes/no")$res
+replot_answer <- "blank"
+while(replot_answer != "yes" & replot_answer != "no"){
+  replot_answer <- dlgInput("Do you want to replot the visualizations with the corrected data?", "yes/no")$res
 }
 
-if(re-plot_answer == "yes"){
+if(replot_answer == "yes"){
   ratio_data <- final_corrected_data
   eval(parse(text = LTR_SIL_visualizeR_script), envir = .GlobalEnv)
   ltr_rsd_2 <- ltr_rsd 
