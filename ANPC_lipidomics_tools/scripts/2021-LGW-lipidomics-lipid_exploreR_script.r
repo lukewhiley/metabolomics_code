@@ -69,6 +69,7 @@ individual_lipid_data <- individual_lipid_data %>% add_column(plateID, .before =
 
 
 project_run_order <- individual_lipid_data %>% select(sampleID, plateID)
+project_run_order$injection_order <- 1:nrow(project_run_order)
 project_run_order_html <- htmlTable(project_run_order)
 
 htmltools::save_html(project_run_order_html, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
@@ -88,24 +89,26 @@ if(temp_answer == "no"){
   write_csv(temp_tibble, 
             file = paste(project_dir, "/", Sys.Date(), "_run_order_template.csv", sep=""))
   dlg_message("Select this file now", type = 'ok')
-  run_order <- file.choose(.) %>% read_csv()
+  new_project_run_order <- file.choose(.) %>% read_csv()
+  colnames(new_project_run_order) <- c("sampleID", "plateID", "injection_order")
 }
 
 individual_lipid_data$run_order <- NA
-for(idx_ro in 1:nrow(run_order)){
+for(idx_ro in 1:nrow(new_project_run_order)){
   #browser()
   #add run order value from worklist template to individual_lipid_data 
-  individual_lipid_data$run_order[grep(run_order$sampleID[idx_ro], individual_lipid_data$sampleID)] <- run_order$injection_order[which(run_order$sampleID==run_order$sampleID[idx_ro])]
+  individual_lipid_data$run_order[grep(new_project_run_order$sampleID[idx_ro], individual_lipid_data$sampleID)] <- new_project_run_order$injection_order[idx_ro]
   #add plate number order value from worklist template to individual_lipid_data 
-  individual_lipid_data$plateID[grep(run_order$sampleID[idx_ro], individual_lipid_data$sampleID)] <- run_order$PlateID[which(run_order$sampleID==run_order$sampleID[idx_ro])]
+  individual_lipid_data$plateID[grep(new_project_run_order$sampleID[idx_ro], individual_lipid_data$sampleID)] <- new_project_run_order$plateID[idx_ro]
 }
 
 individual_lipid_data <- individual_lipid_data %>% arrange(run_order)
 
-project_run_order <- individual_lipid_data %>% select(sampleID, plateID)
-project_run_order <- htmlTable(project_run_order)
+new_project_run_order <- individual_lipid_data %>% select(sampleID, plateID, run_order)
+colnames(new_project_run_order) <- c("sampleID", "plateID", "injection_order")
+new_project_run_order_html <- htmlTable(new_project_run_order)
 
-htmltools::save_html(project_run_order, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
+htmltools::save_html(new_project_run_order_html, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
 browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep="")) #open plotly widget in internet browser
 
 temp_answer_2 <- dlgInput("A new worklist order has just opened in your browser.  Does this match the run order of your analysis?", "yes/no")$res
