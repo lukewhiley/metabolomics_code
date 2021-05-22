@@ -24,8 +24,8 @@ final_dataset[is.na(final_dataset)] <- 0
 total_summed_ratio <- apply(final_dataset %>% select(sampleID), 1, function(summedTIC){
   #browser()
   temp_data <- final_dataset %>% filter(sampleID == summedTIC) %>% select(-sampleID, -plateID) %>% rowSums(na.rm = TRUE)
-}) %>% c() %>% as_tibble() %>%  add_column(final_dataset$sampleID, .before = 1) %>% 
-  rename(summed_TIC = value, sampleID = "final_dataset$sampleID")
+}) %>% c() %>% as_tibble() %>%  add_column(final_dataset$sampleID, final_dataset$plateID, .before = 1) %>% 
+  rename(summed_TIC = value, sampleID = "final_dataset$sampleID", plateID = "final_dataset$plateID")
 total_summed_ratio$sample_idx <- c(1:nrow(total_summed_ratio))
 
 sd(total_summed_ratio$summed_TIC*100)/mean(total_summed_ratio$summed_TIC)
@@ -89,18 +89,18 @@ y_axis_settings <- list(
   title = "Summed lipid target response ratio (Log)"
 )
 
-p <- plot_ly(
-  type = "scatter", mode = "markers", data = total_summed_ratio_samples, x = ~sample_idx, y = ~log_summed_TIC, text = ~sampleID, color = ~sample, colors = c('#1E90FF', '#FF0000'), 
-  marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
-                line = list(color = '#000000',width = 1))
-) %>% 
-  add_trace(type = "scatter", data = total_summed_ratio_LTR, x = ~sample_idx, y = ~log_summed_TIC, text = ~sampleID, color = ~sample, 
-            marker = list(size = 8, color = '#FF0000')
-  ) %>%
-  layout(xaxis = x_axis_settings,
-         yaxis = y_axis_settings
-  ) %>%
-  layout(shapes=p_plot_lines)
+  p <- plot_ly(
+    type = "scatter", mode = "markers", data = total_summed_ratio_samples, x = ~sample_idx, y = ~log_summed_TIC, text = ~sampleID, color = ~sample, colors = c('#1E90FF', '#FF0000'), 
+    marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
+                  line = list(color = '#000000',width = 1))
+  ) %>% 
+    add_trace(type = "scatter", data = total_summed_ratio_LTR, x = ~sample_idx, y = ~log_summed_TIC, text = ~sampleID, color = ~sample, 
+              marker = list(size = 8, color = '#FF0000')
+    ) %>%
+    layout(xaxis = x_axis_settings,
+           yaxis = y_axis_settings
+    ) %>%
+    layout(shapes=p_plot_lines) 
 
 normalized_check_p <- p
 
@@ -168,7 +168,8 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
     p_plot_lines <- c(p_plate_list)
   } 
   
-  
+  xmax <- max(plot_data$sample_idx)
+    
   #create a list of axis settings for plot_ly
   x_axis_settings <- list(
     zeroline = FALSE,
@@ -176,9 +177,13 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = FALSE,
-    range = c(0, max(plot_data$sample_idx)),
-    title = paste(lipidClass)
+    range = c(0, xmax+1),
+    title=""
+    #title = paste(lipidClass)
   )
+  
+  ymin <- log(min(plot_data$ms_response)+1)-(log(min(plot_data$ms_response)+1)/100*50)
+  ymax <- log(max(plot_data$ms_response)+1)+(log(max(plot_data$ms_response)+1)/100*25)
   
   y_axis_settings <- list(
     zeroline = FALSE,
@@ -186,13 +191,11 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
-    range = c(log(min(plot_data$ms_response)+1)-(log(min(plot_data$ms_response)+1)/100*50), 
-              log(max(plot_data$ms_response)+1)+(log(max(plot_data$ms_response)+1)/100*25)
-    ),
+    range = c(ymin, (ymax*1.1)),
     title = "Summed lipid target/internal standard ratio (Log)"
   )
   
-  
+  #browser()
   p <- plot_ly(
     type = "scatter", mode = "markers",  colors = c('#1E90FF', '#FF0000'), data = plot_data, x = ~sample_idx, y = ~log(ms_response+1), text = ~sampleID, color = ~is_ltr, 
     marker = list(size = 5, color = '#1E90FF', opacity = 0.5,
@@ -206,11 +209,16 @@ plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
     layout(xaxis = x_axis_settings,
            yaxis = y_axis_settings
     ) %>%
+    add_annotations(x = xmax/2, 
+                    y = ymax*1.1,
+                    text = paste(lipidClass), showarrow = F) %>%
     layout(shapes=p_plot_lines)
+    
   p
 })
 
-normalized_check_class_p <- subplot(plotlist, nrows = 4, titleX = TRUE, margin = c(0.01,0.01,0.05,0.05))
+
+normalized_check_class_p <- subplot(plotlist, nrows = 4, titleX = TRUE, margin = c(0.015,0.015, 0.05,0.05))
 
 saveWidget(normalized_check_class_p, file = paste(project_dir_html, "/", project_name, "_", user_name, "_normalized_check_class_plot.html", sep=""))# save plotly widget
 browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_normalized_check_class_plot.html", sep="")) #open plot_ly widget in internet browser
