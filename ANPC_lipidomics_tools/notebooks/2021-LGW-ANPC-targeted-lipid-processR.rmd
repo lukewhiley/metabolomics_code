@@ -92,6 +92,10 @@ write_csv(final_corrected_data,
           paste(project_dir, "/", project_name, "_", user_name, "_processed_lipid_data.csv", sep="")
           )
 
+write_csv(final_corrected_class_lipid_data, 
+          paste(project_dir, "/", project_name, "_", user_name, "_processed_lipid_class_data.csv", sep="")
+          )
+
 dlg_message("Lipidomics pre-processing and QC complete. Thanks for using skylineR and lipid exploreR. TTFN.", type = 'ok')
 dlg_message("PS. an official html report can be found in the project folder", type = 'ok')
 
