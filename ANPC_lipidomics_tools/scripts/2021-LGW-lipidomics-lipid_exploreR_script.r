@@ -120,12 +120,13 @@ if(temp_answer_2 == "no"){
 individual_lipid_data <- individual_lipid_data %>% add_column(individual_lipid_data$run_order, .before = 3, .name_repair = "minimal") %>% select(-run_order)
 colnames(individual_lipid_data)[3] <- "run_order"
 
-plateID <- individual_lipid_data$plateID
-run_order <- individual_lipid_data$run_order
 
 individual_lipid_data <- individual_lipid_data %>% filter(!grepl("conditioning", sampleID))
 class_lipid_data <- create_lipid_class_data_summed(individual_lipid_data)
 
+new_project_run_order <- new_project_run_order %>% filter(!grepl("conditioning", sampleID))
+plateID <- individual_lipid_data$plateID
+run_order <- individual_lipid_data$run_order
 
 ##################### Run the rest of the QC exploreR sub-scripts from here
 

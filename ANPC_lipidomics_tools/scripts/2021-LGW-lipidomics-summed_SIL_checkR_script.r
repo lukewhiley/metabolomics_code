@@ -19,7 +19,7 @@ total_summed_sil <- apply(individual_lipid_data %>% select(sampleID), 1, functio
   rename(SIL_TIC = value, sampleID = "individual_lipid_data$sampleID")
 
 
-total_summed_sil <- total_summed_sil %>% add_column(plateID, run_order, .before = 2) %>% arrange(run_order)
+total_summed_sil <- new_project_run_order %>% left_join(total_summed_sil, by = "sampleID") %>% arrange(injection_order)
 total_summed_sil$sample_idx <- c(1:nrow(total_summed_sil))
 total_summed_sil$LOG_SIL_TIC <- log(total_summed_sil$SIL_TIC)
 
