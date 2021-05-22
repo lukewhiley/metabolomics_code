@@ -69,9 +69,9 @@ individual_lipid_data <- individual_lipid_data %>% add_column(plateID, .before =
 
 
 project_run_order <- individual_lipid_data %>% select(sampleID, plateID)
-project_run_order <- htmlTable(project_run_order)
+project_run_order_html <- htmlTable(project_run_order_html)
 
-htmltools::save_html(project_run_order, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
+htmltools::save_html(project_run_order_html, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
 browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep="")) #open plotly widget in internet browser
 
 temp_answer <- "blank"
@@ -83,8 +83,8 @@ while(temp_answer != "yes" & temp_answer != "no"){
 
 if(temp_answer == "no"){
   dlg_message("OK. Please upload a worklist template csv file now. It will need 3x columns: sampleID, PlateID and injection_order. A template file has been created in your project directory (run_order_template.csv)", type = 'ok')
-  temp_tibble <- c("example_file_name_1", "plate_1", 1) %>% t() %>% as_tibble(.name_repair = "minimal")
-  colnames(temp_tibble) <- c("sampleID", "PlateID", "injection_order")
+  temp_tibble <- project_run_order
+  temp_tibble$injection_order <- NA
   write_csv(temp_tibble, 
             file = paste(project_dir, "/", Sys.Date(), "_run_order_template.csv", sep=""))
   dlg_message("Select this file now", type = 'ok')
