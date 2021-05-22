@@ -69,7 +69,7 @@ individual_lipid_data <- individual_lipid_data %>% add_column(plateID, .before =
 
 
 project_run_order <- individual_lipid_data %>% select(sampleID, plateID)
-project_run_order_html <- htmlTable(project_run_order_html)
+project_run_order_html <- htmlTable(project_run_order)
 
 htmltools::save_html(project_run_order_html, file = paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep=""))# save plotly widget
 browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_run_order_check.html", sep="")) #open plotly widget in internet browser
