@@ -1,11 +1,23 @@
 #ANPC Lipidomics PCA quality control visualisation
 
 lipids_pca_universal <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label){
+  #browser()
    scale_answer <- "blank"
   while(scale_answer != "UV" & scale_answer != "Pareto"){
     scale_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
   }
   
+   colour_answer <- "blank"
+   groups_total <- nrow(unique(select(individual_multivariate_data, multivariate_class)))
+   while(colour_answer == "blank" & length(colour_answer) < groups_total){
+     colour_answer <- dlgInput(paste("You have ", paste(groups_total), " groups.  Please enter enough colours for the plot here and seperate by a comma, no spaces.  Colours should be in hexidecimal format"), 
+                               "#1E90FF,#FF0000,#000000, etc")$res
+   }
+   
+  colour_answer <- as.list(strsplit(colour_answer, ',')[[1]]) %>%
+    lapply(function(x)gsub('\\s+', '',x)) %>% 
+    unlist()
+   
   lipid <- individual_multivariate_data %>% select(contains("(")) %>% colnames()
   lipid_class <- sub("\\(.*", "", lipid) %>% unique()
   lipid_class <- lipid_class[!grepl("sampleID", lipid_class)] %>% as_tibble()
@@ -71,7 +83,9 @@ lipids_pca_universal <- function(individual_multivariate_data, family_multivaria
       title = paste("PC2 (", round(pca_model@Parameters$R2[2]*100,1), " %)", sep = "")
       )
     
-    plotly_pca <- plot_ly(type = "scatter", mode = "markers", data = plot_Val, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = c('#1E90FF', '#FF0000'), 
+    
+    
+    plotly_pca <- plot_ly(type = "scatter", mode = "markers", data = plot_Val, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = c(colour_answer), 
                           marker = list(size = 7, 
                                         opacity = 0.5,
                                         line = list(
@@ -103,19 +117,21 @@ lipids_pca_universal <- function(individual_multivariate_data, family_multivaria
     
     
     plotly_loadings <- plot_ly(type = "scatter", mode = "markers", data = plotly_loadings_data, x = ~PC1, y = ~PC2, text = ~lipid, 
+                               color = "PCA loadings",
                                marker = list(size = 7, color = '#808080', opacity = 0.5,
                                              line = list(color = '#000000', width = 1)
                                )) %>% 
       layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""),
              xaxis = x_axis_settings_loading,
-             yaxis = y_axis_settings_loading
+             yaxis = y_axis_settings_loading,
+             showlegend = FALSE
       )
     
     combined_plotly <- subplot(plotly_pca, plotly_loadings, 
                                margin = c(0.01, 0.01, 0.2, 0.01),
                                titleX = TRUE,
                                titleY = TRUE
-                               ) %>% layout(showlegend = FALSE, title =  "Plotly PCA")
+                               ) %>% layout(showlegend = TRUE, title =  "Plotly PCA")
     
     pca_plot_list <- c(list(combined_plotly))
     #print(pca_plot_list)
