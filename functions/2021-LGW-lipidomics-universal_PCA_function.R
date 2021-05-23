@@ -1,6 +1,6 @@
 #ANPC Lipidomics PCA quality control visualisation
 
-lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label){
+lipids_pca_universal <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label){
    scale_answer <- "blank"
   while(scale_answer != "UV" & scale_answer != "Pareto"){
     scale_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
@@ -48,8 +48,8 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
     plot_Val$sampleID <- sampleID$sampleID
     plot_Val$sample_group <- c(pca_class)
     plot_Val$pca_plot_label <- c(pca_plot_label)
-    plot_Val_samples <- plot_Val %>% filter(!grepl("LTR", pca_plot_label))
-    plot_Val_ltr <- plot_Val %>% filter(grepl("LTR", pca_plot_label))
+    # plot_Val_samples <- plot_Val %>% filter(sample_group == "sample")
+    # plot_Val_ltr <- plot_Val %>% filter(sample_group == "LTR")
     
     plotly_loadings_data <- pca_model@p %>% as_tibble(rownames = "lipid") %>% rename(PC1 = V1, PC2 = V2)
     
@@ -71,8 +71,9 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
       title = paste("PC2 (", round(pca_model@Parameters$R2[2]*100,1), " %)", sep = "")
       )
     
-    plotly_pca <- plot_ly(type = "scatter", mode = "markers", data = plot_Val_samples, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = c('#1E90FF', '#FF0000'), 
-                          marker = list(size = 7, color = '#1E90FF', opacity = 0.5,
+    plotly_pca <- plot_ly(type = "scatter", mode = "markers", data = plot_Val, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, colors = c('#1E90FF', '#FF0000'), 
+                          marker = list(size = 7, 
+                                        opacity = 0.5,
                                         line = list(
                                           color = '#000000',
                                           width = 1)
@@ -80,13 +81,7 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
       layout(title = paste(project_name, " Plotly PCA - ", title_text, sep = ""),
              xaxis = x_axis_settings_scores,
              yaxis = y_axis_settings_scores
-             ) %>% 
-      add_trace(type = "scatter", mode = "markers", data = plot_Val_ltr, x = ~PC1, y = ~PC2, text =~pca_plot_label, color = ~sample_group, 
-                marker = list(size = 7, color = '#FF0000', opacity = 0.5,
-                              line = list(color = '#000000', width = 1)
-                ))
-    
-    
+             )
     
     x_axis_settings_loading <- list(
       zeroline = TRUE,

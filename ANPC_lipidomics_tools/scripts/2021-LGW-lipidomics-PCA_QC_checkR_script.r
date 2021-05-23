@@ -16,7 +16,7 @@ final_class_lipid_data$sample_class[grep("LTR", final_class_lipid_data$sampleID)
 pca_check_status <- "change"
 while(pca_check_status == "change"){
 
-pca_p <- lipids_pca(final_individual_lipid_data, final_class_lipid_data, multivariate_class = "sample_class", plot_label = "sampleID")
+pca_p <- lipids_pca_ltr(final_individual_lipid_data, final_class_lipid_data, multivariate_class = "sample_class", plot_label = "sampleID")
 
 saveWidget(pca_p[[1]][[1]], file = paste(project_dir_html, "/", project_name, "_", user_name, "_QC_PCA_all_lipids.html", sep=""))# save plotly widget
 browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_QC_PCA_all_lipids.html", sep="")) #open plotly widget in internet browser
