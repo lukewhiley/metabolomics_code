@@ -1,7 +1,7 @@
 #ANPC Lipidomics opls quality control visualisation
 
 lipids_opls_2_class <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label){
-  browser()
+  #browser()
   lipid <- individual_multivariate_data %>% select(contains("(")) %>% colnames()
   lipid_class <- sub("\\(.*", "", lipid) %>% unique()
   lipid_class <- lipid_class[!grepl("sampleID", lipid_class)] %>% as_tibble()
@@ -9,7 +9,7 @@ lipids_opls_2_class <- function(individual_multivariate_data, family_multivariat
   multivariate_data_list <- list(individual_multivariate_data, family_multivariate_data)
   
   opls_plot_list <- lapply(multivariate_data_list, function(func_list){
-    browser()
+   #browser()
     multivariate_data <- func_list
     column_length <- multivariate_data %>% select(contains("(")) %>% ncol()
     
@@ -34,7 +34,11 @@ lipids_opls_2_class <- function(individual_multivariate_data, family_multivariat
     opls_class[is.na(opls_class)] <- "none"
     sampleID <- multivariate_data %>% select(sampleID)
     
-    opls_model <- opls(opls_x, opls_class, scale = "UV", center = TRUE)
+    opls_model <- opls(opls_x, opls_class, 
+                       scale = "UV", 
+                       center = TRUE, 
+                       cv = list(method = "MC", k = 3, split = 2/3)
+    )
     opls_stats <- opls_model@summary
     t_pred <- as.numeric(as.matrix(opls_model@t_pred[,1]))
     t_orth <- as.numeric(as.matrix(opls_model@t_orth[,1]))
@@ -54,7 +58,7 @@ lipids_opls_2_class <- function(individual_multivariate_data, family_multivariat
       linecolor = toRGB("black"),
       linewidth = 2,
       showgrid = TRUE,
-      title = paste("t_pred (", round(opls_model@Parameters$R2[1]*100,1), " %)", sep = "")
+      title = paste("t_pred")
     )
     
     y_axis_settings_scores <- list(
@@ -63,7 +67,7 @@ lipids_opls_2_class <- function(individual_multivariate_data, family_multivariat
       linecolor = toRGB("black"),
       linewidth = 2,
       showgrid = TRUE,
-      title = paste("t_orth (", round(opls_model@Parameters$R2[2]*100,1), " %)", sep = "")
+      title = paste("t_orth")
     )
     
     plotly_opls <- plot_ly(type = "scatter", mode = "markers", data = plot_Val, x = ~t_pred, y = ~t_orth, text =~opls_plot_label, color = ~sample_group, colors = c("#1E90FF", "#FF0000"), 
@@ -78,13 +82,20 @@ lipids_opls_2_class <- function(individual_multivariate_data, family_multivariat
              yaxis = y_axis_settings_scores
       )
     
+    #browser()
+    loadings_data <- eruption(opls_model)
+    
+    plotly_loadings_data <- loadings_data$data
+    
+    
     x_axis_settings_loading <- list(
       zeroline = TRUE,
       showline = TRUE,
       linecolor = toRGB("black"),
       linewidth = 2,
       showgrid = TRUE,
-      title = paste("")
+      title = paste("Cliff's Delta"),
+      range = c(-1,1)
     )
     
     y_axis_settings_loading <- list(
@@ -93,35 +104,41 @@ lipids_opls_2_class <- function(individual_multivariate_data, family_multivariat
       linecolor = toRGB("black"),
       linewidth = 2,
       showgrid = TRUE,
-      title = paste("")
+      title = paste(""),
+      range = c(0, max(plotly_loadings_data$p1)*1.1)
     )
     
-    
-    plotly_loadings <- plot_ly(type = "scatter", mode = "markers", data = plotly_loadings_data, x = ~t_pred, y = ~t_orth, text = ~lipid, 
-                               color = "opls loadings",
+ 
+    #browser()
+    plotly_loadings <- plot_ly(type = "scatter", mode = "markers", data = plotly_loadings_data, x = ~Cd, y = ~p1, text = ~id, 
+                               color = "OPLS loadings",
                                marker = list(size = 7, color = '#808080', opacity = 0.5,
                                              line = list(color = '#000000', width = 1)
                                )) %>% 
-      layout(title = paste(project_name, " Plotly opls - ", title_text, sep = ""),
+      layout(title = paste(project_name, " OPLS eruption plot - ", title_text, sep = ""),
              xaxis = x_axis_settings_loading,
              yaxis = y_axis_settings_loading,
              showlegend = FALSE
       )
     
     combined_plotly <- subplot(plotly_opls, plotly_loadings, 
-                               margin = c(0.01, 0.01, 0.2, 0.01),
+                               margin = c(0.05, 0.05, 0.02, 0.02),
                                titleX = TRUE,
                                titleY = TRUE
-    ) %>% layout(showlegend = TRUE, title =  "Plotly opls")
+    ) %>% layout(showlegend = TRUE, title =  "")
     
-    opls_plot_list <- c(list(combined_plotly))
+    
+    #opls_plot_list <- c(list(combined_plotly))
     #print(opls_plot_list)
-    
+    list(combined_plotly,
+         plotly_loadings_data,
+      opls_stats
+    )
   })
   
-  opls_plot_list <- c(opls_plot_list,
-                     list(scale_answer)
-  )
+  #opls_plot_list <- c(opls_plot_list)
+                     
+  
   opls_plot_list
   
   
