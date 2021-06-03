@@ -2,9 +2,9 @@
 
 # # load required packages not required if running as part of the notebook
 
-# package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "stats", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr")
-# loaded_packages <- lapply(package_list, require, character.only = TRUE)
-# rm(loaded_packages, package_list)
+package_list <- c("plyr", "tidyverse", "janitor", "gridExtra", "ggpubr", "readxl", "cowplot", "scales", "stats", "devtools", "metabom8", "shiny", "plotly", "svDialogs", "DataEditR", "htmlwidgets", "httr", "htmlTable", 'statTarget')
+loaded_packages <- lapply(package_list, require, character.only = TRUE)
+rm(loaded_packages, package_list)
 
 # load custom functions from github
 lipidomics_class_sum_function <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/functions/2021-LGW-lipidomics-class_sumR_function.r") %>% content(as = "text")

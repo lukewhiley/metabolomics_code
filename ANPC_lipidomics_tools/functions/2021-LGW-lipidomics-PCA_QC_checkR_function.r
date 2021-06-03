@@ -117,7 +117,7 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
       )
     
     combined_plotly <- subplot(plotly_pca, plotly_loadings, 
-                               margin = c(0.05, 0.05, 0.1, 0.01),
+                               margin = c(0.05, 0.05, 0.01, 0.01),
                                titleX = TRUE,
                                titleY = TRUE
                                ) %>% layout(showlegend = FALSE, title =  "")
