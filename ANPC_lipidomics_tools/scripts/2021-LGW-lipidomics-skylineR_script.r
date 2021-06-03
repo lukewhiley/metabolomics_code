@@ -21,9 +21,9 @@ transition_metadata <- clean_names(transition_metadata)
 metabolite_target_list <- transition_metadata %>% select(precursor_name)
 
 #create list of mzML files
-dlg_message("Please select the folder that contains your mzML files", type = 'ok')
-mzml_file_location <- rstudioapi::selectDirectory() # save project directory root location
-filenames <- list.files(pattern = ".mzML", paste(mzml_file_location)) %>% as_tibble() %>% rename(FileName = value)
+#dlg_message("Please select the folder that contains your mzML files", type = 'ok')
+#mzml_file_location <- rstudioapi::selectDirectory() # save project directory root location
+#filenames <- list.files(pattern = ".mzML", paste(mzml_file_location)) %>% as_tibble() %>% rename(FileName = value)
 
 dlg_message("1. Please open skylineMS software", type = 'ok')
 dlg_message("2. Create new small molecule file", type = 'ok')
@@ -63,8 +63,11 @@ dlg_message("Next select the new export file for importing into skylineR in R St
 
 results_2 <- read_csv(file = file.choose(.))  %>% 
   clean_names() %>% 
-  rename(molecule_list_name = protein, precursor_name = peptide) %>% 
-  filter(grepl("LTR", replicate))
+  rename(molecule_list_name = protein, precursor_name = peptide) 
+
+filenames <- results_2$replicate %>% unique()
+
+results_2 <- results_2 %>% filter(grepl("LTR", replicate))
 results_2$area <- sapply(results_2$area, as.numeric) #ensure area column is numeric
 
 rt_boundary_output <- lapply(metabolite_target_list$precursor_name, function(idx_m){
