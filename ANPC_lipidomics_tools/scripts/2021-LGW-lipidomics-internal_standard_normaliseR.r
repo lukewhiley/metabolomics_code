@@ -38,8 +38,8 @@ sil_sum <- lapply(sil_list$note, function(FUNC_SIL){
   temp_func_data_sum <- sil_data_check %>% select(all_of(FUNC_SIL)) %>% as.matrix() %>% sum() %>% log()
 }) %>% c() %>% unlist() %>% as_tibble() %>% rename(SIL_SUM = value) %>% add_column(sil_list, .before = 1) %>% arrange(SIL_SUM)
 
-sil_sum_q1 <- quantile(sil_sum$SIL_SUM, 0.25) %>% as.numeric()
-inter_quantile_range <- as.numeric(quantile(sil_sum$SIL_SUM, 0.75)) - as.numeric(quantile(sil_sum$SIL_SUM, 0.25))
+sil_sum_q1 <- quantile(sil_sum$SIL_SUM, 0.25, na.rm = TRUE) %>% as.numeric()
+inter_quantile_range <- as.numeric(quantile(sil_sum$SIL_SUM, 0.75, na.rm = TRUE)) - as.numeric(quantile(sil_sum$SIL_SUM, 0.25, na.rm = TRUE))
 sil_sum_lower_threshold <- sil_sum_q1 - inter_quantile_range
 
 #create a list of IS that fail the test
