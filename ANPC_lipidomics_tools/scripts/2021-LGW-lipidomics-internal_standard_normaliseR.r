@@ -21,6 +21,7 @@ temp_answer <- "change"
 while(temp_answer == "change"){
 sil_target_list <- read_csv(file = file.choose(.)) %>% clean_names
 lipid_data <- filtered_data %>% select(contains("(")) %>% select(!contains("SIL"))
+lipid_data[lipid_data == 0] <- 1e-5
 sil_data <- filtered_data %>% select(-sampleID, - plateID) %>% select(contains("SIL"))
 
 # this section checks each of the SIL IS used in the target list template in the LTRs. It evaluates if:
@@ -29,9 +30,26 @@ sil_data <- filtered_data %>% select(-sampleID, - plateID) %>% select(contains("
 
 dlg_message("Checks to see if all internal standards are present in the SIL internal standard mix", type = 'ok')
 
-sil_data_check <- individual_lipid_data_sil_tic_filtered %>% select(sampleID, plateID, contains("SIL")) %>% filter(grepl("LTR", sampleID))
+sil_data_check <- individual_lipid_data_sil_tic_filtered %>% select(sampleID, plateID, contains("SIL")) #%>% filter(grepl("LTR", sampleID))
 
 sil_list <- sil_target_list %>% filter(grepl("SIL", note)) %>% select(note) %>% unique() 
+
+# check for missing SIL values
+missing_sil_list <- NULL
+for(idx_sil in 1:length(sil_list$note)){
+  temp_sil_data <- sil_data_check %>% select(sampleID, plateID, sil_list$note[idx_sil])
+  colnames(temp_sil_data) <- c("sampleID", "plateID", "area")
+  temp_sil_data$lipidID <- sil_list$note[idx_sil]
+  #if(length(which(temp_sil_data[,3]==0))>0){
+  missing_sil_list <- rbind(missing_sil_list,
+                              temp_sil_data[which(temp_sil_data[,3]==0),])
+  missing_sil_list <- rbind(missing_sil_list,
+                              temp_sil_data[which(is.na(temp_sil_data[,3])),])
+#  }
+}
+
+sil_list_warning <- missing_sil_list %>% select(sampleID, plateID, lipidID)
+sil_list_warning$reason_for_flag <- "missing value in sample - check skyline"
 
 sil_sum <- lapply(sil_list$note, function(FUNC_SIL){
   #browser()
@@ -43,8 +61,9 @@ inter_quantile_range <- as.numeric(quantile(sil_sum$SIL_SUM, 0.75, na.rm = TRUE)
 sil_sum_lower_threshold <- sil_sum_q1 - inter_quantile_range
 
 #create a list of IS that fail the test
-sil_list_warning <- sil_sum$note[which(sil_sum$SIL_SUM < sil_sum_lower_threshold)]
+sil_list_warning_2 <- sil_sum$note[which(sil_sum$SIL_SUM < sil_sum_lower_threshold)]
 
+sil_data_check <- individual_lipid_data_sil_tic_filtered %>% select(sampleID, plateID, contains("SIL")) %>% filter(grepl("LTR", sampleID))
 sil_rsd <- lapply(sil_list$note, function(FUNC_SIL){
   #browser()
   temp_func_data <- sil_data_check %>% select(all_of(FUNC_SIL))
@@ -54,21 +73,26 @@ sil_rsd <- lapply(sil_list$note, function(FUNC_SIL){
   temp_func_data_rsd
 }) %>% c() %>% unlist() %>% as_tibble() %>% rename(SIL_RSD = value) %>% add_column(sil_list, .before = 1)
 
-sil_list_warning_2 <- sil_rsd %>% filter(SIL_RSD > 30) 
+sil_list_warning_3 <- sil_rsd %>% filter(SIL_RSD > 30) %>% rename(lipidID = note) %>% select(lipidID)
+sil_list_warning_3$plateID <- NA 
+sil_list_warning_3$reason_for_flag <- "RSD > 30% across dataset"
+sil_list_warning_3$sampleID <- NA
+sil_list_warning_3 <- sil_list_warning_3 %>% select(lipidID, plateID, lipidID, reason_for_flag)
 
-dlg_message(paste( "############################################", 
-                   "Warning 1! These internal standards have a very low signal and may not be present in the mixture:",
-                   paste(sil_list_warning, collapse = ";     ."),
-                   "############################################", 
-                   "Warning 2! These internal standards have a %RSD >30%: ",
-                   paste(sil_list_warning_2$note, collapse = ";     ."),
-                   "############################################",
-                   "double check skyline!"), 
+sil_list_warning <- bind_rows(sil_list_warning,
+                              sil_list_warning_3)
+
+sil_list_warning_html <- htmlTable(sil_list_warning)
+
+htmltools::save_html(sil_list_warning_html, file = paste(project_dir_html, "/", project_name, "_", user_name, "_SIL_internal_standard_fail_list.html", sep=""))# save plotly widget
+browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_SIL_internal_standard_fail_list.html", sep="")) #open plotly widget in internet browser
+
+
+dlg_message(paste("SIL WARNING: CHECK BROWSER FOR TABLE OF FAILED SIL SRTANDARDS AND CHECK SKYLINE IF NECESSARY"), 
             type = 'ok')
 
-
-sil_list_warning <- c(sil_list_warning, unlist(sil_list_warning_2$note))
-
+#sil_list_warning <- c(sil_list_warning, unlist(sil_list_warning_2$note)) %>% unique()
+temp_answer <- "change"
 temp_answer <- dlgInput("Do you wish to continue or use different internal standards?", "continue/change")$res
 
 #add in a check in case the user enters the incorrect entry. It must be "continue" or "change" to continue
@@ -131,7 +155,7 @@ ratio_data <- lapply(colnames(lipid_data), function(FUNC_IS_RATIO){
   
 }) %>% bind_cols %>% as_tibble() %>% add_column(filtered_data$sampleID, filtered_data$plateID, .before = 1)
 
-colnames(ratio_data) <- c("sampleID", "plateID", "run_order", colnames(lipid_data))
+colnames(ratio_data) <- c("sampleID", "plateID",  colnames(lipid_data))
 
-ratio_data_2 <- ratio_data
+#ratio_data_2 <- ratio_data
 

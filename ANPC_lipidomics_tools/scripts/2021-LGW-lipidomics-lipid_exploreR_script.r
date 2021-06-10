@@ -150,10 +150,10 @@ rm(intensity_threshold_checkR_script)
 
 # Review individual SIL internal standards 
 # Create target lipid to stable isotope ratio internal standard and evaluate them in the pooled QC. Here we use Long Term Reference pool
-LTR_SIL_checkR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% 
+LTR_SIL_normaliseR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_normaliseR.r") %>% 
   content(as = "text")
-eval(parse(text = LTR_SIL_checkR_script), envir = .GlobalEnv)
-#rm(LTR_SIL_checkR_script)
+eval(parse(text = LTR_SIL_normaliseR_script), envir = .GlobalEnv)
+#rm(LTR_SIL_normaliseR_script)
 
 # Create target lipid to stable isotope ratio internal standard and evaluate them in the pooled QC. Here we use Long Term Reference pool
 LTR_SIL_visualizeR_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-internal_standard_visualizeR.R") %>% 

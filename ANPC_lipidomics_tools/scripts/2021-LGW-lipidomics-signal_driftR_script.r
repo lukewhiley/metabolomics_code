@@ -13,7 +13,9 @@ library(statTarget)
 dir.create(paste(project_dir, "/", Sys.Date(), "_signal_correction_results", sep=""))
 setwd(paste(project_dir, "/", Sys.Date(), "_signal_correction_results", sep=""))
 
-sil_trend <- final_individual_lipid_data %>%  as_tibble() %>% select(-plateID, -sample_class) 
+sil_trend <- non_filtered_dataset
+sil_trend[sapply(sil_trend, is.infinite)] <- 1e-5
+
 
 #this section creates the required metadata file for statTarget::shiftCor
 
@@ -114,7 +116,7 @@ corrected_lipid_list <- corrected_data %>% select(contains("(")) %>% colnames()
 final_corrected_data <- lapply(corrected_lipid_list, function(FUNC_LIPID_NORM){
   #browser()
   corrected_data_mean <- corrected_data %>% filter(grepl("LTR", sampleID)) %>% select(FUNC_LIPID_NORM) %>% as.matrix() %>% mean()
-  pre_corrected_data_mean <- final_individual_lipid_data %>% as_tibble() %>% filter(grepl("LTR", sampleID)) %>% select(FUNC_LIPID_NORM) %>% as.matrix() %>% mean()
+  pre_corrected_data_mean <- non_filtered_dataset %>% as_tibble() %>% filter(grepl("LTR", sampleID)) %>% select(FUNC_LIPID_NORM) %>% as.matrix() %>% mean()
   normalization_ratio <- corrected_data_mean/pre_corrected_data_mean
   corrected_data_norm <- corrected_data %>% select(FUNC_LIPID_NORM)/normalization_ratio
   corrected_data_norm
