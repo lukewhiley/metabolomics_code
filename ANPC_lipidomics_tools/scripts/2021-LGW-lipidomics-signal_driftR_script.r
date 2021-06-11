@@ -103,7 +103,7 @@ corrected_data <- read_csv(paste(project_dir, "/", Sys.Date(), "_signal_correcti
 corrected_data <- sil_trend_cor_meta %>% select(sampleID, sample) %>% right_join(corrected_data, by = 'sample') %>% select(-sample, -class) %>% arrange(sampleID)
 colnames(corrected_data) <- colnames(sil_trend)
 corrected_data <- final_individual_lipid_data %>% as_tibble() %>% select(sampleID, plateID) %>% right_join(corrected_data, by = "sampleID")
-}
+
 
 corrected_lipid_list <- corrected_data %>% select(contains("(")) %>% colnames()
 
