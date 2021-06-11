@@ -110,8 +110,8 @@ corrected_lipid_list <- corrected_data %>% select(contains("(")) %>% colnames()
 #because the correction changes the concentrations of the lipids, this next section re-scales the values based on the change (ratio) between pre and post corrected signal mean in the LTR QCs
 final_corrected_data <- lapply(corrected_lipid_list, function(FUNC_LIPID_NORM){
   #browser()
-  corrected_data_mean <- corrected_data %>% filter(grepl("LTR", sampleID)) %>% select(FUNC_LIPID_NORM) %>% as.matrix() %>% mean()
-  pre_corrected_data_mean <- non_filtered_dataset %>% as_tibble() %>% filter(grepl("LTR", sampleID)) %>% select(FUNC_LIPID_NORM) %>% as.matrix() %>% mean()
+  corrected_data_mean <- corrected_data %>% filter(grepl("LTR", sampleID)) %>% select(all_of(FUNC_LIPID_NORM)) %>% as.matrix() %>% mean()
+  pre_corrected_data_mean <- non_filtered_dataset %>% as_tibble() %>% filter(grepl("LTR", sampleID)) %>% select(all_of(FUNC_LIPID_NORM)) %>% as.matrix() %>% mean()
   normalization_ratio <- corrected_data_mean/pre_corrected_data_mean
   corrected_data_norm <- corrected_data %>% select(FUNC_LIPID_NORM)/normalization_ratio
   corrected_data_norm
