@@ -79,6 +79,7 @@ if(signal_drift_method == "RF"){
 shiftCor(samPeno = samPeno,
          samFile =  samFile,
          Frule = 0.8,
+         ntree = 500,
          MLmethod = 'QCRFSC',
          QCspan = 0,
          imputeM = "KNN",
