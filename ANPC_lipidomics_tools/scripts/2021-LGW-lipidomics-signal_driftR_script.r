@@ -1,13 +1,6 @@
 # signal drift/batch correction
 # this script uses the LTRs (pooled QC) to correct the signal drift across the run
 
-signal_drift_choice <- "blank"
-while(signal_drift_choice != "yes"& signal_drift_choice != "no"){
-  signal_drift_choice <- dlgInput("Do you want to use a signal drift correction?", "yes/no")$res
-}
-
-if(signal_drift_choice == "yes"){
-
 library(statTarget)
 
 dir.create(paste(project_dir, "/", Sys.Date(), "_signal_correction_results", sep=""))
@@ -90,7 +83,7 @@ shiftCor(samPeno = samPeno,
          QCspan = 0,
          imputeM = "KNN",
          plot = TRUE,
-         coCV = 100
+         coCV = 1000
          )
 }
 
@@ -102,7 +95,7 @@ if(signal_drift_method == "loess"){
            QCspan = 0,
            imputeM = "KNN",
            plot = TRUE,
-           coCV = 100
+           coCV = 1000
   )
 }
 
@@ -124,6 +117,7 @@ final_corrected_data <- lapply(corrected_lipid_list, function(FUNC_LIPID_NORM){
   corrected_data_norm
 }) %>% bind_cols %>% as_tibble()
 
+
+
 final_corrected_data <- final_corrected_data %>% add_column(select(corrected_data, sampleID, plateID), .before = 1)
 final_corrected_class_lipid_data <- create_lipid_class_data_summed(final_corrected_data)
-

@@ -19,7 +19,7 @@ lipid_keep_list <- ltr_rsd %>% filter(RSD < 30)
 final_dataset <- ratio_data %>% select(sampleID, plateID, all_of(lipid_keep_list$lipid))
 final_dataset[is.na(final_dataset)] <- 0
 
-non_filtered_dataset <- ratio_data %>% select(-plateID)
+non_filtered_dataset <- ratio_data_2 %>% select(-plateID)
 non_filtered_dataset[is.na(non_filtered_dataset)] <- 0
 
 # visualisation of normalized data

@@ -157,5 +157,5 @@ ratio_data <- lapply(colnames(lipid_data), function(FUNC_IS_RATIO){
 
 colnames(ratio_data) <- c("sampleID", "plateID",  colnames(lipid_data))
 
-#ratio_data_2 <- ratio_data
+ratio_data_2 <- ratio_data
 
