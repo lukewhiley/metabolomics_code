@@ -89,7 +89,8 @@ shiftCor(samPeno = samPeno,
          MLmethod = 'QCRFSC',
          QCspan = 0,
          imputeM = "KNN",
-         plot = TRUE
+         plot = TRUE,
+         coCV = 100
          )
 }
 
@@ -100,7 +101,8 @@ if(signal_drift_method == "loess"){
            MLmethod = 'QCRLSC',
            QCspan = 0,
            imputeM = "KNN",
-           plot = TRUE
+           plot = TRUE,
+           coCV = 100
   )
 }
 

@@ -190,7 +190,7 @@ if(replot_answer == "yes"){
   normalized_check_p_2 <- normalized_check_p
   normalized_check_class_p_2 <- normalized_check_class_p
   
-  final_individual_lipid_data <- final_corrected_data
+  final_individual_lipid_data <- ratio_data
   final_class_lipid_data <- create_lipid_class_data_summed(final_individual_lipid_data)
   eval(parse(text = PCA_QC_script), envir = .GlobalEnv)
   pca_scale_used_2 <- scale_used
