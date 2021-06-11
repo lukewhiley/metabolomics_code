@@ -175,13 +175,14 @@ pca_p_1 <- pca_p
 
 
 signal_drift_choice <- "blank"
+signal_drift_continue <- "change"
 while(signal_drift_choice != "yes"& signal_drift_choice != "no"){
   signal_drift_choice <- dlgInput("Do you want to use a signal drift correction?", "yes/no")$res
 }
 
 if(signal_drift_choice == "yes"){
 
-signal_drift_continue <- "change"
+
 while(signal_drift_continue != "continue"){
 
 signal_drift_correct_script <- GET(url = "https://raw.githubusercontent.com/lukewhiley/metabolomics_code/main/ANPC_lipidomics_tools/scripts/2021-LGW-lipidomics-signal_driftR_script.r") %>% content(as = "text")
@@ -208,9 +209,9 @@ if(replot_answer == "yes"){
   pca_p_2 <- pca_p
 }
 
-signal_drift_continue <- "change"
-while(signal_drift_choice != "change"& signal_drift_choice != "continue"){
-  signal_drift_choice <- dlgInput("Are you happy with the drift correction or do you want to change", "continue/change")$res
+
+while(signal_drift_continue != "change"& signal_drift_choice != "continue"){
+  signal_drift_continue <- dlgInput("Are you happy with the drift correction or do you want to change", "continue/change")$res
 }
 }
 }
