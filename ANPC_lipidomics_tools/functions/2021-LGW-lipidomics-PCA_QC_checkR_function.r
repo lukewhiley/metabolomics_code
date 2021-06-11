@@ -8,9 +8,9 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
     scale_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
   }
   }
-  
+  browser()
   lipid <- individual_multivariate_data %>% select(contains("(")) %>% colnames()
-  lipid_class <- family_multivariate_data %>% select(-contains("sample"))  %>% select(-is_ltr) %>% colnames()
+  lipid_class <- family_multivariate_data[sapply(family_multivariate_data, is.numeric)] %>% colnames()
   
   #lipid_class <- sub("\\(.*", "", lipid) %>% unique()
   #lipid_class <- lipid_class[!grepl("sampleID", lipid_class)] %>% as_tibble()
