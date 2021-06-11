@@ -10,7 +10,7 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
   }
   
   lipid <- individual_multivariate_data %>% select(contains("(")) %>% colnames()
-  lipid_class <- family_multivariate_data %>% select(!contains("sample")) %>% colnames()
+  lipid_class <- family_multivariate_data %>% select(-contains("sample"))  %>% select(-is_ltr) %>% colnames()
   
   #lipid_class <- sub("\\(.*", "", lipid) %>% unique()
   #lipid_class <- lipid_class[!grepl("sampleID", lipid_class)] %>% as_tibble()
