@@ -17,26 +17,21 @@ pca_check_status <- "change"
 while(pca_check_status == "change"){
 
   plotlist <- apply(lipid_class_list %>% select(value), 1, function(lipidClass){
-    browser()
-    PCA_class_plot_data <- final_individual_lipid_data[,c(1:30, 826)]
+    #browser()
+    PCA_class_plot_data <- final_individual_lipid_data %>% select(sampleID, sample_class, starts_with(paste0(lipidClass, "(")))
     
-    pca_p <- lipids_pca_ltr(PCA_class_plot_data, final_class_lipid_data, multivariate_class = "sample_class", plot_label = "sampleID")
-    pca_p
+  if(ncol(PCA_class_plot_data) > 3){
+    pca_p <- lipids_pca_ltr(PCA_class_plot_data, final_class_lipid_data, multivariate_class = "sample_class", plot_label = "sampleID", scaling = "UV")
+    pca_p[[1]][[1]]
+  }
   })
   
-saveWidget(pca_p[[1]][[1]], file = paste(project_dir_html, "/", project_name, "_", user_name, "_QC_PCA_all_lipids.html", sep=""))# save plotly widget
-browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_QC_PCA_all_lipids.html", sep="")) #open plotly widget in internet browser
-saveWidget(pca_p[[2]][[1]], file = paste(project_dir_html, "/", project_name, "_", user_name, "_QC_PCA_lipid_class.html", sep=""))# save plotly widget
-browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_QC_PCA_lipid_class.html", sep="")) #open plotly widget in internet browser
-
-
-pca_check_status <- dlgInput("Check the PCA plots. Are you happy to continue? or do wish to change the scalling type?", "continue/change")$res
-while(pca_check_status != "continue" & pca_check_status != "change"){
-  pca_check_status <- dlgInput("Check the PCA plots. Are you happy to continue? or do wish to change the scalling type?", "continue/change")$res
-  }
+  plotlist <- plotlist[-which(sapply(plotlist, is.null))]
   
+  PCA_class_plot <- subplot(plotlist, nrows = 4, titleX = FALSE, margin = c(0.015,0.015, 0.05,0.05))
+  
+  saveWidget(PCA_class_plot, file = paste(project_dir_html, "/", project_name, "_", user_name, "_PCA_class_check_plot.html", sep=""))# save plotly widget
+  browseURL(paste(project_dir_html, "/", project_name, "_", user_name, "_PCA_class_check_plot.html", sep="")) #open plot_ly widget in internet browser
 }
-
-scale_used <- pca_p[[3]][1]
 
 

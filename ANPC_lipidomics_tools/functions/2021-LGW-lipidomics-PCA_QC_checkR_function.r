@@ -1,9 +1,12 @@
 #ANPC Lipidomics PCA quality control visualisation
 
-lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label){
-   scale_answer <- "blank"
+lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_data, multivariate_class, plot_label, scaling){
+  scale_answer <- scaling
+  if(scaling == "option"){ 
+  scale_answer <- "blank"
   while(scale_answer != "UV" & scale_answer != "Pareto"){
     scale_answer <- dlgInput("What scaling do you want to apply to the PCA?", "UV/Pareto")$res
+  }
   }
   
   lipid <- individual_multivariate_data %>% select(contains("(")) %>% colnames()
