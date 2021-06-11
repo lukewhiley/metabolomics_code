@@ -7,8 +7,10 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
   }
   
   lipid <- individual_multivariate_data %>% select(contains("(")) %>% colnames()
-  lipid_class <- sub("\\(.*", "", lipid) %>% unique()
-  lipid_class <- lipid_class[!grepl("sampleID", lipid_class)] %>% as_tibble()
+  lipid_class <- family_multivariate_data %>% select(!contains("sample")) %>% colnames()
+  
+  #lipid_class <- sub("\\(.*", "", lipid) %>% unique()
+  #lipid_class <- lipid_class[!grepl("sampleID", lipid_class)] %>% as_tibble()
   
   multivariate_data_list <- list(individual_multivariate_data, family_multivariate_data)
   
@@ -23,7 +25,7 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
       title_text <- "individual lipid species"
     }
     if(column_length == 0){ 
-      pca_x <- multivariate_data %>%  select(all_of(lipid_class$value)) %>% as.matrix()+1 
+      pca_x <- multivariate_data %>% select(all_of(lipid_class)) %>% as.matrix()+1 
       pca_x <- log(pca_x)
       title_text <- "lipid class"
     }
@@ -37,8 +39,8 @@ lipids_pca_ltr <- function(individual_multivariate_data, family_multivariate_dat
     pca_plot_label <- multivariate_data %>% select(plot_label) %>% as.matrix()
     pca_class[is.na(pca_class)] <- "none"
     sampleID <- multivariate_data %>% select(sampleID)
-    
-    pca_model <- pca(pca_x, scale = paste(scale_answer), center = TRUE)
+    #browser()
+    pca_model <- pca(pca_x, pc=2, scale = paste(scale_answer), center = TRUE)
     PC1 <- as.numeric(as.matrix(pca_model@t[,1]))
     PC2 <- as.numeric(as.matrix(pca_model@t[,2]))
     
