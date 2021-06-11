@@ -127,8 +127,8 @@ print(paste("For creating the QC PCA plots",  pca_scale_used_1, "scaling was use
 print(paste("PCA plot created using the",  length(which(ltr_rsd_1$RSD < 30)), "lipids in the final dataset" ))
 pca_p_1[[1]][[1]]
 
-print(paste("PCA plot using lipid class created by summing individual lipid response ratios grouped by lipid class"))
-pca_p_1[[2]][[1]]
+#print(paste("PCA plot using lipid class created by summing individual lipid response ratios grouped by lipid class"))
+#pca_p_1[[2]][[1]]
 
 #'
 #'
@@ -146,7 +146,7 @@ if(signal_drift_method == "RF"){
   print(paste("For correction of the signal drift a Random Forest method (QC-RFSC) was employed using the statTarget package (bioconductor"))
 }
 
-print(paste(nrow(ltr_rsd_1)-length(which(ltr_rsd_2$RSD < 30)), " lipid targets had a LTR RSD of > 30% so were removed from the dataset", sep=""))
+print(paste(nrow(ltr_rsd_2)-length(which(ltr_rsd_2$RSD < 30)), " lipid targets had a LTR RSD of > 30% so were removed from the dataset", sep=""))
 print(paste("Total number of lipid target response ratios with with an LTR RSD of <30% =", length(which(ltr_rsd_2$RSD < 30))))
 print(paste("Total number of lipid target response ratios with with an LTR RSD of <20% =", length(which(ltr_rsd_2$RSD < 20))))
 print(paste("Total number of lipid target response ratios with with an LTR RSD of <15% =", length(which(ltr_rsd_2$RSD < 15))))
@@ -180,9 +180,9 @@ normalized_check_class_p_2
 #+ echo=FALSE, message=FALSE, fig.width=10, fig.height=4
 
 print(paste("For creating the QC PCA plots",  pca_scale_used_2, "scaling was used"))
-print(paste("PCA plot created using the",  length(which(ltr_rsd_1$RSD < 30)), "lipids in the final dataset" ))
+print(paste("PCA plot created using the",  length(which(ltr_rsd_2$RSD < 30)), "lipids in the final dataset" ))
 pca_p_2[[1]][[1]]
 
-print(paste("PCA plot using lipid class created by summing individual lipid response ratios grouped by lipid class"))
-pca_p_2[[2]][[1]]
+#print(paste("PCA plot using lipid class created by summing individual lipid response ratios grouped by lipid class"))
+#pca_p_2[[2]][[1]]
 
