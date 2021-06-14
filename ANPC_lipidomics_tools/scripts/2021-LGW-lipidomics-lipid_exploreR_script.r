@@ -210,7 +210,7 @@ if(replot_answer == "yes"){
 }
 
 
-while(signal_drift_continue != "change"& signal_drift_choice != "continue"){
+while(signal_drift_continue != "change"& signal_drift_continue != "continue"){
   signal_drift_continue <- dlgInput("Are you happy with the drift correction or do you want to change", "continue/change")$res
 }
 }
