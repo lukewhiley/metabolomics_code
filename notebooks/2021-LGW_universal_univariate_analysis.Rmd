@@ -1,0 +1,81 @@
+---
+title: "kruskal wallis test for lipids data"
+output: html_notebook
+---
+
+CSV file must have the following column names:
+   -> sampleID
+   -> classID
+   -> all of the lipids in the dataset
+    -> e.g. CE(14:0) etc
+
+Requires the following packages:
+  -> tidyverse
+
+
+
+```{r, KW tests on lipid data,echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE, results=FALSE, fig.height=4, fig.width=4}
+
+# read in the csv
+lipid_data <- read_csv(file.choose(.))
+
+# create list of lipids 
+lipid_list <- lipid_data %>% 
+  select(contains("(")) %>%
+  names()
+
+#create empty object for use in loop
+univariate_result <- NULL
+
+# create loop to perform test on every lipid
+for(idx_lipid in lipid_list){
+  #select data for lipid x in loop
+  univariate_data <- lipid_data %>% 
+    select(classID, all_of(idx_lipid))
+  #browser()
+  # set starrd column names
+  colnames(univariate_data) <- c("class", "concentration")
+  
+  #perform kruskal wallis test
+  kw_result <- kruskal.test(concentration ~ class, data = univariate_data)
+  
+  # get p-value
+  kw_result_p <- kw_result$p.value %>% signif(3) %>% format(scientific = TRUE)
+  
+  #perform an additional statistical test to obtain inter group differences
+  dunn_result <- dunn.test(x = univariate_data$concentration, g = univariate_data$class)
+  # get p values
+  dunn_result_p <- dunn_result$P  %>% signif(3) %>% format(scientific = TRUE)
+  
+  # combine the above data for export
+  final_row <- c(kw_result_p,
+                 dunn_result_p
+  )
+  univariate_result <-  rbind(univariate_result,
+                                 final_row)
+}
+
+# add column names of final export
+colnames(univariate_result) <- c("kw_result_p_value",
+                                 dunn_result$comparisons)
+
+#add lipid names column
+univariate_result_2 <- univariate_result %>% 
+  as_tibble() %>% 
+  add_column(lipid_list, .before = 1) %>% 
+  rename(Lipid = lipid_list) 
+
+#convert pvalues to numeric
+univariate_result_2[,2:3] <- sapply(univariate_result_2[,2:3], as.numeric)
+
+#order columns by p value 
+univariate_result_2 <- univariate_result_2 %>% arrange(kw_result_p_value)
+
+#save table - uncomment if saving is required
+write_csv(univariate_result_2,file.choose(new=TRUE))
+
+
+
+```
+
+
