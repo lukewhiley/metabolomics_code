@@ -46,7 +46,7 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
   plot_Val$pca_colour <- c(pca_colour)
   plot_Val$pca_plot_label <- c(pca_plot_label)
   
-  plot_colors <- RColorBrewer::brewer.pal(name = "Set3",
+  plot_colors <- RColorBrewer::brewer.pal(name = "Set2",
                                           n = length(unique(pca_colour)))
   
   x_axis_settings_scores <- list(
@@ -75,7 +75,7 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
                        text = ~pca_plot_label, 
                        color = ~pca_colour, 
                        colors = c(plot_colors[1:length(unique(pca_colour))]), 
-                        marker = list(size = 7, 
+                        marker = list(size = 10, 
                                       #color = '#1E90FF', 
                                       opacity = 0.5,
                                       line = list(
@@ -113,7 +113,7 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
                              x = ~PC1, 
                              y = ~PC2, 
                              text = ~variable, 
-                             marker = list(size = 7, color = '#808080', opacity = 0.5,
+                             marker = list(size = 10, color = '#808080', opacity = 0.5,
                                            line = list(color = '#000000', width = 1)
                              )) %>% 
     layout(title = paste(" Plotly PCA - ", title_text, sep = ""),

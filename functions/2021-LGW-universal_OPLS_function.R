@@ -54,7 +54,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
   plot_Val$opls_colour <- c(opls_colour)
   plot_Val$opls_plot_label <- c(opls_plot_label)
   
-  plot_colors <- RColorBrewer::brewer.pal(name = "Set3",
+  plot_colors <- RColorBrewer::brewer.pal(name = "Set2",
                                           n = length(unique(opls_colour)))
   
   x_axis_settings_scores <- list(
@@ -63,7 +63,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
-    title = paste("PC1 (", round(opls_model@Parameters$R2[1]*100,1), " %)", sep = "")
+    title = paste("t_pred", sep = "")
   )
   
   y_axis_settings_scores <- list(
@@ -72,7 +72,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
-    title = paste("PC2 (", round(opls_model@Parameters$R2[2]*100,1), " %)", sep = "")
+    title = paste("t_orth", sep = "")
   )
   
  plotly_opls <- plot_ly(type = "scatter", 
@@ -83,7 +83,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                        text = ~opls_plot_label, 
                        color = ~opls_colour, 
                        colors = c(plot_colors[1:length(unique(opls_colour))]), 
-                        marker = list(size = 7, 
+                        marker = list(size = 10, 
                                       #color = '#1E90FF', 
                                       opacity = 0.5,
                                       line = list(
@@ -121,7 +121,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                              x = ~Cd, 
                              y = ~p1, 
                              text = ~id, 
-                             marker = list(size = 7, color = '#808080', opacity = 0.5,
+                             marker = list(size = 10, color = '#808080', opacity = 0.5,
                                            line = list(color = '#000000', width = 1)
                              )) %>% 
     layout(title = paste(" Plotly opls - ", title_text, sep = ""),
@@ -135,7 +135,10 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                              titleY = TRUE
   ) %>% layout(showlegend = TRUE, title =  "")
   
-
+  plotly_loadings_data %>% arrange(desc(p1)) %>% kable() %>% print()
+  
   combined_plotly
+  
+  
 
 }

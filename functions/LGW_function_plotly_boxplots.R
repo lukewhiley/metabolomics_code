@@ -2,11 +2,13 @@
 
 #log_data = TRUE/FALSE
 
-generic_boxplot <- function(FUNC_boxplot_data, FUNC_boxplot_class, FUNC_metabolite_list, log_data){
+generic_boxplot <- function(FUNC_boxplot_data, FUNC_boxplot_class, FUNC_metabolite_list, FUNC_log_data){
   require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
   require(plotly)
+  
+  #browser()
   
   bp_plotlist <- list()
   
@@ -19,13 +21,13 @@ generic_boxplot <- function(FUNC_boxplot_data, FUNC_boxplot_class, FUNC_metaboli
       rename(concentration = all_of(idx_metabolite), 
              plotClass = all_of(FUNC_boxplot_class))
     
-    if(log_data == TRUE){
+    if(FUNC_log_data == TRUE){
       temp_plot_data$concentration <- log(temp_plot_data$concentration+1)
     }
     
     
     # repare plot_ly attributes
-    plot_colors <- RColorBrewer::brewer.pal(name = "Set3",
+    plot_colors <- RColorBrewer::brewer.pal(name = "Set2",
                                             n = length(unique(temp_plot_data$plotClass)))
     
     
@@ -49,7 +51,7 @@ generic_boxplot <- function(FUNC_boxplot_data, FUNC_boxplot_class, FUNC_metaboli
       title = paste("concentration")
     )
     
-    if(log_data == TRUE){
+    if(FUNC_log_data == TRUE){
     y_axis_settings_scores <- list(
       zeroline = TRUE,
       showline = TRUE,
