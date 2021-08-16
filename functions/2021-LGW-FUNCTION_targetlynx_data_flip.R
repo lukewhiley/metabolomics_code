@@ -8,9 +8,9 @@ require(janitor)
 
 targetlynx_flippR <- function(FUNC_txt_file_path){
 
-  data <- read.delim(paste(FUNC_txt_file_path),
-                   sep = "\t",
-                   header=FALSE)
+flippr_func_data <- read.delim(paste(FUNC_txt_file_path),
+                               sep = "\t",
+                               header=FALSE)
 
 #find the row which contains the column numbers
 for(idx_row in 1:10){
