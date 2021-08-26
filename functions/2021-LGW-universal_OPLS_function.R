@@ -1,9 +1,22 @@
 #ANPC Lipidomics opls quality control visualisation
 
-# FUNC_individual_multivariate_data = data containing individual lipid data - MUST CONTAIN sampleID column 
-# FUNC_colour_by = how to colour the plot (e.g. sample class, is_ltr or cohort)
-# FUNC_plot label = what to label the scores plot with (e.g. sampleID)
-# FUNC_scaling = UV or Pareto
+## REQUIRED PACKAGES
+
+# -> metabom8 (github.com/tkimhofer)
+# -> tidyverse
+# -> RColorBrewer
+# -> plotly
+
+
+## REQUIRED ARGUMENTS
+
+# -> FUNC_individual_multivariate_data = a tibble or data fram containng data
+# -> FUNC_opls_y = column name for column containing class data as y in OPLS-DA
+# -> FUNC_metabolite_list = array of metabolites to use - must match appropiate column names
+# -> FUNC_colour_by = column name for column containing ccharacter string or factor to colour OPLS-DA 
+# -> FUNC_plot_label = column name for column containing ccharacter string or factor to label OPLS-DA plotly
+# -> FUNC_scaling = scaling argument for metabom8 - only use UV or Pareto
+
 
 lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabolite_list, FUNC_colour_by, FUNC_plot_label, FUNC_scaling){
   require(metabom8)
