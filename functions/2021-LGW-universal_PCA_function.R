@@ -13,14 +13,16 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
   
   #browser()
   
+  title_text <- "PCA"
+  
   #create data matrix for PCA
   pca_x <- FUNC_individual_multivariate_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
-  pca_x <- log(pca_x)
-  title_text <- "PCA"
-  pca_x[pca_x == 0] <- NA #remove all 0 values
+  pca_x[pca_x == 1] <- NA #remove all 0 values (above adds 1 to all values therefore anything that = 1 was a 0)
   pca_x[is.infinite(pca_x)] <- NA #remove all infinite values
   min_value <- min(pca_x, na.rm = TRUE) # find the lowest value in the matrix
-  pca_x[is.na(pca_x)] <- min_value # replace all NA, Inf, and 0 values with the lowest value in the matrix
+  pca_x[is.na(pca_x)] <- min_value/100 # replace all NA, Inf, and 0 values with the lowest value in the matrix/100 to represent a value below limit of detection
+  
+  pca_x <- log(pca_x) #log values for plotting
   
   #create PCA model
   pca_model <- pca(pca_x, pc=2, scale = paste(FUNC_scaling), center = TRUE)
