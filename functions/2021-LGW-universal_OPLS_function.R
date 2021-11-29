@@ -56,7 +56,9 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
   #produce plot_ly opls scores plot
   
   # set plot attributes (controlled by FUNC_colour_by and FUNC_plot_label)
-  opls_colour <- FUNC_individual_multivariate_data %>% select(all_of(FUNC_colour_by)) %>% as.matrix()
+  opls_colour <- FUNC_individual_multivariate_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
+  colnames(opls_colour) <- "opls_colour" 
+  opls_colour <- opls_colour$opls_colour
   opls_colour[is.na(opls_colour)] <- "none"
   opls_plot_label <- FUNC_individual_multivariate_data %>% 
     select(all_of(FUNC_plot_label)) %>% 
@@ -67,8 +69,10 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
   plot_Val$opls_colour <- c(opls_colour)
   plot_Val$opls_plot_label <- c(opls_plot_label)
   
-  plot_colors <- RColorBrewer::brewer.pal(name = "Set2",
-                                          n = length(unique(opls_colour)))
+  plot_colors <- RColorBrewer::brewer.pal(#name = "Set2",
+                                          n = length(unique(opls_colour)),
+                                          "BrBG")
+  
   
   x_axis_settings_scores <- list(
     zeroline = TRUE,
@@ -98,7 +102,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                        colors = c(plot_colors[1:length(unique(opls_colour))]), 
                         marker = list(size = 10, 
                                       #color = '#1E90FF', 
-                                      opacity = 0.5,
+                                      opacity = 1,
                                       line = list(
                                         color = '#000000',
                                         width = 1)
@@ -148,7 +152,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                              titleY = TRUE
   ) %>% layout(showlegend = TRUE, title =  "")
   
-  plotly_loadings_data %>% arrange(desc(p1)) %>% kable() %>% print()
+  plotly_loadings_data %>% arrange(desc(p1)) %>% knitr::kable() %>% print()
   
   combined_plotly
   

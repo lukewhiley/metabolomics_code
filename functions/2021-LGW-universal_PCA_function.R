@@ -37,7 +37,9 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
   #produce plot_ly PCA scores plot
   
   # set plot attributes (controlled by FUNC_colour_by and FUNC_plot_label)
-  pca_colour <- FUNC_individual_multivariate_data %>% select(all_of(FUNC_colour_by)) %>% as.matrix()
+  pca_colour <- FUNC_individual_multivariate_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
+  colnames(pca_colour) <- "pca_colour" 
+  pca_colour <- pca_colour$pca_colour
   pca_colour[is.na(pca_colour)] <- "none"
   pca_plot_label <- FUNC_individual_multivariate_data %>% 
     select(all_of(FUNC_plot_label)) %>% 
