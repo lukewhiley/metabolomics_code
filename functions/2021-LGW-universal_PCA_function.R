@@ -48,8 +48,9 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
   plot_Val$pca_colour <- c(pca_colour)
   plot_Val$pca_plot_label <- c(pca_plot_label)
   
-  plot_colors <- RColorBrewer::brewer.pal(name = "Set2",
-                                          n = length(unique(pca_colour)))
+  plot_colors <- RColorBrewer::brewer.pal(#name = "Dark2",
+                                          n = length(unique(pca_colour)),
+                                          "BrBG")
   
   x_axis_settings_scores <- list(
     zeroline = TRUE,
@@ -79,7 +80,7 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
                        colors = c(plot_colors[1:length(unique(pca_colour))]), 
                         marker = list(size = 10, 
                                       #color = '#1E90FF', 
-                                      opacity = 0.5,
+                                      opacity = 1,
                                       line = list(
                                         color = '#000000',
                                         width = 1)
