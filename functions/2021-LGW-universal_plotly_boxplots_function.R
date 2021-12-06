@@ -2,8 +2,7 @@
 
 #log_data = TRUE/FALSE
 
-lgw_generic_boxplot <- function(FUNC_data, FUNC_metabolite_list, FUNC_HEADER_class, FUNC_OPTION_log_data){
-  require(metabom8)
+lgw_plotly_boxplot <- function(FUNC_data, FUNC_metabolite_list, FUNC_HEADER_class, FUNC_OPTION_log_data){
   require(RColorBrewer)
   require(tidyverse)
   require(plotly)

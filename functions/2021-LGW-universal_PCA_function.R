@@ -5,7 +5,13 @@
 # FUNC_plot label = what to label the scores plot with (e.g. sampleID)
 # FUNC_scaling = UV or Pareto
 
-lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUNC_colour_by, FUNC_plot_label, FUNC_scaling){
+lgw_pca <- function(FUNC_individual_multivariate_data, 
+                    FUNC_metabolite_list, 
+                    FUNC_colour_by, 
+                    FUNC_plot_label, 
+                    FUNC_scaling,
+                    FUNC_title,
+                    FUNC_project_colours){
   require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
@@ -41,6 +47,15 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
   colnames(pca_colour) <- "pca_colour" 
   pca_colour <- pca_colour$pca_colour
   pca_colour[is.na(pca_colour)] <- "none"
+  
+  #set colours
+  plot_colours <- FUNC_project_colours
+  
+  # plot_colors <- RColorBrewer::brewer.pal(#name = "Dark2",
+  #   n = length(unique(pca_colour)),
+  #   "BrBG")
+  
+  #scores plot label
   pca_plot_label <- FUNC_individual_multivariate_data %>% 
     select(all_of(FUNC_plot_label)) %>% 
     as.matrix()
@@ -49,11 +64,9 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
   plot_Val <- as_tibble(cbind(PC1, PC2))
   plot_Val$pca_colour <- c(pca_colour)
   plot_Val$pca_plot_label <- c(pca_plot_label)
+
   
-  plot_colors <- RColorBrewer::brewer.pal(#name = "Dark2",
-                                          n = length(unique(pca_colour)),
-                                          "BrBG")
-  
+  #axis settings
   x_axis_settings_scores <- list(
     zeroline = TRUE,
     showline = TRUE,
@@ -79,7 +92,8 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
                        y = ~PC2, 
                        text = ~pca_plot_label, 
                        color = ~pca_colour, 
-                       colors = c(plot_colors[1:length(unique(pca_colour))]), 
+                       #colors = c(plot_colors[1:length(unique(pca_colour))]), 
+                       colors = plot_colours,
                         marker = list(size = 10, 
                                       #color = '#1E90FF', 
                                       opacity = 1,
@@ -118,6 +132,7 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
                              x = ~PC1, 
                              y = ~PC2, 
                              text = ~variable, 
+                             color = "Metabolite", 
                              marker = list(size = 10, color = '#808080', opacity = 0.5,
                                            line = list(color = '#000000', width = 1)
                              )) %>% 
@@ -130,7 +145,7 @@ lgw_pca <- function(FUNC_individual_multivariate_data, FUNC_metabolite_list, FUN
                              margin = c(0.05, 0.05, 0.01, 0.01),
                              titleX = TRUE,
                              titleY = TRUE
-  ) %>% layout(showlegend = TRUE, title =  "")
+  ) %>% layout(showlegend = TRUE, title = FUNC_title)
   
 
   combined_plotly
