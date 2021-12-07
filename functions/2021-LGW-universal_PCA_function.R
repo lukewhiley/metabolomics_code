@@ -5,7 +5,7 @@
 # FUNC_plot label = what to label the scores plot with (e.g. sampleID)
 # FUNC_scaling = UV or Pareto
 
-lgw_pca <- function(FUNC_individual_multivariate_data, 
+lgw_pca <- function(FUNC_data, 
                     FUNC_metabolite_list, 
                     FUNC_colour_by, 
                     FUNC_plot_label, 

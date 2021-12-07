@@ -2,7 +2,7 @@
 
 lgw_kw_dunn <- function(FUNC_data,
                         FUNC_metabolite_list,
-                        FUNC_groups_header){
+                        FUNC_HEADER_class){
   require(rstatix)
   
   #browser()
@@ -15,7 +15,7 @@ lgw_kw_dunn <- function(FUNC_data,
   dunn_out <- NULL
   
   for(idx_lipid in FUNC_metabolite_list){
-    temp_data <- FUNC_data %>% select(all_of(FUNC_groups_header), all_of(idx_lipid))
+    temp_data <- FUNC_data %>% select(all_of(FUNC_HEADER_class), all_of(idx_lipid))
     colnames(temp_data) <- c("class", "data")
     temp_kw_result <- kruskal.test(data ~ class, data = temp_data)
     temp_dunn_result <- rstatix::dunn_test(data = temp_data, 

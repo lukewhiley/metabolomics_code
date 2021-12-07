@@ -16,9 +16,18 @@
 # -> FUNC_colour_by = column name for column containing character string or factor to colour OPLS-DA 
 # -> FUNC_plot_label = column name for column containing character string or factor to label OPLS-DA plotly
 # -> FUNC_scaling = scaling argument for metabom8 - only use UV or Pareto
+# -> FUNC_title = title for OPLS-DA plot
+# -> FUNC_project_colours = array of colours - must match length of unique number of groups
 
 
-lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabolite_list, FUNC_colour_by, FUNC_plot_label, FUNC_scaling){
+lgw_opls <- function(FUNC_data, 
+                     FUNC_opls_y, 
+                     FUNC_metabolite_list, 
+                     FUNC_colour_by, 
+                     FUNC_plot_label, 
+                     FUNC_scaling,
+                     FUNC_title,
+                     FUNC_project_colours){
   require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
@@ -60,6 +69,16 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
   colnames(opls_colour) <- "opls_colour" 
   opls_colour <- opls_colour$opls_colour
   opls_colour[is.na(opls_colour)] <- "none"
+  
+  #set colours
+  plot_colours <- FUNC_project_colours
+  
+  # plot_colors <- RColorBrewer::brewer.pal(#name = "Set2",
+  #                                         n = length(unique(opls_colour)),
+  #                                         "BrBG")
+  
+  
+  #scores plot label
   opls_plot_label <- FUNC_individual_multivariate_data %>% 
     select(all_of(FUNC_plot_label)) %>% 
     as.matrix()
@@ -69,9 +88,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
   plot_Val$opls_colour <- c(opls_colour)
   plot_Val$opls_plot_label <- c(opls_plot_label)
   
-  plot_colors <- RColorBrewer::brewer.pal(#name = "Set2",
-                                          n = length(unique(opls_colour)),
-                                          "BrBG")
+
   
   
   x_axis_settings_scores <- list(
@@ -99,7 +116,7 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                        y = ~PC2, 
                        text = ~opls_plot_label, 
                        color = ~opls_colour, 
-                       colors = c(plot_colors[1:length(unique(opls_colour))]), 
+                       colors = FUNC_project_colours, 
                         marker = list(size = 10, 
                                       #color = '#1E90FF', 
                                       opacity = 1,
@@ -137,7 +154,8 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                              data = plotly_loadings_data, 
                              x = ~Cd, 
                              y = ~p1, 
-                             text = ~id, 
+                             text = ~id,
+                             color = "Metabolite",
                              marker = list(size = 10, color = '#808080', opacity = 0.5,
                                            line = list(color = '#000000', width = 1)
                              )) %>% 
@@ -150,7 +168,8 @@ lgw_opls <- function(FUNC_individual_multivariate_data, FUNC_opls_y, FUNC_metabo
                              margin = c(0.05, 0.05, 0.01, 0.01),
                              titleX = TRUE,
                              titleY = TRUE
-  ) %>% layout(showlegend = TRUE, title =  "")
+  ) %>% layout(showlegend = TRUE, 
+               title =  FUNC_title)
   
   plotly_loadings_data %>% arrange(desc(p1)) %>% knitr::kable() %>% print()
   

@@ -4,7 +4,8 @@ lgw_ggplot_boxplot <- function(FUNC_data,
                                FUNC_metabolite_list, 
                                FUNC_HEADER_class, 
                                FUNC_HEADER_colour,
-                               FUNC_OPTION_log_data){
+                               FUNC_OPTION_log_data
+                               ){
   
   #required packages
   require(RColorBrewer)
@@ -53,6 +54,7 @@ lgw_ggplot_boxplot <- function(FUNC_data,
       #       legend.text = element_text(color = "black", size = 40),
       #       legend.key.size = unit(2, "cm"))
     
+    bp$labels$colour <- paste0(FUNC_HEADER_colour)
     bp_plotlist[idx_metabolite] <- list(bp)
   }
   
