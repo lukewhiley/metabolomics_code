@@ -1,6 +1,6 @@
 #ANPC Lipidomics PCA quality control visualisation
 
-# FUNC_individual_multivariate_data = data containing individual lipid data - MUST CONTAIN sampleID column 
+# FUNC_data = data containing individual lipid data - MUST CONTAIN sampleID column 
 # FUNC_colour_by = how to colour the plot (e.g. sample class, is_ltr or cohort)
 # FUNC_plot label = what to label the scores plot with (e.g. sampleID)
 # FUNC_scaling = UV or Pareto
@@ -22,7 +22,7 @@ lgw_pca <- function(FUNC_data,
   title_text <- "PCA"
   
   #create data matrix for PCA
-  pca_x <- FUNC_individual_multivariate_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
+  pca_x <- FUNC_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
   pca_x[pca_x == 1] <- NA #remove all 0 values (above adds 1 to all values therefore anything that = 1 was a 0)
   pca_x[is.infinite(pca_x)] <- NA #remove all infinite values
   min_value <- min(pca_x, na.rm = TRUE) # find the lowest value in the matrix
@@ -43,7 +43,7 @@ lgw_pca <- function(FUNC_data,
   #produce plot_ly PCA scores plot
   
   # set plot attributes (controlled by FUNC_colour_by and FUNC_plot_label)
-  pca_colour <- FUNC_individual_multivariate_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
+  pca_colour <- FUNC_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
   colnames(pca_colour) <- "pca_colour" 
   pca_colour <- pca_colour$pca_colour
   pca_colour[is.na(pca_colour)] <- "none"
@@ -56,7 +56,7 @@ lgw_pca <- function(FUNC_data,
   #   "BrBG")
   
   #scores plot label
-  pca_plot_label <- FUNC_individual_multivariate_data %>% 
+  pca_plot_label <- FUNC_data %>% 
     select(all_of(FUNC_plot_label)) %>% 
     as.matrix()
   

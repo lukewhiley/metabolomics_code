@@ -10,7 +10,7 @@
 
 ## REQUIRED ARGUMENTS
 
-# -> FUNC_individual_multivariate_data = a tibble or data from containing data
+# -> FUNC_data = a tibble or data from containing data
 # -> FUNC_opls_y = column name for column containing class data as y in OPLS-DA
 # -> FUNC_metabolite_list = array of metabolites to use - must match appropiate column names
 # -> FUNC_colour_by = column name for column containing character string or factor to colour OPLS-DA 
@@ -27,7 +27,8 @@ lgw_opls <- function(FUNC_data,
                      FUNC_plot_label, 
                      FUNC_scaling,
                      FUNC_title,
-                     FUNC_project_colours){
+                     FUNC_project_colours,
+                     FUNC_max_orth){
   require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
@@ -36,7 +37,7 @@ lgw_opls <- function(FUNC_data,
   #browser()
   
   #create data matrix for opls
-  opls_x <- FUNC_individual_multivariate_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
+  opls_x <- FUNC_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
   opls_x <- log(opls_x)
   title_text <- "opls"
   opls_x[opls_x == 0] <- NA #remove all 0 values
@@ -47,8 +48,9 @@ lgw_opls <- function(FUNC_data,
   #create opls model
   opls_model <- opls(X = opls_x, 
                      Y = FUNC_opls_y,
-                     scale = paste(FUNC_scaling), 
-                     center = TRUE)
+                     scale = paste(FUNC_scaling),
+                     center = TRUE,
+                     maxPCo = (FUNC_max_orth +1))
   
   # extract score values for plotting in plot_ly
   PC1 <- as.numeric(as.matrix(opls_model@t_pred))
@@ -65,7 +67,7 @@ lgw_opls <- function(FUNC_data,
   #produce plot_ly opls scores plot
   
   # set plot attributes (controlled by FUNC_colour_by and FUNC_plot_label)
-  opls_colour <- FUNC_individual_multivariate_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
+  opls_colour <- FUNC_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
   colnames(opls_colour) <- "opls_colour" 
   opls_colour <- opls_colour$opls_colour
   opls_colour[is.na(opls_colour)] <- "none"
@@ -79,7 +81,7 @@ lgw_opls <- function(FUNC_data,
   
   
   #scores plot label
-  opls_plot_label <- FUNC_individual_multivariate_data %>% 
+  opls_plot_label <- FUNC_data %>% 
     select(all_of(FUNC_plot_label)) %>% 
     as.matrix()
   
