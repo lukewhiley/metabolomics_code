@@ -1,4 +1,4 @@
-#ANPC Lipidomics PCA quality control visualisation
+#ANPC PCA quality control visualisation
 
 # FUNC_data = data containing individual lipid data - MUST CONTAIN sampleID column 
 # FUNC_colour_by = how to colour the plot (e.g. sample class, is_ltr or cohort)
@@ -17,6 +17,8 @@ lgw_pca <- function(FUNC_data,
   require(tidyverse)
   require(plotly)
   
+  pca_output <- list()
+  
   #browser()
   
   title_text <- "PCA"
@@ -31,14 +33,14 @@ lgw_pca <- function(FUNC_data,
   pca_x <- log(pca_x) #log values for plotting
   
   #create PCA model
-  pca_model <- pca(pca_x, pc=2, scale = paste(FUNC_scaling), center = TRUE)
+  pca_output$pca_model <- pca(pca_x, pc=2, scale = paste(FUNC_scaling), center = TRUE)
   
   # extract score values for plotting in plot_ly
-  PC1 <- as.numeric(as.matrix(pca_model@t[,1]))
-  PC2 <- as.numeric(as.matrix(pca_model@t[,2]))
+  PC1 <- as.numeric(as.matrix(pca_output$pca_model@t[,1]))
+  PC2 <- as.numeric(as.matrix(pca_output$pca_model@t[,2]))
   
   # extract loadings values for plotting in plot_ly
-  plotly_loadings_data <- pca_model@p %>% as_tibble(rownames = "variable") %>% rename(PC1 = V1, PC2 = V2)
+  plotly_loadings_data <- pca_output$pca_model@p %>% as_tibble(rownames = "variable") %>% rename(PC1 = V1, PC2 = V2)
 
   #produce plot_ly PCA scores plot
   
@@ -50,11 +52,7 @@ lgw_pca <- function(FUNC_data,
   
   #set colours
   plot_colours <- FUNC_project_colours
-  
-  # plot_colors <- RColorBrewer::brewer.pal(#name = "Dark2",
-  #   n = length(unique(pca_colour)),
-  #   "BrBG")
-  
+
   #scores plot label
   pca_plot_label <- FUNC_data %>% 
     select(all_of(FUNC_plot_label)) %>% 
@@ -73,7 +71,7 @@ lgw_pca <- function(FUNC_data,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
-    title = paste("PC1 (", round(pca_model@Parameters$R2[1]*100,1), " %)", sep = "")
+    title = paste("PC1 (", round(pca_output$pca_model@Parameters$R2[1]*100,1), " %)", sep = "")
   )
   
   y_axis_settings_scores <- list(
@@ -82,10 +80,10 @@ lgw_pca <- function(FUNC_data,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
-    title = paste("PC2 (", round(pca_model@Parameters$R2[2]*100,1), " %)", sep = "")
+    title = paste("PC2 (", round(pca_output$pca_model@Parameters$R2[2]*100,1), " %)", sep = "")
   )
   
- plotly_pca <- plot_ly(type = "scatter", 
+  pca_output$plot_scores <- plot_ly(type = "scatter", 
                        mode = "markers", 
                        data = plot_Val, 
                        x = ~PC1, 
@@ -101,9 +99,14 @@ lgw_pca <- function(FUNC_data,
                                         color = '#000000',
                                         width = 1)
                         )) %>% 
-    layout(title = paste(" Plotly PCA - ", title_text, sep = ""),
+    layout(
+      title = paste(" Plotly PCA - ", title_text, sep = ""),
            xaxis = x_axis_settings_scores,
-           yaxis = y_axis_settings_scores)
+           yaxis = y_axis_settings_scores,
+           showlegend = TRUE, 
+           margin = list(l = 65, r = 50, b=65, t=85),
+           title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
+           )
   
  
  
@@ -126,7 +129,7 @@ lgw_pca <- function(FUNC_data,
     title = paste("")
   )
   
-  plotly_loadings <- plot_ly(type = "scatter", 
+  pca_output$plot_loadings <- plot_ly(type = "scatter", 
                              mode = "markers", 
                              data = plotly_loadings_data, 
                              x = ~PC1, 
@@ -136,18 +139,26 @@ lgw_pca <- function(FUNC_data,
                              marker = list(size = 10, color = '#808080', opacity = 0.5,
                                            line = list(color = '#000000', width = 1)
                              )) %>% 
-    layout(title = paste(" Plotly PCA - ", title_text, sep = ""),
+    layout(
            xaxis = x_axis_settings_loading,
-           yaxis = y_axis_settings_loading
+           yaxis = y_axis_settings_loading,
+           showlegend = TRUE, 
+           margin = list(l = 65, r = 50, b=65, t=85),
+           title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
     )
   
-  combined_plotly <- subplot(plotly_pca, plotly_loadings, 
-                             margin = c(0.05, 0.05, 0.01, 0.01),
+  pca_output$plot_combined <- subplot(pca_output$plot_scores, 
+                                      pca_output$plot_loadings, 
+                             nrows = 1,
+                             margin = 0.05,
                              titleX = TRUE,
                              titleY = TRUE
-  ) %>% layout(showlegend = TRUE, title = FUNC_title)
+  ) %>% layout(showlegend = TRUE, 
+               margin = list(l = 65, r = 50, b=65, t=85),
+               title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
+  )
   
 
-  combined_plotly
+  pca_output
 
 }

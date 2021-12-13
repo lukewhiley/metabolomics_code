@@ -34,38 +34,50 @@ lgw_opls <- function(FUNC_data,
   require(tidyverse)
   require(plotly)
   
+  opls_output <- list()
+  
   #browser()
   
   #create data matrix for opls
   opls_x <- FUNC_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
   opls_x <- log(opls_x)
-  title_text <- "opls"
   opls_x[opls_x == 0] <- NA #remove all 0 values
   opls_x[is.infinite(opls_x)] <- NA #remove all infinite values
   min_value <- min(opls_x, na.rm = TRUE) # find the lowest value in the matrix
   opls_x[is.na(opls_x)] <- min_value # replace all NA, Inf, and 0 values with the lowest value in the matrix
   
+  opls_y = FUNC_opls_y
+  
   #create opls model
-  opls_model <- opls(X = opls_x, 
-                     Y = FUNC_opls_y,
-                     scale = paste(FUNC_scaling),
-                     center = TRUE,
-                     maxPCo = (FUNC_max_orth +1))
+  capture.output(
+    suppressMessages(
+      opls_output$opls_model <- 
+    opls(X = opls_x, 
+         Y = opls_y,
+         scale = paste(FUNC_scaling),
+         center = TRUE,
+         maxPCo = (FUNC_max_orth +1))
+  ))
   
   # extract score values for plotting in plot_ly
-  PC1 <- as.numeric(as.matrix(opls_model@t_pred))
-  PC2 <- as.numeric(as.matrix(opls_model@t_orth))
+  PC1 <- as.numeric(as.matrix(opls_output$opls_model@t_pred))
+  PC2 <- as.numeric(as.matrix(opls_output$opls_model@t_orth))
   
   # extract loadings values for plotting in plot_ly
  
-    eruption_model <- eruption(mod = opls_model, 
-                             pc = 1,
-                             p_adj = "BH")
+  capture.output(
+    suppressMessages(  
+      opls_output$eruption_model <- 
+        eruption(mod = opls_output$opls_model, 
+               pc = 1,
+               p_adj = "BH")
+    )
+  )
     
-    plotly_loadings_data <- eruption_model$data %>% as_tibble() 
+    plotly_loadings_data <- opls_output$eruption_model$data %>% as_tibble() 
   
   #produce plot_ly opls scores plot
-  
+    
   # set plot attributes (controlled by FUNC_colour_by and FUNC_plot_label)
   opls_colour <- FUNC_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
   colnames(opls_colour) <- "opls_colour" 
@@ -74,11 +86,6 @@ lgw_opls <- function(FUNC_data,
   
   #set colours
   plot_colours <- FUNC_project_colours
-  
-  # plot_colors <- RColorBrewer::brewer.pal(#name = "Set2",
-  #                                         n = length(unique(opls_colour)),
-  #                                         "BrBG")
-  
   
   #scores plot label
   opls_plot_label <- FUNC_data %>% 
@@ -90,9 +97,7 @@ lgw_opls <- function(FUNC_data,
   plot_Val$opls_colour <- c(opls_colour)
   plot_Val$opls_plot_label <- c(opls_plot_label)
   
-
-  
-  
+  #scores axis settings
   x_axis_settings_scores <- list(
     zeroline = TRUE,
     showline = TRUE,
@@ -111,7 +116,8 @@ lgw_opls <- function(FUNC_data,
     title = paste("t_orth", sep = "")
   )
   
- plotly_opls <- plot_ly(type = "scatter", 
+  #create plotly 
+  opls_output$plot_scores <- plot_ly(type = "scatter", 
                        mode = "markers", 
                        data = plot_Val, 
                        x = ~PC1, 
@@ -126,10 +132,16 @@ lgw_opls <- function(FUNC_data,
                                         color = '#000000',
                                         width = 1)
                         )) %>% 
-    layout(title = paste(" Plotly opls - ", title_text, sep = ""),
-           xaxis = x_axis_settings_scores,
-           yaxis = y_axis_settings_scores)
-  
+    layout(
+      xaxis = x_axis_settings_scores,
+      yaxis = y_axis_settings_scores,
+      showlegend = TRUE, 
+      margin = list(l = 65, r = 50, b=65, t=85),
+      title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
+                     signif(opls_output$opls_model@summary$R2X[1],2)
+      )
+    )
+  # 
  
  
  # create loadings plot
@@ -151,32 +163,45 @@ lgw_opls <- function(FUNC_data,
     title = paste("")
   )
   
-  plotly_loadings <- plot_ly(type = "scatter", 
-                             mode = "markers", 
-                             data = plotly_loadings_data, 
-                             x = ~Cd, 
-                             y = ~p1, 
-                             text = ~id,
-                             color = "Metabolite",
-                             marker = list(size = 10, color = '#808080', opacity = 0.5,
-                                           line = list(color = '#000000', width = 1)
-                             )) %>% 
-    layout(title = paste(" Plotly opls - ", title_text, sep = ""),
-           xaxis = x_axis_settings_loading,
-           yaxis = y_axis_settings_loading
+  opls_output$plot_loadings <- plot_ly(type = "scatter", 
+                                       mode = "markers", 
+                                       data = plotly_loadings_data, 
+                                       x = ~Cd, 
+                                       y = ~p1, 
+                                       text = ~id,
+                                       color = "Metabolite",
+                                       marker = list(size = 10, color = '#808080', opacity = 0.5,
+                                                     line = list(color = '#000000', width = 1)
+                                       )) %>% 
+    layout(
+      xaxis = x_axis_settings_loading,
+      yaxis = y_axis_settings_loading,
+      showlegend = TRUE, 
+      margin = list(l = 65, r = 50, b=65, t=85),
+      title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
+                     signif(opls_output$opls_model@summary$R2X[1],2)
+      )
+    )
+
+  
+  opls_output$plot_combined <- subplot(
+    opls_output$plot_scores, 
+    opls_output$plot_loadings, 
+    nrows = 1,
+    margin = 0.05,
+    titleX = TRUE,
+    titleY = TRUE
+  ) %>% 
+    layout(
+      showlegend = TRUE, 
+      margin = list(l = 65, r = 50, b=65, t=85),
+      title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
+                     signif(opls_output$opls_model@summary$R2X[1],2)
+                     )
     )
   
-  combined_plotly <- subplot(plotly_opls, plotly_loadings, 
-                             margin = c(0.05, 0.05, 0.01, 0.01),
-                             titleX = TRUE,
-                             titleY = TRUE
-  ) %>% layout(showlegend = TRUE, 
-               title =  FUNC_title)
+  opls_output$data_eruption <- plotly_loadings_data %>% arrange(desc(p1))
   
-  plotly_loadings_data %>% arrange(desc(p1)) %>% knitr::kable() %>% print()
+  opls_output
   
-  combined_plotly
-  
-  
-
 }

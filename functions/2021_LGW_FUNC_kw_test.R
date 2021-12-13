@@ -3,7 +3,7 @@
 lgw_kw_dunn <- function(FUNC_data,
                         FUNC_metabolite_list,
                         FUNC_HEADER_class){
-  require(rstatix)
+  #require(rstatix)
   
   #browser()
   
