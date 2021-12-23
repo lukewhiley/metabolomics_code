@@ -21,7 +21,7 @@ lgw_pca <- function(FUNC_data,
   
   #browser()
   
-  title_text <- "PCA"
+  title_text <- FUNC_title
   
   #create data matrix for PCA
   pca_x <- FUNC_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
@@ -92,18 +92,20 @@ lgw_pca <- function(FUNC_data,
                        color = ~pca_colour, 
                        #colors = c(plot_colors[1:length(unique(pca_colour))]), 
                        colors = plot_colours,
-                        marker = list(size = 10, 
+                       legendgroup = ~pca_colour,
+                       showlegend = NULL,
+                       marker = list(size = 10, 
                                       #color = '#1E90FF', 
                                       opacity = 1,
                                       line = list(
                                         color = '#000000',
                                         width = 1)
-                        )) %>% 
+                                     )) %>% 
     layout(
-      title = paste(" Plotly PCA - ", title_text, sep = ""),
+      title = paste("PCA - ", title_text, sep = ""),
            xaxis = x_axis_settings_scores,
            yaxis = y_axis_settings_scores,
-           showlegend = TRUE, 
+           #showlegend = TRUE, 
            margin = list(l = 65, r = 50, b=65, t=85),
            title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
            )

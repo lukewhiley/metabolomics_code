@@ -1,6 +1,9 @@
+require(ggplot2)
+require(tidyverse)
+
 lgw_colour_pie <- function(){
-  
-  colour_pie <- c(
+
+    colour_pie <- c(
     "dodgerblue2", 
     "#E31A1C", 
     "green4",
@@ -28,14 +31,32 @@ lgw_colour_pie <- function(){
     "darkorange4", 
     "brown"
   )
+    
+    pie_data <- rep(1,26) %>% as_tibble() %>% add_column("idx" = seq(1:26))
 
-pie(rep(1, 26), col = colour_pie)
+#pie(rep(1, 26), col = colour_pie)
 
-# print(paste0("what ", FUNC_number_of_groups, " colours do you want to use? Seperate each one with a comma"))
-# user_input <- readline()
-# 
-# colour_choice <- colour_pie[user_input]
-# 
-# pie(rep(1, FUNC_number_of_groups), col = colour_choice)
+pie_plot <- ggplot(pie_data, aes(x="", y=as.factor(value), fill=as.factor(idx)))+
+            geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start=0) +
+  scale_fill_manual(values = rev(c(colour_pie))) +
+  #theme_minimal() +
+  geom_text(aes(y = value/2 + c(0, cumsum(value)[-length(value)]), 
+                label = idx), nudge_x = 0.6, size=2)+
+  labs(title = "choose colours from pie",
+       x = "", y ="") +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 0.5,
+                                  size = 6),
+                                  axis.line = element_blank(), 
+                                  panel.grid.major = element_blank(), 
+                                  panel.grid.minor = element_blank(),
+                                  panel.background = element_rect(fill = "white"),
+                                  axis.ticks = element_blank()
+  )
+  
+
+pie_plot
+
 
 }
