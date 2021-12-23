@@ -125,17 +125,17 @@ lgw_opls <- function(FUNC_data,
                        text = ~opls_plot_label, 
                        color = ~opls_colour, 
                        colors = FUNC_project_colours, 
-                        marker = list(size = 10, 
-                                      #color = '#1E90FF', 
-                                      opacity = 1,
-                                      line = list(
-                                        color = '#000000',
-                                        width = 1)
+                       legendgroup = ~opls_colour,
+                       marker = list(size = 10, 
+                                     #color = '#1E90FF', 
+                                     opacity = 1,
+                                     line = list(
+                                       color = '#000000',
+                                       width = 1)
                         )) %>% 
     layout(
       xaxis = x_axis_settings_scores,
       yaxis = y_axis_settings_scores,
-      showlegend = TRUE, 
       margin = list(l = 65, r = 50, b=65, t=85),
       title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
                      signif(opls_output$opls_model@summary$R2X[1],2)
