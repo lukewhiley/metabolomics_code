@@ -95,28 +95,21 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                       alpha=0.05)  +
       geom_jitter(aes(color = get(FUNC_HEADER_colour)), 
                   width = 0.01,
-                  size = 1)
-                  #size = 1)
+                  size = 3)
     bp <- bp + labs(x = paste(""), y = paste(y_axis_title))
     bp <- bp +   ggtitle(idx_metabolite)
     bp <- bp +  theme_cowplot() 
     bp <- bp +  theme(plot.title = element_text(hjust = 0.5)) 
-    bp <- bp +  theme(plot.title = element_text(size=5)) 
-    bp <- bp +  theme(axis.text.y = element_text(size = 5, margin = margin(t = 0, r = 0, b = 0, l = 2)))
-    bp <- bp +  theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1))
-    bp <- bp + theme(axis.title = element_text(size = 5)) 
+    bp <- bp +  theme(plot.title = element_text(size=15)) 
+    bp <- bp +  theme(axis.text.y=element_text(size = 15, margin = margin(t = 0, r = 0, b = 0, l = 2)))
+    bp <- bp + theme(axis.title = element_text(size = 15)) 
     bp$labels$colour <- paste0(FUNC_HEADER_colour) %>% str_to_title()
     
     
   #add significance to plot
   
     bp <- bp + stat_compare_means(comparisons = dunn_test_comparisons,
-                                  label = "p.signif",
-                                  size = 2
-                                  #label.y = 1
-    )
-  
-    
+                                  label = "p.signif")
     # bp <- bp + stat_compare_means(method = FUNC_OPTION_compare_means_method,
     #                               label.y = ggplot_build(bp)$layout$panel_scales_y[[1]]$range$range[2]+0.5,
     #                               label.x.npc = 0.2)
@@ -124,11 +117,11 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     
     # bp <- bp + theme(axis.text.x = element_blank()) 
      bp <- bp + theme(legend.position = "right",
-            legend.title = element_text(color = "black", size = 5),
-           legend.text = element_text(color = "black", size = 5))
+            legend.title = element_text(color = "black", size = 15),
+           legend.text = element_text(color = "black", size = 15))
            #legend.key.size = unit(2, "cm"))
     
-    bp_plotlist[[idx_metabolite]]$BP <- bp
+    bp_plotlist[[idx_metabolite]]$BP <- bp %>% ggplotly()
     bp_plotlist[[idx_metabolite]]$stats <- compare_means_result
   }
   
