@@ -4,6 +4,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                                FUNC_metabolite_list, 
                                FUNC_HEADER_class, 
                                FUNC_HEADER_colour,
+                               FUNC_OPTION_colour_choice,
                                FUNC_OPTION_log_plot_data,
                                FUNC_OPTION_compare_means_method
                                ){
@@ -20,12 +21,21 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
   
   for(idx_metabolite in FUNC_metabolite_list){
    
-    #browser()
+   #browser()
     
     temp_func_data <- FUNC_data %>%
       select(all_of(FUNC_HEADER_class), all_of(FUNC_HEADER_colour), all_of(idx_metabolite)) %>%
       rename(concentration = all_of(idx_metabolite), 
              plotClass = all_of(FUNC_HEADER_class))
+    
+    
+    
+    # if function to naming fix error when FUNC_HEADER_class and FUNC_HEADER_colour are the same column
+    FUNC_HEADER_temp_colour <- FUNC_HEADER_colour
+    
+    if(FUNC_HEADER_class == FUNC_HEADER_colour){
+      FUNC_HEADER_temp_colour <- "plotClass"
+    }
     
     #compare means
     compare_means_result <- compare_means(data = temp_func_data,
@@ -35,6 +45,9 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       rename(feature = .y.)
     
     compare_means_result$feature[1] <- idx_metabolite
+    
+    #compare_means_result$p <- compare_means_result$p %>% signif(digits = 3)
+    
     
     #post-hoc comparison
     if(FUNC_OPTION_compare_means_method == "kruskal.test"){
@@ -53,7 +66,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       }
       
       #combine KW and Dunn result into a single line
-      dunn_test_q <- dunn_test_result$p.adj %>% as.data.frame() %>% t() %>% as_tibble()
+      dunn_test_q <- dunn_test_result$p.adj %>% as.data.frame() %>% t() %>% as_tibble() %>% signif(digits = 2)
       colnames(dunn_test_q) <- paste0(dunn_test_result$group1,
                                       " - ",
                                       dunn_test_result$group2)
@@ -67,7 +80,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     #SECOND box plots
     
     if(FUNC_OPTION_log_plot_data == TRUE){
-      y_axis_title <- "LOG Peak Area"
+      y_axis_title <- "LOG Peak Response"
       bp <- ggplot(data=temp_func_data,
                    aes(x=as.factor(plotClass),
                        y=log(as.numeric(concentration)))
@@ -76,7 +89,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     }
     
     if(FUNC_OPTION_log_plot_data == FALSE){
-      y_axis_title <- "Peak Area"
+      y_axis_title <- "Peak Response"
       bp <- ggplot(data=temp_func_data,
                    aes(x=as.factor(plotClass),
                        y=as.numeric(concentration))
@@ -92,10 +105,12 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                       aes(),
                       outlier.shape = NA,
                       #lwd = 1,
-                      alpha=0.05)  +
-      geom_jitter(aes(color = get(FUNC_HEADER_colour)), 
+                      alpha=0.05)  
+    bp <- bp +  geom_jitter(aes(fill = get(FUNC_HEADER_temp_colour)), 
                   width = 0.01,
-                  size = 1)
+                  size = 1,
+                  shape = 21)
+    bp <- bp + scale_fill_manual(values = c(FUNC_OPTION_colour_choice))
                   #size = 1)
     bp <- bp + labs(x = paste(""), y = paste(y_axis_title))
     bp <- bp +   ggtitle(idx_metabolite)
@@ -105,7 +120,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     bp <- bp +  theme(axis.text.y = element_text(size = 5, margin = margin(t = 0, r = 0, b = 0, l = 2)))
     bp <- bp +  theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1))
     bp <- bp + theme(axis.title = element_text(size = 5)) 
-    bp$labels$colour <- paste0(FUNC_HEADER_colour) %>% str_to_title()
+    bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
     
     
   #add significance to plot
