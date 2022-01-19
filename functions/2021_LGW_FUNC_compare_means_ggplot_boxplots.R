@@ -83,7 +83,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       y_axis_title <- "LOG Peak Response"
       bp <- ggplot(data=temp_func_data,
                    aes(x=as.factor(plotClass),
-                       y=log(as.numeric(concentration)))
+                       y=log(as.numeric(concentration)+1))
                        ) 
       bp_y_max <- temp_func_data$concentration %>% max() %>% log()
     }

@@ -19,6 +19,8 @@
 # -> FUNC_title = title for OPLS-DA plot
 # -> FUNC_project_colours = array of colours - must match length of unique number of groups
 
+# -> FUNC_data_predict = use if wanting to predict data to model - a tibble or data from containing data to predict. Set as FALSE if no predicition required
+
 
 lgw_opls <- function(FUNC_data, 
                      FUNC_opls_y, 
@@ -28,7 +30,8 @@ lgw_opls <- function(FUNC_data,
                      FUNC_scaling,
                      FUNC_title,
                      FUNC_project_colours,
-                     FUNC_max_orth){
+                     FUNC_max_orth
+                     ){
   require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
