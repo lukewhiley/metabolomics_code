@@ -10,7 +10,7 @@
 
 ## REQUIRED ARGUMENTS
 
-# -> FUNC_data = a tibble or data from containing data. Must contain headers for sample_class, sample_qc
+# -> FUNC_data = a tibble or data from containing data. Must contain headers for sample_class, sample_type
 # -> FUNC_opls_class = an array of 2 string descriptors of the classes for OPLS-DA (e.g. "healthy", "control")
 # -> FUNC_opls_y = column name for column containing class data as y in OPLS-DA
 # -> FUNC_metabolite_list = array of metabolites to use - must match appropriate column names
@@ -43,7 +43,7 @@ lgw_opls <- function(FUNC_data,
   opls_output <- list()
   
   TEMP_FUNC_opls_data <- FUNC_data %>%
-    filter(sample_qc == "sample") %>%
+    filter(sample_type == "sample") %>%
     filter(sample_class == FUNC_opls_class[1]| sample_class == FUNC_opls_class[2])
   
   #browser()
@@ -97,7 +97,7 @@ lgw_opls <- function(FUNC_data,
     if(is.character(FUNC_opls_class_predict)){
       
       TEMP_FUNC_opls_predict_data <- FUNC_data %>%
-        filter(sample_qc == "sample") %>%
+        filter(sample_type == "sample") %>%
         filter(sample_class == FUNC_opls_class_predict)
       
     opls_x_predict <- TEMP_FUNC_opls_predict_data %>%
