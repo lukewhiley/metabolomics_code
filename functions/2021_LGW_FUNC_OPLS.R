@@ -55,7 +55,7 @@ lgw_opls <- function(FUNC_data,
   capture.output(
     suppressMessages(
       opls_output$opls_model <- 
-    opls(X = opls_x, 
+    metabom8:: opls(X = opls_x, 
          Y = opls_y,
          scale = paste(FUNC_scaling),
          center = TRUE,

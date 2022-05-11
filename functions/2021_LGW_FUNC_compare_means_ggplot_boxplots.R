@@ -6,7 +6,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                                FUNC_HEADER_colour,
                                FUNC_OPTION_colour_choice,
                                FUNC_OPTION_log_plot_data,
-                               FUNC_OPTION_compare_means_method
+                               FUNC_OPTION_compare_means_method,
+                               FUNC_OPTION_plot_qc
                                ){
   
   #required packages
@@ -20,8 +21,9 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
   #compare_means_list() <- list()
   
   for(idx_metabolite in FUNC_metabolite_list){
+    #browser()
+    #print(idx_metabolite)
    
-   #browser()
     
     temp_func_data <- FUNC_data %>%
       select(all_of(FUNC_HEADER_class), all_of(FUNC_HEADER_colour), all_of(idx_metabolite)) %>%
@@ -38,7 +40,9 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     }
     
     #compare means
-    compare_means_result <- compare_means(data = temp_func_data,
+    compare_means_result <- compare_means(data = temp_func_data %>%
+                                            filter(plotClass != "qc") %>%
+                                            filter(plotClass != "QC"),
                                           concentration ~ plotClass,
                                           method = FUNC_OPTION_compare_means_method,
                                           p.adjust.method = "BH") %>%
@@ -51,7 +55,9 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     
     #post-hoc comparison
     if(FUNC_OPTION_compare_means_method == "kruskal.test"){
-      dunn_test_result <- dunn_test(data = temp_func_data,
+      dunn_test_result <- dunn_test(data = temp_func_data %>%
+                                      filter(plotClass != "qc") %>%
+                                      filter(plotClass != "QC"),
                                     concentration ~ plotClass,
                                     p.adjust.method = "BH") 
       
@@ -79,6 +85,12 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     
     #SECOND box plots
     
+    if(FUNC_OPTION_plot_qc == FALSE){
+      temp_func_data <- temp_func_data %>% 
+        filter(plotClass != "qc") %>%
+        filter(plotClass != "QC")
+    }
+    
     if(FUNC_OPTION_log_plot_data == TRUE){
       y_axis_title <- "LOG Peak Response"
       bp <- ggplot(data=temp_func_data,
@@ -96,6 +108,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       ) 
       bp_y_max <- temp_func_data$concentration %>% max() 
     }
+    
+   
     
     
     # bp <- ggplot(data=temp_plot_data,
@@ -144,6 +158,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
            #legend.key.size = unit(2, "cm"))
     
     bp_plotlist[[idx_metabolite]]$BP <- bp
+    #View(compare_means_result)
     bp_plotlist[[idx_metabolite]]$stats <- compare_means_result
   }
   
