@@ -20,6 +20,16 @@ lgw_lipid_plot <- function(FUNC_data,
   
   lipid_plot_output <- list()
   
+  #browser()
+  
+  #find max -log10 (p)
+ max_log10_p <- FUNC_data %>% 
+    select(all_of(FUNC_plot_comparisons)) %>%
+    log() %>%
+    abs() %>%
+    max()
+  
+  
   for(idx_str_data in FUNC_plot_comparisons){
   
   #browser()
@@ -105,15 +115,15 @@ lgw_lipid_plot <- function(FUNC_data,
                          )
   bp <- bp + labs(x = paste("lipid class"),
                   y = paste("sidechain"))
-  bp <- bp + ggtitle("Comparison of Dunn's Test Results")
+  bp <- bp + ggtitle(paste0("Visualisation of Kruskal Wallis post-hoc Dunn's Tests: ", idx_str_data))
   bp <- bp + theme_cowplot() 
   bp <- bp + theme(plot.title = element_text(hjust = 0.5)) 
-  bp <- bp + theme(plot.title = element_text(size=5)) 
-  bp <- bp + theme(axis.text.y = element_text(size = 5, margin = margin(t = 0, r = 0, b = 0, l = 2)))
-  bp <- bp + theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1))
-  bp <- bp + theme(axis.title = element_text(size = 5)) 
-  bp <- bp + theme(legend.title=element_text(size=5), 
-                   legend.text=element_text(size=5))
+  bp <- bp + theme(plot.title = element_text(size=10)) 
+  bp <- bp + theme(axis.text.y = element_text(size = 10, margin = margin(t = 0, r = 0, b = 0, l = 2)))
+  bp <- bp + theme(axis.text.x = element_text(size = 10, angle = 45, vjust = 1, hjust = 1))
+  bp <- bp + theme(axis.title = element_text(size = 10)) 
+  bp <- bp + theme(legend.title=element_text(size=10), 
+                   legend.text=element_text(size=10))
   
   #create vertical lines to seprate classes on plot
   x_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_class %>% unique())-1))+0.5
@@ -124,8 +134,9 @@ lgw_lipid_plot <- function(FUNC_data,
   bp <- bp + guides(size=FALSE)
   
   bp <- bp + scale_size(limits = c(0,100))
-  bp <- bp + scale_fill_viridis_c(option = "magma")
-  bp <- bp + scale_color_viridis_c(option = "magma")
+  #bp <- bp + scale_fill_gradient()
+  bp <- bp + scale_fill_viridis_c(option = "magma", limits = c(0, max_log10_p))
+  bp <- bp + scale_color_viridis_c(option = "magma", limits = c(0, max_log10_p))
   #bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
   
   lipid_plot_output[[idx_str_data]] <- bp %>% ggplotly() %>% layout(legend = list(orientation = 'h'))

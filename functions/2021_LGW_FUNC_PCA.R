@@ -107,7 +107,7 @@ lgw_pca <- function(FUNC_data,
            yaxis = y_axis_settings_scores,
            #showlegend = TRUE, 
            margin = list(l = 65, r = 50, b=65, t=85),
-           title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
+           title = paste0(FUNC_title, ": PCA Scores", "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
            )
   
  
@@ -146,7 +146,7 @@ lgw_pca <- function(FUNC_data,
            yaxis = y_axis_settings_loading,
            showlegend = TRUE, 
            margin = list(l = 65, r = 50, b=65, t=85),
-           title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
+           title = paste0(FUNC_title,": PCA Loadings", "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
     )
   
   pca_output$plot_combined <- subplot(pca_output$plot_scores, 
@@ -157,7 +157,7 @@ lgw_pca <- function(FUNC_data,
                              titleY = TRUE
   ) %>% layout(showlegend = TRUE, 
                margin = list(l = 65, r = 50, b=65, t=85),
-               title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
+               title = paste0(FUNC_title,": PCA", "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
   )
   
 

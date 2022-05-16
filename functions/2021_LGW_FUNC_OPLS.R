@@ -23,6 +23,8 @@
 
 
 lgw_opls <- function(FUNC_data, 
+                     FUNC_OPLS_comparison_control,
+                     FUNC_OPLS_comparison_test,
                      FUNC_opls_y, 
                      FUNC_metabolite_list, 
                      FUNC_colour_by, 
@@ -39,22 +41,36 @@ lgw_opls <- function(FUNC_data,
   
   opls_output <- list()
   
-  #browser()
   
+  
+  for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
+    
+    #browser()
+    
   #create data matrix for opls
-  opls_x <- FUNC_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 
+  opls_x <- FUNC_data %>%  
+    filter(sample_type == "sample") %>%
+    filter(sample_class_factor == FUNC_OPLS_comparison_control| sample_class_factor == FUNC_idx_str_opls) %>%
+    select(all_of(FUNC_metabolite_list)) %>% 
+    as.matrix()+1 
   opls_x <- log(opls_x)
   opls_x[opls_x == 0] <- NA #remove all 0 values
   opls_x[is.infinite(opls_x)] <- NA #remove all infinite values
   min_value <- min(opls_x, na.rm = TRUE) # find the lowest value in the matrix
   opls_x[is.na(opls_x)] <- min_value # replace all NA, Inf, and 0 values with the lowest value in the matrix
   
-  opls_y = FUNC_opls_y
+  opls_y <-  FUNC_data %>%  
+    filter(sample_type == "sample") %>% 
+    filter(sample_class_factor == FUNC_OPLS_comparison_control| sample_class_factor == FUNC_idx_str_opls) %>%
+    select("sample_class") %>% 
+    as.matrix()
   
+  #set random seed for reproducibility
+  set.seed(123)
   #create opls model
   capture.output(
     suppressMessages(
-      opls_output$opls_model <- 
+      opls_output[[FUNC_idx_str_opls]]$opls_model <- 
     metabom8:: opls(X = opls_x, 
          Y = opls_y,
          scale = paste(FUNC_scaling),
@@ -63,26 +79,29 @@ lgw_opls <- function(FUNC_data,
   ))
   
   # extract score values for plotting in plot_ly
-  PC1 <- as.numeric(as.matrix(opls_output$opls_model@t_pred))
-  PC2 <- as.numeric(as.matrix(opls_output$opls_model@t_orth))
+  PC1 <- as.numeric(as.matrix(opls_output[[FUNC_idx_str_opls]]$opls_model@t_pred))
+  PC2 <- as.numeric(as.matrix(opls_output[[FUNC_idx_str_opls]]$opls_model@t_orth))
   
   # extract loadings values for plotting in plot_ly
  
   capture.output(
     suppressMessages(  
-      opls_output$eruption_model <- 
-        eruption(mod = opls_output$opls_model, 
+      opls_output[[FUNC_idx_str_opls]]$eruption_model <- 
+        eruption(mod = opls_output[[FUNC_idx_str_opls]]$opls_model, 
                pc = 1,
                p_adj = "BH")
     )
   )
     
-    plotly_loadings_data <- opls_output$eruption_model$data %>% as_tibble() 
+    plotly_loadings_data <- opls_output[[FUNC_idx_str_opls]]$eruption_model$data %>% as_tibble() 
   
   #produce plot_ly opls scores plot
     
   # set plot attributes (controlled by FUNC_colour_by and FUNC_plot_label)
-  opls_colour <- FUNC_data %>% select(all_of(FUNC_colour_by)) #%>% as.matrix()
+  opls_colour <- FUNC_data %>% 
+    filter(sample_type == "sample") %>% 
+    filter(sample_class_factor == FUNC_OPLS_comparison_control| sample_class_factor == FUNC_idx_str_opls) %>%
+    select(all_of(FUNC_colour_by)) #%>% as.matrix()
   colnames(opls_colour) <- "opls_colour" 
   opls_colour <- opls_colour$opls_colour
   opls_colour[is.na(opls_colour)] <- "none"
@@ -91,7 +110,9 @@ lgw_opls <- function(FUNC_data,
   plot_colours <- FUNC_project_colours
   
   #scores plot label
-  opls_plot_label <- FUNC_data %>% 
+  opls_plot_label <- FUNC_data %>%
+    filter(sample_type == "sample") %>% 
+    filter(sample_class_factor == FUNC_OPLS_comparison_control| sample_class_factor == FUNC_idx_str_opls) %>%
     select(all_of(FUNC_plot_label)) %>% 
     as.matrix()
   
@@ -120,7 +141,7 @@ lgw_opls <- function(FUNC_data,
   )
   
   #create plotly 
-  opls_output$plot_scores <- plot_ly(type = "scatter", 
+  opls_output[[FUNC_idx_str_opls]]$plot_scores <- plot_ly(type = "scatter", 
                        mode = "markers", 
                        data = plot_Val, 
                        x = ~PC1, 
@@ -140,8 +161,8 @@ lgw_opls <- function(FUNC_data,
       xaxis = x_axis_settings_scores,
       yaxis = y_axis_settings_scores,
       margin = list(l = 65, r = 50, b=65, t=85),
-      title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
-                     signif(opls_output$opls_model@summary$R2X[1],2)
+      title = paste0(FUNC_title, ": OPLS-DA Scores: ", FUNC_OPLS_comparison_control, " vs ", FUNC_idx_str_opls, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
+                     signif(opls_output[[FUNC_idx_str_opls]]$opls_model@summary$R2X[1],2)
       )
     )
   # 
@@ -166,7 +187,7 @@ lgw_opls <- function(FUNC_data,
     title = paste("")
   )
   
-  opls_output$plot_loadings <- plot_ly(type = "scatter", 
+  opls_output[[FUNC_idx_str_opls]]$plot_loadings <- plot_ly(type = "scatter", 
                                        mode = "markers", 
                                        data = plotly_loadings_data, 
                                        x = ~Cd, 
@@ -181,15 +202,15 @@ lgw_opls <- function(FUNC_data,
       yaxis = y_axis_settings_loading,
       showlegend = TRUE, 
       margin = list(l = 65, r = 50, b=65, t=85),
-      title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
-                     signif(opls_output$opls_model@summary$R2X[1],2)
+      title = paste0(FUNC_title, ": OPLS-DA Loadings: ", FUNC_OPLS_comparison_control, " vs ", FUNC_idx_str_opls, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
+                     signif(opls_output[[FUNC_idx_str_opls]]$opls_model@summary$R2X[1],2)
       )
     )
 
   
-  opls_output$plot_combined <- subplot(
-    opls_output$plot_scores, 
-    opls_output$plot_loadings, 
+  opls_output[[FUNC_idx_str_opls]]$plot_combined <- subplot(
+    opls_output[[FUNC_idx_str_opls]]$plot_scores, 
+    opls_output[[FUNC_idx_str_opls]]$plot_loadings, 
     nrows = 1,
     margin = 0.05,
     titleX = TRUE,
@@ -198,12 +219,14 @@ lgw_opls <- function(FUNC_data,
     layout(
       showlegend = TRUE, 
       margin = list(l = 65, r = 50, b=65, t=85),
-      title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
-                     signif(opls_output$opls_model@summary$R2X[1],2)
+      title = paste0(master_list$project_details$project_name, ": OPLS-DA: ", FUNC_OPLS_comparison_control, " vs ", FUNC_idx_str_opls,  "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
+                     signif(opls_output[[FUNC_idx_str_opls]]$opls_model@summary$R2X[1],2)
                      )
     )
   
-  opls_output$data_eruption <- plotly_loadings_data %>% arrange(desc(p1))
+  opls_output[[FUNC_idx_str_opls]]$data_eruption <- plotly_loadings_data %>% arrange(desc(p1))
+  
+  }
   
   opls_output
   

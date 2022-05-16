@@ -10,7 +10,8 @@ lgw_lipid_plot <- function(FUNC_data,
                     #FUNC_colour_by, 
                     #FUNC_plot_label, 
                     #FUNC_title,
-                    #FUNC_project_colours,
+                    FUNC_project_colour_reference,
+                    FUNC_project_colours,
                     FUNC_plot_class_or_sidechain){
   require(metabom8)
   require(RColorBrewer)
@@ -35,7 +36,7 @@ plot_Val <- FUNC_data %>%
   rename(lipid_class = subclass)
 }
   
-  #browser()
+  
   
   temp_list <- list()
   for(idx_plot_comparisons in 1:length(FUNC_plot_comparisons)){
@@ -59,8 +60,8 @@ plot_Val <- FUNC_data %>%
   
   if(FUNC_plot_class_or_sidechain=="sidechain"){
   plot_Val_2$lipid_sidechain_factor <- plot_Val_2$sidechain %>% factor(levels = unique(plot_Val_2$sidechain %>% sort()), ordered = TRUE)
-}
-  
+  }
+
   #create values for point size
   plot_Val_2 <- plot_Val_2 %>%
     add_column(point_size = rank(plot_Val_2$`-Log10 (p)`))
@@ -68,7 +69,7 @@ plot_Val <- FUNC_data %>%
   #reset scale so that all features p<0.05 are set to size 1
   plot_Val_2$point_size <- plot_Val_2$point_size - which(plot_Val_2$`-Log10 (p)` < (log(0.05) %>% abs())) %>% length()
   
-  #ser scale so that all features p<0.05 are set to size 1
+  #reset scale so that all features p<0.05 are set to size 1
   plot_Val_2$point_size[which(plot_Val_2$`-Log10 (p)` < (log(0.05) %>% abs()))] <- 1
  
   #arrange by point_size
@@ -110,7 +111,14 @@ plot_Val <- FUNC_data %>%
                  group =`Dunn's test comparison`)
   }
   
-  
+  #browser()
+  #create color reference
+  unique_comparisons <- unique(plot_Val_2$`Dunn's test comparison`)
+  unique_comparison_test <- sub('.*_', '', unique_comparisons) %>% str_to_lower()
+  colour_idx <- which((FUNC_project_colour_reference%>% str_to_lower()) %in% unique_comparison_test)
+
+    
+  # add scatter points to plot
   bp <- bp + geom_point(aes(text = feature,
                             fill = `Dunn's test comparison`,
                             group =`Dunn's test comparison`,
@@ -118,35 +126,71 @@ plot_Val <- FUNC_data %>%
                             ),
                           position=position_dodge(0.7),
                           width = 0.01,
-                          #size = 0.5,
                           shape = 16
                          )
-  bp <- bp + labs(x = paste("lipid class"),
-                  y = paste("Dunn's Test -Log10 (p)"))
-  bp <- bp + ggtitle("Comparison of Dunn's Test Results")
+  bp <- bp + scale_fill_manual(values = FUNC_project_colours[colour_idx])
+  
+  
+  #edit titles
+if(FUNC_plot_class_or_sidechain=="class"){
+  plot_x_title <- "lipid class"
+}
+  if(FUNC_plot_class_or_sidechain=="sidechain"){
+    plot_x_title <- "lipid sidechain"
+  }
+  bp <- bp + labs(x = paste(plot_x_title),
+                  y = paste("Kruskal Wallis post-hoc Dunn's Test [-Log10 (p)]"))
+  bp <- bp + ggtitle("Kruskal Wallis post-hoc Dunn's Test Results")
+  
+  #edit theme and plot appearance
   bp <- bp + theme_cowplot() 
   bp <- bp + theme(plot.title = element_text(hjust = 0.5)) 
-  bp <- bp + theme(plot.title = element_text(size=5)) 
-  bp <- bp + theme(axis.text.y = element_text(size = 5, margin = margin(t = 0, r = 0, b = 0, l = 2)))
-  bp <- bp + theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1))
-  bp <- bp + theme(axis.title = element_text(size = 5)) 
-  bp <- bp + theme(legend.title=element_text(size=5), 
-                   legend.text=element_text(size=5))
+  bp <- bp + theme(plot.title = element_text(size=10)) 
+  bp <- bp + theme(axis.text.y = element_text(size = 10, margin = margin(t = 0, r = 0, b = 0, l = 2)))
+  bp <- bp + theme(axis.text.x = element_text(size = 10, angle = 45, vjust = 1, hjust = 1))
+  bp <- bp + theme(axis.title = element_text(size = 10)) 
+  bp <- bp + theme(legend.title=element_text(size=10), 
+                   legend.text=element_text(size=10))
   
+  #add line guides to plot
   #create vertical lines to seprate classes on plot
   if(FUNC_plot_class_or_sidechain == "class"){lipid_sequence <- seq(1:(length(plot_Val_2$lipid_class %>% unique())-1))+0.5}
   if(FUNC_plot_class_or_sidechain == "sidechain"){lipid_sequence <- seq(1:(length(plot_Val_2$lipid_sidechain_factor %>% unique())-1))+0.5}
-  
+  #add the lines to the plot
   bp <- bp + geom_vline(xintercept=c(lipid_sequence),color="grey")
-  bp <- bp + geom_hline(yintercept=c(0.05 %>% log() %>% abs()), color="red")
+  
+  #add horizontal line to represent p=0.05 threshold
+  h_line <- c(0.05 %>% log() %>% abs())
+  bp <- bp + geom_hline(yintercept=h_line, color="red")
+  
+  #label horizontal line
+  # bp <- bp + geom_text(aes(x = 21, 
+  #                          y= h_line, 
+  #                          label = "p=0.05", 
+  #                          vjust = - 1, 
+  #                          hjust = 2))
+  
+  #remove legends
   bp <- bp + guides(size=FALSE)
   
-  bp <- bp + scale_size(limits = c(0,100))
-  #bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
   
-  lipid_plot_output <- bp %>% ggplotly() %>% layout(legend = list(orientation = 'h'))
+ #add scaleing factor that controls points on the plot
+  bp <- bp + scale_size(limits = c(0,100))
+  
+ 
+  
+  lipid_plot_output <- bp %>%
+    ggplotly() %>%
+    layout(legend = list(orientation = "h",   # show entries horizontally
+                         xanchor = "center",  # use center of legend as anchor
+                         x = 0.5,
+                         y = -0.2,
+                         title=list(text="Group comparison:"))
+    )
   lipid_plot_output
   
 }
+
+
   
 
