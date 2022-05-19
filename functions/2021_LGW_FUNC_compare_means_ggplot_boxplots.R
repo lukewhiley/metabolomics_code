@@ -163,14 +163,16 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     
     #####WILCOX.TEST.PAIRED##########
 
-    #complete paired pairwise wilcox test
+    #complete pairwise paired wilcox test
     if(FUNC_OPTION_compare_means_method == "wilcox.test.paired"){
       
+      #create loop to perform pairwise tests
       wilcox_test_result <- NULL
       for(idx_str_comparison in FUNC_plot_comparisons){
         loop_comparisons <- c(gsub(" - .*","", idx_str_comparison),
                               gsub(".* - ","", idx_str_comparison)
                               )
+        #create sub-frame for paired data
         temp_func_paired_data <- temp_func_data %>%
           filter(plot_class %in% loop_comparisons)
         
@@ -178,6 +180,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
           slice(which(duplicated(temp_func_paired_data$pair_group)|duplicated(temp_func_paired_data$pair_group, fromLast = TRUE))) %>%
           arrange(pair_group)
         
+        #perform pairwise paired test
       loop_wilcox_test_result <-  compare_means(data = temp_func_paired_data %>%
                                              filter(plot_class != "qc") %>%
                                              filter(plot_class != "QC"),
@@ -188,7 +191,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
         rename(feature = .y.)
       
     
-      
+      #create column of comparison made
       loop_wilcox_test_result$comparison <- paste0(loop_wilcox_test_result$group1, 
                                               " - ",
                                               loop_wilcox_test_result$group2)
@@ -213,6 +216,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                                                           dunn_test_result$group2[dunn_test_significance_idx[idx_significance]]))
       }
       
+      #output pairwise result
       wilcox_test_result_t <- wilcox_test_result %>% 
         select(p, comparison) %>%
         t() %>% 
@@ -248,28 +252,27 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
         filter(plot_class != "QC")
     }
     
+    #browser()
     if(FUNC_OPTION_log_plot_data == TRUE){
-      y_axis_title <- "LOG Peak Response"
-      bp <- ggplot(data=temp_func_data,
-        #ggplot(data=temp_func_paired_data,
-                   aes(x=as.factor(plot_class),
-                       y=log(as.numeric(concentration)+1))
-                       ) 
-      bp_y_max <- temp_func_data$concentration %>% max() %>% log()
-    }
+      y_axis_title <- "LOG Concentration (µM)"
+      temp_func_plot_data <- temp_func_data
+      temp_func_plot_data$concentration <- log(temp_func_plot_data$concentration+1)
+      bp_y_max <- temp_func_plot_data$concentration %>% max() 
+          }
     
     if(FUNC_OPTION_log_plot_data == FALSE){
-      y_axis_title <- "Peak Response"
-      bp <- ggplot(data=temp_func_data,
+      temp_func_plot_data <- temp_func_data
+      y_axis_title <- "Concentration (µM)"
+      bp_y_max <- temp_func_plot_data$concentration %>% max() 
+    }
+    
+    
+    
+      bp <- ggplot(data=temp_func_plot_data,
                    aes(x=as.factor(plot_class),
                        y=as.numeric(concentration))
       ) 
-      bp_y_max <- temp_func_data$concentration %>% max() 
-    }
-    
-    # bp <- ggplot(data=temp_plot_data,
-    #              aes(x=as.factor(plot_class),
-    #                  y=as.numeric(concentration))) 
+
     bp <- bp + geom_boxplot(color = "black",
                       aes(),
                       outlier.shape = NA,
@@ -282,7 +285,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     bp <- bp + scale_fill_manual(values = c(FUNC_OPTION_colour_choice))
                   #size = 1)
     bp <- bp + labs(x = paste(""), y = paste(y_axis_title))
-    bp <- bp +   ggtitle(idx_metabolite)
+    bp <- bp +  ggtitle(idx_metabolite)
     bp <- bp +  theme_cowplot() 
     bp <- bp +  theme(plot.title = element_text(hjust = 0.5)) 
     bp <- bp +  theme(plot.title = element_text(size=5)) 
@@ -294,26 +297,17 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     #add significance to plot
    # if(FUNC_OPTION_compare_means_method == "kruskal.test"){
     if(FUNC_OPTION_compare_means_method != "wilcox.test.paired"){
-    bp <- bp + stat_compare_means(comparisons = dunn_test_comparisons,
-                                  label = "p.signif",
-                                  size = 2
-                                  )
+    bp <- bp + stat_compare_means(
+      data = temp_func_data,
+      comparisons = dunn_test_comparisons,
+      label = "p.signif",
+      size = 2
+      )
     }
     
     if(FUNC_OPTION_compare_means_method == "wilcox.test.paired"){
-      
-      #browser()
       loop_FUNC_plot_comparisons <- NULL
-      
       for(idx in 1:length(dunn_test_comparisons)){
-      #loop_list_FUNC_plot_comparisons <- FUNC_plot_comparisons[FUNC_plot_comparisons %in% paste(dunn_test_comparisons[[idx]][1], dunn_test_comparisons[[idx]][2], sep = " - ")]
-      # loop_FUNC_plot_comparisons <- c(loop_FUNC_plot_comparisons, loop_list_FUNC_plot_comparisons)
-      # }
-      # for(idx_str_comparison in loop_FUNC_plot_comparisons){
-        # loop_comparisons <- c(gsub(" - .*","", idx_str_comparison),
-        #                       gsub(".* - ","", idx_str_comparison)
-        #)
-        
         loop_comparisons <- c(dunn_test_comparisons[[idx]][1], dunn_test_comparisons[[idx]][2])
         
         temp_func_paired_data <- temp_func_data %>%
@@ -322,18 +316,16 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
         temp_func_paired_data <- temp_func_paired_data %>%
           slice(which(duplicated(temp_func_paired_data$pair_group)|duplicated(temp_func_paired_data$pair_group, fromLast = TRUE))) %>%
           arrange(pair_group)
-        
         #browser()
-        
-        #ggsave("/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/analysis/plots/testplot.png", plot = bp)
-   
-      bp <- bp + stat_compare_means(data = temp_func_paired_data,
+        bp <- bp + stat_compare_means(data = temp_func_paired_data,
                                     paired = TRUE,
                                     comparisons = dunn_test_comparisons[idx],
                                     label = "p.signif",
                                     size = 2,
-                                    label.y = max(temp_func_data$concentration)+
-                                      (max(temp_func_data$concentration)-min(temp_func_data$concentration))/100*((idx-1)*10)
+                                    label.y = max(temp_func_plot_data$concentration)+
+                                      (max(temp_func_plot_data$concentration)-min(temp_func_plot_data$concentration))/100*((idx-1)*10),
+                                    tip.length = 0
+                                      #(0.01/max(temp_func_plot_data$concentration))
                                     )
       }
     }

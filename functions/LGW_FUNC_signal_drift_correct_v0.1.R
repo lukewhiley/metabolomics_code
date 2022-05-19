@@ -1,0 +1,314 @@
+#ANPC signal batch correction
+
+## REQUIRED PACKAGES
+
+# -> metabom8 (github.com/tkimhofer)
+# -> tidyverse
+# -> RColorBrewer
+# -> plotly
+# -> statTarget
+
+
+## REQUIRED ARGUMENTS
+
+# -> FUNC_data = a tibble or data from containing data
+# -> FUNC_opls_y = column name for column containing class data as y in OPLS-DA
+# -> FUNC_metabolite_list = array of metabolites to use - must match appropiate column names
+# -> FUNC_colour_by = column name for column containing character string or factor to colour OPLS-DA 
+# -> FUNC_plot_label = column name for column containing character string or factor to label OPLS-DA plotly
+# -> FUNC_scaling = scaling argument for metabom8 - only use UV or Pareto
+# -> FUNC_title = title for OPLS-DA plot
+# -> FUNC_project_colours = array of colours - must match length of unique number of groups
+
+# -> FUNC_data_predict = use if wanting to predict data to model - a tibble or data from containing data to predict. Set as FALSE if no predicition required
+
+
+#FUNC_data = read_csv(file = "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/analysis/test.csv")
+
+lgw_signal_correction <- function(FUNC_project_directory,
+                                  FUNC_data,
+                                  FUNC_metabolite_list,
+                                  FUNC_header_sample_id,
+                                  FUNC_header_batch,
+                                  FUNC_header_sample_type,
+                                  FUNC_header_run_order,
+                                  FUNC_option_method
+                                  ){
+
+require(statTarget)
+  
+#create directories for use later
+dir.create(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", sep=""))
+setwd(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", sep=""))  
+
+#create data list 
+FUNC_list <- list()
+#set master data for function
+FUNC_list$master_data <- FUNC_data %>% as_tibble()
+#fill infinite values created at the ratio step with a small value
+FUNC_list$master_data[sapply(FUNC_list$master_data, is.infinite)] <- 1e-5
+
+# SECTION 1 ---------------------------------------------------------------
+#create the required metadata file (PhenoFile) for statTarget::shiftCor
+
+FUNC_list$PhenoFile <- list()
+
+# build PhenoFile file template
+FUNC_list$PhenoFile$template <- FUNC_list$master_data %>% 
+  select(all_of(FUNC_header_sample_id)) %>%
+  rename(sample = FUNC_header_sample_id) %>%
+  add_column(FUNC_list$master_data %>% 
+               select(all_of(FUNC_header_sample_id))) %>%
+  add_column(FUNC_list$master_data %>%
+               select(all_of(FUNC_header_batch))) %>%
+  add_column(FUNC_list$master_data %>%
+               select(all_of(FUNC_header_sample_type))) %>%
+  rename(class = all_of(FUNC_header_sample_type)) %>% 
+  add_column(FUNC_list$master_data %>%
+               select(all_of(FUNC_header_sample_type))) %>%
+  add_column(FUNC_list$master_data %>%
+               select(all_of(FUNC_header_run_order)))
+
+#### arrange by run order
+FUNC_list$PhenoFile$template <- FUNC_list$PhenoFile$template %>%
+  arrange_at(FUNC_header_run_order)
+
+#### QC placement
+#stat target needs a qc at postion 1 and last position in the run. Default run order takes this into account, but some datasets this is not the case
+#in this instance this section of code artificially moves the first and last qc into position. It is completed for each batch.
+
+FUNC_list$PhenoFile$template_qc_order <- NULL
+qc_idx <- NULL
+for(idx_batch in FUNC_list$PhenoFile$template %>% 
+    select(all_of(FUNC_header_batch)) %>%
+    unique() %>%
+    as.matrix() %>%
+    c()
+){
+
+  #create a temp tibble batch specific
+  loop_temp_data <- FUNC_list$PhenoFile$template %>%
+    filter(!!as.symbol(FUNC_header_batch) == idx_batch)
+  
+#ensure a sample_type "qc" is "first" and "last" in the worklist order. Required for statTarget::shiftCor
+loop_qc_idx <- which(loop_temp_data %>% 
+                       select(all_of(FUNC_header_sample_type)) 
+                      == "qc")
+
+#if qc is not run before the samples - artificially move first qc to run order position 1. This is required for statTarget
+if(loop_qc_idx[1] > 1){
+  loop_temp_data <- loop_temp_data %>%
+    slice(loop_qc_idx[1],1:nrow(loop_temp_data)) %>%
+    slice(-(loop_qc_idx[1]+1))
+}
+
+#create last qc
+if(loop_qc_idx[length(loop_qc_idx)] < nrow(loop_temp_data)){
+  loop_temp_data <- loop_temp_data %>%
+    slice(1:nrow(loop_temp_data), loop_qc_idx[length(loop_qc_idx)]) %>%
+    slice(-loop_qc_idx[length(loop_qc_idx)])
+}
+
+#create total qc_idx for use later
+qc_idx <- c(qc_idx,
+            loop_qc_idx)
+
+FUNC_list$PhenoFile$template_qc_order <- bind_rows(FUNC_list$PhenoFile$template_qc_order,
+                                                    loop_temp_data)
+
+}
+
+#set sample column for statTarget requires "QC" in QC rows, and sample name in sample rows
+FUNC_list$PhenoFile$template_qc_order$sample[which(FUNC_list$PhenoFile$template_qc_order %>% 
+                                                      select(all_of(FUNC_header_sample_type)) == "qc")] <- paste0("QC", rep(1:length(qc_idx)))
+FUNC_list$PhenoFile$template_qc_order$sample[which(FUNC_list$PhenoFile$template_qc_order %>% 
+                                                      select(all_of(FUNC_header_sample_type)) == "sample")] <- paste0("sample", 
+                                                                                                                       rep(1:(nrow(sil_trend_cor_meta)-length(qc_idx))))
+#set NA for class column in rows that are NA
+FUNC_list$PhenoFile$template_qc_order$class[which(FUNC_list$PhenoFile$template_qc_order %>% 
+                                                     select(all_of(FUNC_header_sample_type)) == "qc")] <- NA
+
+#write out for later (requirement of statTarget)
+FUNC_list$PhenoFile$template_sample_id <- FUNC_list$PhenoFile$template_qc_order %>% 
+  rename(sample_id = all_of(FUNC_header_sample_id),
+         batch = all_of(FUNC_header_batch),
+         order = all_of(FUNC_header_run_order)) %>%
+  select(sample, batch, class, order, sample_id)
+
+FUNC_list$PhenoFile$template_sample_id$order <- c(1:nrow(FUNC_list$PhenoFile$template_sample_id))
+FUNC_list$PhenoFile$template_sample_id$batch <- gsub(".*?([0-9]+).*", "\\1", FUNC_list$PhenoFile$template_sample_id$batch) %>%
+  as.numeric()
+
+#final Phenofile
+FUNC_list$PhenoFile$PhenoFile <- FUNC_list$PhenoFile$template_sample_id %>%
+  select(-sample_id)
+
+# write out as csv (requirement for statTarget::shiftCor)
+write_csv(x = FUNC_list$PhenoFile$PhenoFile,
+          file = paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", "/PhenoFile.csv", sep="")
+          )
+
+
+# SECTION 2 - create data for statTarget::shiftCor  -----------------------------------
+
+FUNC_list$ProfileFile <- list()
+
+#must have samples in columns and metabolites in rows
+FUNC_list$ProfileFile$template  <- FUNC_list$master_data %>%
+  select(all_of(FUNC_header_sample_id),
+         all_of(FUNC_metabolite_list)) %>%
+  rename(sample_id = all_of(FUNC_header_sample_id))
+
+#match run order to sil_trend_cor_meta
+FUNC_list$ProfileFile$template_qc_order <- FUNC_list$PhenoFile$template_sample_id %>%
+  select(sample, sample_id) %>%
+  left_join(FUNC_list$ProfileFile$template, by = "sample_id") %>%
+  select(-sample_id)
+
+#transpose tibble for statTarget
+FUNC_list$ProfileFile$ProfileFile <- FUNC_list$ProfileFile$template_qc_order  %>%
+    gather(key = name, value = value, 2:ncol(FUNC_list$ProfileFile$template_qc_order)) %>% 
+    spread(key = names(FUNC_list$ProfileFile$template_qc_order)[1],value = 'value') %>%
+  select(name, FUNC_list$ProfileFile$template_qc_order$sample)
+
+#create a metabolite list and create metabolite code
+FUNC_list$ProfileFile$metabolite_list <- FUNC_list$ProfileFile$ProfileFile %>%
+  select(name) %>%
+  add_column(metabolite_code = paste0("M", rep(1:nrow(FUNC_list$ProfileFile$ProfileFile))))
+
+#add metabolite code to data
+FUNC_list$ProfileFile$ProfileFile$name <- FUNC_list$ProfileFile$metabolite_list$metabolite_code
+
+# write out as csv (requirement for statTarget::shiftCor)
+write_csv(x = FUNC_list$ProfileFile$ProfileFile, 
+          file = paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", "/ProfileFile.csv", sep="")
+          )
+
+#files from previous work
+#samPeno <- "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/data/batch_correction/test_files/sil_trend_cor_meta.csv"
+#samFile <- "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/data/batch_correction/test_files/sil_trend_cor_data.csv"
+
+#script files
+samPeno <- paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", "/PhenoFile.csv", sep="")
+samFile <- paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results",  "/ProfileFile.csv", sep="")
+
+#example files from online
+#samPeno <- "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/data/batch_correction/test_files/Data_example/PhenoFile.csv"
+#samFile <- "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/data/batch_correction/test_files/Data_example/ProfileFile.csv"
+
+if(FUNC_option_method == "RF"){
+shiftCor(samPeno = samPeno,
+         samFile =  samFile,
+         Frule = 0.8,
+         ntree = 500,
+         MLmethod = 'QCRFSC',
+         QCspan = 0,
+         imputeM = "minHalf",
+         plot = FALSE,
+         coCV = 1000
+         )
+}
+
+if(FUNC_option_method == "loess"){
+  shiftCor(samPeno = samPeno,
+           samFile =  samFile,
+           Frule = 0.8,
+           MLmethod = 'QCRLSC',
+           QCspan = 0,
+           imputeM = "minHalf",
+           plot = FALSE,
+           coCV = 1000
+  )
+}
+
+corrected_data <- read_csv(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", "/statTarget/shiftCor/After_shiftCor/shift_all_cor.csv", sep=""))
+corrected_data <- sil_trend_cor_meta %>% 
+  select(all_of(FUNC_header_sample_id), sample) %>% 
+  right_join(corrected_data, by = 'sample') #%>% 
+  #select(-sample, -class) %>% 
+  #arrange(sampleID)
+
+#get column names back to correct format (replace _ with (:) e.g. CE_14_0_ to CE(14:0)
+#first add bracket after lipid class
+# for (idx_name in lipid_class_list$value){
+#   colnames(corrected_data)[grep(paste0(idx_name, "_"), colnames(corrected_data))] <- gsub(idx_name, paste0(idx_name, "("), colnames(corrected_data)[grep(paste0(idx_name, "_"), colnames(corrected_data))])
+# }
+# 
+# colnames(corrected_data) <- paste0(colnames(corrected_data), ")")
+# colnames(corrected_data) <- sub("\\(_", "\\(", colnames(corrected_data))
+# colnames(corrected_data) <- sub("\\_)", "\\)", colnames(corrected_data))
+# colnames(corrected_data) <- sub("_",":",colnames(corrected_data))
+# colnames(corrected_data) <- sub("_","/",colnames(corrected_data))
+# colnames(corrected_data) <- sub("_",":",colnames(corrected_data))
+# colnames(corrected_data) <- sub("/","_",colnames(corrected_data))
+# colnames(corrected_data)[which(colnames(corrected_data) == "sampleID)")] <- "sampleID"
+
+# corrected_data <- lipid_exploreR_data$individual_lipid_data_sil_tic_intensity_filtered_ratio %>% 
+#   select(sampleID, plateID) %>% right_join(corrected_data, by = "sampleID")
+
+
+#corrected_lipid_list <- corrected_data %>% select(contains("(")) %>% colnames()
+
+#because the correction changes the concentrations of the lipids, this next section re-scales the values based on the change (ratio) between pre and post corrected signal mean in the LTR QCs
+signal_drift_corrected_data <- lapply(corrected_lipid_list, function(FUNC_LIPID_NORM){
+  #browser()
+  
+  corrected_data_mean <- corrected_data %>% 
+    filter(grepl("LTR", sampleID)) %>% 
+    select(all_of(FUNC_LIPID_NORM)) %>% 
+    as.matrix() %>% 
+    mean()
+  
+  pre_corrected_data_mean <- lipid_exploreR_data$individual_lipid_data_sil_tic_intensity_filtered_ratio %>% 
+    as_tibble() %>% 
+    filter(grepl("LTR", sampleID)) %>% 
+    select(all_of(FUNC_LIPID_NORM)) %>% 
+    as.matrix() %>% 
+    mean()
+  
+  normalization_ratio <- corrected_data_mean/pre_corrected_data_mean
+  corrected_data_norm <- corrected_data %>% select(FUNC_LIPID_NORM)/normalization_ratio
+  corrected_data_norm
+}) %>% bind_cols %>% as_tibble()
+
+signal_drift_corrected_data <- signal_drift_corrected_data %>% add_column(select(corrected_data, sampleID, plateID), .before = 1)
+#
+
+### correlate data with non-signal drift ratio data to prevent over correction
+###only keep features where correlate r >0.85
+
+corr_out = NULL
+
+for(idx in signal_drift_corrected_data %>% select(contains("(")) %>% names()){
+  
+  #extract data from ratio data (before signal correction)
+  loop_data <- lipid_exploreR_data$individual_lipid_data_sil_tic_intensity_filtered_ratio %>%
+    select(sampleID, idx)
+  
+    processed_data <- signal_drift_corrected_data %>% 
+      select(sampleID, plateID, all_of(idx))
+    
+    test_data <- processed_data %>%
+      left_join(loop_data, by = "sampleID")
+     
+    corr_result <- cor(test_data[,3], test_data[,4]) %>% as_tibble(rownames = "lipid")
+    colnames(corr_result)[2] <- "r_value"
+    
+    corr_out <- rbind(corr_out, 
+                      corr_result)
+    
+  }
+
+corr_out$lipid <- gsub(".x", "", corr_out$lipid)
+
+
+corr_filter_list <- corr_out %>%
+  filter(r_value > 0.75)
+  
+#select corrected data to those lipids that are correlated with > 0.85 to ratio data alone 
+signal_drift_corrected_data <- signal_drift_corrected_data %>% 
+  select(sampleID, plateID, all_of(corr_filter_list$lipid))
+
+signal_drift_corrected_class_data <- create_lipid_class_data_summed(signal_drift_corrected_data)
+
+}

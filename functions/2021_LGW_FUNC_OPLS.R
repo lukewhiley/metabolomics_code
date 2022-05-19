@@ -175,16 +175,18 @@ lgw_opls <- function(FUNC_data,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
-    title = paste("")
+    title = paste("Cliff's Delta"),
+    range = c(-1,1)
   )
-  
+  #browser()
   y_axis_settings_loading <- list(
     zeroline = TRUE,
     showline = TRUE,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
-    title = paste("")
+    title = paste("|Ppred|"),
+    range = c(0,plotly_loadings_data$p1 %>% max()*1.20)
   )
   
   opls_output[[FUNC_idx_str_opls]]$plot_loadings <- plot_ly(type = "scatter", 

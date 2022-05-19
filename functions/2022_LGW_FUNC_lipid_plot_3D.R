@@ -113,17 +113,17 @@ lgw_lipid_plot <- function(FUNC_data,
                           #size = 0.5,
                           shape = 21
                          )
-  bp <- bp + labs(x = paste("lipid class"),
-                  y = paste("sidechain"))
-  bp <- bp + ggtitle(paste0("Visualisation of Kruskal Wallis post-hoc Dunn's Tests: ", idx_str_data))
+  bp <- bp + labs(x = paste("Lipid Class"),
+                  y = paste("Sidechain"))
+  bp <- bp + ggtitle(paste0(str_split(idx_str_data, "_")[[1]][1], " vs ", str_split(idx_str_data, "_")[[1]][2]))
   bp <- bp + theme_cowplot() 
   bp <- bp + theme(plot.title = element_text(hjust = 0.5)) 
-  bp <- bp + theme(plot.title = element_text(size=10)) 
-  bp <- bp + theme(axis.text.y = element_text(size = 10, margin = margin(t = 0, r = 0, b = 0, l = 2)))
-  bp <- bp + theme(axis.text.x = element_text(size = 10, angle = 45, vjust = 1, hjust = 1))
-  bp <- bp + theme(axis.title = element_text(size = 10)) 
-  bp <- bp + theme(legend.title=element_text(size=10), 
-                   legend.text=element_text(size=10))
+  bp <- bp + theme(plot.title = element_text(size=14)) 
+  bp <- bp + theme(axis.text.y = element_text(size = 12, margin = margin(t = 0, r = 0, b = 0, l = 2)))
+  bp <- bp + theme(axis.text.x = element_text(size = 12, angle = 45, vjust = 1, hjust = 1))
+  bp <- bp + theme(axis.title = element_text(size = 14)) 
+  bp <- bp + theme(legend.title=element_text(size=12), 
+                   legend.text=element_text(size=12))
   
   #create vertical lines to seprate classes on plot
   x_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_class %>% unique())-1))+0.5
