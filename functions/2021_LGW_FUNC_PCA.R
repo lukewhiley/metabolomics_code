@@ -11,7 +11,9 @@ lgw_pca <- function(FUNC_data,
                     FUNC_plot_label, 
                     FUNC_scaling,
                     FUNC_title,
-                    FUNC_project_colours){
+                    FUNC_project_colours,
+                    FUNC_option_invert_y,
+                    FUNC_option_invert_x){
   require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
@@ -109,6 +111,16 @@ lgw_pca <- function(FUNC_data,
            margin = list(l = 65, r = 50, b=65, t=85),
            title = paste0(FUNC_title, ": PCA Scores", "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
            )
+  
+  if(FUNC_option_invert_x == TRUE){
+    pca_output$plot_scores <- pca_output$plot_scores %>%
+      layout(xaxis = list(autorange = "reversed"))
+  }
+  
+  if(FUNC_option_invert_y == TRUE){
+    pca_output$plot_scores <- pca_output$plot_scores %>%
+      layout(yaxis = list(autorange = "reversed"))
+  }
   
  
  

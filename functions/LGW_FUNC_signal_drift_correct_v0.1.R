@@ -32,7 +32,8 @@ lgw_signal_correction <- function(FUNC_project_directory,
                                   FUNC_header_batch,
                                   FUNC_header_sample_type,
                                   FUNC_header_run_order,
-                                  FUNC_option_method
+                                  FUNC_option_method,
+                                  FUNC_option_coCV
                                   ){
 
 require(statTarget)
@@ -56,7 +57,7 @@ FUNC_list$PhenoFile <- list()
 # build PhenoFile file template
 FUNC_list$PhenoFile$template <- FUNC_list$master_data %>% 
   select(all_of(FUNC_header_sample_id)) %>%
-  rename(sample = FUNC_header_sample_id) %>%
+  rename(sample = all_of(FUNC_header_sample_id)) %>%
   add_column(FUNC_list$master_data %>% 
                select(all_of(FUNC_header_sample_id))) %>%
   add_column(FUNC_list$master_data %>%
@@ -123,7 +124,7 @@ FUNC_list$PhenoFile$template_qc_order$sample[which(FUNC_list$PhenoFile$template_
                                                       select(all_of(FUNC_header_sample_type)) == "qc")] <- paste0("QC", rep(1:length(qc_idx)))
 FUNC_list$PhenoFile$template_qc_order$sample[which(FUNC_list$PhenoFile$template_qc_order %>% 
                                                       select(all_of(FUNC_header_sample_type)) == "sample")] <- paste0("sample", 
-                                                                                                                       rep(1:(nrow(sil_trend_cor_meta)-length(qc_idx))))
+                                                                                                                       rep(1:(nrow(FUNC_list$PhenoFile$template_qc_order)-length(qc_idx))))
 #set NA for class column in rows that are NA
 FUNC_list$PhenoFile$template_qc_order$class[which(FUNC_list$PhenoFile$template_qc_order %>% 
                                                      select(all_of(FUNC_header_sample_type)) == "qc")] <- NA
@@ -196,7 +197,9 @@ samFile <- paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_re
 #samPeno <- "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/data/batch_correction/test_files/Data_example/PhenoFile.csv"
 #samFile <- "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/data/batch_correction/test_files/Data_example/ProfileFile.csv"
 
+#browser()
 if(FUNC_option_method == "RF"){
+  capture.output(
 shiftCor(samPeno = samPeno,
          samFile =  samFile,
          Frule = 0.8,
@@ -205,11 +208,13 @@ shiftCor(samPeno = samPeno,
          QCspan = 0,
          imputeM = "minHalf",
          plot = FALSE,
-         coCV = 1000
+         coCV = FUNC_option_coCV
          )
+)
 }
 
 if(FUNC_option_method == "loess"){
+  capture.output(
   shiftCor(samPeno = samPeno,
            samFile =  samFile,
            Frule = 0.8,
@@ -217,98 +222,156 @@ if(FUNC_option_method == "loess"){
            QCspan = 0,
            imputeM = "minHalf",
            plot = FALSE,
-           coCV = 1000
+           coCV = FUNC_option_coCV
+  )
   )
 }
 
-corrected_data <- read_csv(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", "/statTarget/shiftCor/After_shiftCor/shift_all_cor.csv", sep=""))
-corrected_data <- sil_trend_cor_meta %>% 
-  select(all_of(FUNC_header_sample_id), sample) %>% 
-  right_join(corrected_data, by = 'sample') #%>% 
-  #select(-sample, -class) %>% 
-  #arrange(sampleID)
+#browser()
+FUNC_list$corrected_data$data <- read_csv(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", "/statTarget/shiftCor/After_shiftCor/shift_all_cor.csv", sep=""),
+                                          show_col_types = FALSE)
 
-#get column names back to correct format (replace _ with (:) e.g. CE_14_0_ to CE(14:0)
-#first add bracket after lipid class
-# for (idx_name in lipid_class_list$value){
-#   colnames(corrected_data)[grep(paste0(idx_name, "_"), colnames(corrected_data))] <- gsub(idx_name, paste0(idx_name, "("), colnames(corrected_data)[grep(paste0(idx_name, "_"), colnames(corrected_data))])
-# }
-# 
-# colnames(corrected_data) <- paste0(colnames(corrected_data), ")")
-# colnames(corrected_data) <- sub("\\(_", "\\(", colnames(corrected_data))
-# colnames(corrected_data) <- sub("\\_)", "\\)", colnames(corrected_data))
-# colnames(corrected_data) <- sub("_",":",colnames(corrected_data))
-# colnames(corrected_data) <- sub("_","/",colnames(corrected_data))
-# colnames(corrected_data) <- sub("_",":",colnames(corrected_data))
-# colnames(corrected_data) <- sub("/","_",colnames(corrected_data))
-# colnames(corrected_data)[which(colnames(corrected_data) == "sampleID)")] <- "sampleID"
+#create new list of meatbolie codes (statTarget might throw some away based on cut off CV values (e.g >30% variation))
+FUNC_list$ProfileFile$metabolite_list_update <- FUNC_list$ProfileFile$metabolite_list %>% 
+  filter(metabolite_code %in% (FUNC_list$corrected_data$data %>% 
+              select(contains("M", ignore.case = FALSE)) %>%
+              names()))
 
-# corrected_data <- lipid_exploreR_data$individual_lipid_data_sil_tic_intensity_filtered_ratio %>% 
-#   select(sampleID, plateID) %>% right_join(corrected_data, by = "sampleID")
+#recombine with sample filenames
+FUNC_list$corrected_data$data_with_sample_id <- FUNC_list$PhenoFile$template_sample_id %>% 
+  select(-class) %>% 
+  right_join(FUNC_list$corrected_data$data, by = 'sample') %>%
+  rename_with(~all_of(FUNC_header_sample_id),  "sample_id")
+
+#add annotation data
+FUNC_list$corrected_data$data_with_meta <- FUNC_list$master_data %>%
+  select(-all_of(FUNC_metabolite_list)) %>%
+  left_join(FUNC_list$corrected_data$data_with_sample_id,
+            by = FUNC_header_sample_id) %>%
+  select(contains("sample"), all_of(FUNC_list$ProfileFile$metabolite_list_update$metabolite_code))
+
+#set column names to metabolite
+FUNC_list$corrected_data$data_with_header <- FUNC_list$corrected_data$data_with_meta %>%
+  setNames(c(FUNC_list$corrected_data$data_with_meta %>% 
+                      select(-contains("M", ignore.case = FALSE)) %>% 
+               names(),
+             FUNC_list$ProfileFile$metabolite_list_update$name))
+
+# SECTION 3 - concentration adjustment ------------------------------------
+#because the StatTarget correction changes the output concentrations of the lipids, this next section re-scales the values based on the change (ratio) between pre and post corrected signal mean in the QCs
+
+# #create empty list to store results
+# FUNC_list$corrected_data$data_ratio_adjusted <- list()
+
+#step one - get mean value for each metabolite in the QC samples - pre-single drift corrected data 
+FUNC_list$corrected_data$qc_means <- FUNC_list$master_data %>%
+  filter(!!as.symbol(FUNC_header_sample_type) == "qc") %>%
+  #select(all_of(FUNC_metabolite_list)) %>%
+  select(all_of(FUNC_list$ProfileFile$metabolite_list_update$name)) %>%
+  colMeans() %>%
+  as_tibble() %>%
+  rename(original_mean = value) %>%
+  add_column(metabolite = FUNC_list$ProfileFile$metabolite_list_update$name, 
+             .before = "original_mean")
+
+#step two - get mean value for each metabolite in the QC samples - post-single drift corrected data 
+FUNC_list$corrected_data$qc_means <- FUNC_list$corrected_data$qc_means %>%  
+  add_column(corrected_mean = FUNC_list$corrected_data$data_with_header %>%
+               filter(!!as.symbol(FUNC_header_sample_type) == "qc") %>%
+               select(all_of(FUNC_list$corrected_data$qc_means$metabolite)) %>%
+               colMeans())
+
+#step three - create ratio factor for concentration adjustment
+FUNC_list$corrected_data$qc_means$correction_ratio <- FUNC_list$corrected_data$qc_means$corrected_mean/
+  FUNC_list$corrected_data$qc_means$original_mean
+
+#step 4 - adjust data concentrations
+FUNC_list$corrected_data$data_qc_mean_adjusted <- FUNC_list$corrected_data$data_with_header
+for(idx_metabolite in FUNC_list$ProfileFile$metabolite_list_update$name){
+  FUNC_list$corrected_data$data_qc_mean_adjusted[[idx_metabolite]] <- FUNC_list$corrected_data$data_qc_mean_adjusted[[idx_metabolite]]/
+    FUNC_list$corrected_data$qc_means %>% 
+    filter(metabolite == idx_metabolite) %>% 
+    select(correction_ratio) %>% 
+    as.numeric()
+}
+
+FUNC_list$corrected_data$data_qc_mean_adjusted %>% 
+  select(-sample)
+}
+
+#drop extra column "sample" that is added in the function and then export final corrected data
 
 
-#corrected_lipid_list <- corrected_data %>% select(contains("(")) %>% colnames()
 
-#because the correction changes the concentrations of the lipids, this next section re-scales the values based on the change (ratio) between pre and post corrected signal mean in the LTR QCs
-signal_drift_corrected_data <- lapply(corrected_lipid_list, function(FUNC_LIPID_NORM){
-  #browser()
-  
-  corrected_data_mean <- corrected_data %>% 
-    filter(grepl("LTR", sampleID)) %>% 
-    select(all_of(FUNC_LIPID_NORM)) %>% 
-    as.matrix() %>% 
-    mean()
-  
-  pre_corrected_data_mean <- lipid_exploreR_data$individual_lipid_data_sil_tic_intensity_filtered_ratio %>% 
-    as_tibble() %>% 
-    filter(grepl("LTR", sampleID)) %>% 
-    select(all_of(FUNC_LIPID_NORM)) %>% 
-    as.matrix() %>% 
-    mean()
-  
-  normalization_ratio <- corrected_data_mean/pre_corrected_data_mean
-  corrected_data_norm <- corrected_data %>% select(FUNC_LIPID_NORM)/normalization_ratio
-  corrected_data_norm
-}) %>% bind_cols %>% as_tibble()
 
-signal_drift_corrected_data <- signal_drift_corrected_data %>% add_column(select(corrected_data, sampleID, plateID), .before = 1)
-#
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+####################################
+# archive
+############
+
 
 ### correlate data with non-signal drift ratio data to prevent over correction
 ###only keep features where correlate r >0.85
 
-corr_out = NULL
+# FUNC_list$corrected_data$data_filtered <- NULL
+# 
+# for(idx_metabolite in FUNC_metabolite_list){
+#   temp_loop_data <- cor(FUNC_list$corrected_data$ratio_corrected_data[[idx_metabolite]],
+#                           FUNC_list$master_data[[idx_metabolite]])
+#   
+#   
+#   
+#   
+#   
+#   
+#   #extract data from ratio data (before signal correction)
+#   loop_data <- lipid_exploreR_data$individual_lipid_data_sil_tic_intensity_filtered_ratio %>%
+#     select(sampleID, idx)
+#   
+#     processed_data <- signal_drift_corrected_data %>% 
+#       select(sampleID, plateID, all_of(idx))
+#     
+#     test_data <- processed_data %>%
+#       left_join(loop_data, by = "sampleID")
+#      
+#     corr_result <- cor(test_data[,3], test_data[,4]) %>% as_tibble(rownames = "lipid")
+#     colnames(corr_result)[2] <- "r_value"
+#     
+#     corr_out <- rbind(corr_out, 
+#                       corr_result)
+#     
+#   }
+# 
+# corr_out$lipid <- gsub(".x", "", corr_out$lipid)
+# 
+# 
+# corr_filter_list <- corr_out %>%
+#   filter(r_value > 0.75)
+#   
+# #select corrected data to those lipids that are correlated with > 0.85 to ratio data alone 
+# signal_drift_corrected_data <- signal_drift_corrected_data %>% 
+#   select(sampleID, plateID, all_of(corr_filter_list$lipid))
+# 
+# signal_drift_corrected_class_data <- create_lipid_class_data_summed(signal_drift_corrected_data)
 
-for(idx in signal_drift_corrected_data %>% select(contains("(")) %>% names()){
-  
-  #extract data from ratio data (before signal correction)
-  loop_data <- lipid_exploreR_data$individual_lipid_data_sil_tic_intensity_filtered_ratio %>%
-    select(sampleID, idx)
-  
-    processed_data <- signal_drift_corrected_data %>% 
-      select(sampleID, plateID, all_of(idx))
-    
-    test_data <- processed_data %>%
-      left_join(loop_data, by = "sampleID")
-     
-    corr_result <- cor(test_data[,3], test_data[,4]) %>% as_tibble(rownames = "lipid")
-    colnames(corr_result)[2] <- "r_value"
-    
-    corr_out <- rbind(corr_out, 
-                      corr_result)
-    
-  }
-
-corr_out$lipid <- gsub(".x", "", corr_out$lipid)
-
-
-corr_filter_list <- corr_out %>%
-  filter(r_value > 0.75)
-  
-#select corrected data to those lipids that are correlated with > 0.85 to ratio data alone 
-signal_drift_corrected_data <- signal_drift_corrected_data %>% 
-  select(sampleID, plateID, all_of(corr_filter_list$lipid))
-
-signal_drift_corrected_class_data <- create_lipid_class_data_summed(signal_drift_corrected_data)
-
-}
