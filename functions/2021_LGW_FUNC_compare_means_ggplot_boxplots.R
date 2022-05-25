@@ -27,7 +27,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
 
     #print(idx_metabolite)
    
-    
+    #browser()
     temp_func_data <- FUNC_data %>%
       select(all_of(FUNC_HEADER_class), all_of(FUNC_HEADER_colour), all_of(idx_metabolite)) %>%
       rename(concentration = all_of(idx_metabolite), 

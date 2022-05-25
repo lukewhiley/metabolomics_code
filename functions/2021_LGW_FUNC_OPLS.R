@@ -32,7 +32,9 @@ lgw_opls <- function(FUNC_data,
                      FUNC_scaling,
                      FUNC_title,
                      FUNC_project_colours,
-                     FUNC_max_orth
+                     FUNC_max_orth,
+                     FUNC_option_invert_x,
+                     FUNC_option_invert_y
                      ){
   require(metabom8)
   require(RColorBrewer)
@@ -165,6 +167,17 @@ lgw_opls <- function(FUNC_data,
                      signif(opls_output[[FUNC_idx_str_opls]]$opls_model@summary$R2X[1],2)
       )
     )
+  
+  if(FUNC_option_invert_x == TRUE){
+    pca_output$plot_scores <- pca_output$plot_scores %>%
+      layout(xaxis = list(autorange = "reversed"))
+  }
+  
+  if(FUNC_option_invert_y == TRUE){
+    pca_output$plot_scores <- pca_output$plot_scores %>%
+      layout(yaxis = list(autorange = "reversed"))
+  }
+  
   # 
  
  
