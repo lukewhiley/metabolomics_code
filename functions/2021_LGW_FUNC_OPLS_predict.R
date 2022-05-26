@@ -23,17 +23,32 @@
 # -> FUNC_opls_class_predict = use if wanting to predict data to model - a descriptor string of class to predict. Set as FALSE if no predicition required
 
 
-lgw_opls <- function(FUNC_data, 
-                     FUNC_opls_class,
-                     FUNC_opls_class_predict,
-                     #FUNC_opls_y, 
-                     FUNC_metabolite_list, 
-                     FUNC_colour_by, 
-                     FUNC_plot_label, 
-                     FUNC_scaling,
-                     FUNC_title,
-                     FUNC_project_colours,
-                     FUNC_max_orth
+lgw_opls <- function(
+  # FUNC_data, 
+  #                    FUNC_opls_class,
+  #                    FUNC_opls_class_predict,
+  #                    #FUNC_opls_y, 
+  #                    FUNC_metabolite_list, 
+  #                    FUNC_colour_by, 
+  #                    FUNC_plot_label, 
+  #                    FUNC_scaling,
+  #                    FUNC_title,
+  #                    FUNC_project_colours,
+  #                    FUNC_max_orth
+  
+  FUNC_data, 
+  FUNC_OPLS_comparison_control,
+  FUNC_OPLS_comparison_test,
+  FUNC_OPLS_predict,
+  FUNC_metabolite_list,
+  FUNC_colour_by,
+  FUNC_plot_label,
+  FUNC_scaling,
+  FUNC_title,
+  FUNC_project_colours = master_list$project_details$project_colours$colour_selection,
+  FUNC_max_orth = 1,
+  FUNC_option_invert_x = FALSE,
+  FUNC_option_invert_y = FALSE
                      ){
   require(metabom8)
   require(RColorBrewer)

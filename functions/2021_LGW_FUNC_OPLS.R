@@ -25,7 +25,7 @@
 lgw_opls <- function(FUNC_data, 
                      FUNC_OPLS_comparison_control,
                      FUNC_OPLS_comparison_test,
-                     FUNC_opls_y, 
+                     # FUNC_opls_y, 
                      FUNC_metabolite_list, 
                      FUNC_colour_by, 
                      FUNC_plot_label, 
