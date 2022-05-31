@@ -5,13 +5,8 @@
 # FUNC_plot label = what to label the scores plot with (e.g. sampleID)
 # FUNC_scaling = UV or Pareto
 
-lgw_lipid_plot <- function(FUNC_data,
+lgw_lipid_3D_plot <- function(FUNC_data,
                            FUNC_plot_comparisons
-                    #FUNC_colour_by, 
-                    #FUNC_plot_label, 
-                    #FUNC_title,
-                    #FUNC_project_colours,
-                    #FUNC_plot_class_or_sidechain
                     ){
   require(metabom8)
   require(RColorBrewer)
@@ -22,41 +17,54 @@ lgw_lipid_plot <- function(FUNC_data,
   
   #browser()
   
+  FUNC_sidechains <- list()
+  #extract chain length data from inside brackets
+  FUNC_sidechains$all <- gsub("[\\(\\)]", "", regmatches(FUNC_data$feature, gregexpr("\\(.*?\\)", FUNC_data$feature)))
+  
+  #extract data either side of "/" for sidechain 1 and sidechain 2
+  FUNC_sidechains$sidechain_1 <- sub('/.*', '', FUNC_sidechains$all)
+  FUNC_sidechains$sidechain_2 <- sub('.*/', '', FUNC_sidechains$all)
+  
+  #delete TAG from sidechain 1 because they do not contain specific sidechain data
+  FUNC_sidechains$sidechain_1[which(master_list$lipid_plot$data$subclass == "TAG")] <- NA
+  FUNC_sidechains$sidechain_1[!grepl("/", master_list$lipid_plot$data$feature)] <- NA
+  
+  
+  #drop the extra P- and O- and d, allows for focus on just chain length
+  FUNC_sidechains$sidechain_1 <- sub('P-', '', FUNC_sidechains$sidechain_1)
+  FUNC_sidechains$sidechain_1 <- sub('O-', '', FUNC_sidechains$sidechain_1)
+  FUNC_sidechains$sidechain_1 <- sub('d', '', FUNC_sidechains$sidechain_1)
+  FUNC_sidechains$sidechain_2 <- sub('FA', '', FUNC_sidechains$sidechain_2)
+  
+  #melt into longer list and stack side chains into single column
+  FUNC_sidechains$plot <- FUNC_data %>% 
+    add_column(sidechain = FUNC_sidechains$sidechain_1) %>%
+    bind_rows(FUNC_data %>% 
+                add_column(sidechain = FUNC_sidechains$sidechain_2)) %>%
+    filter(!is.na(sidechain))
+  
+  plot_Val <- FUNC_sidechains$plot %>% 
+    select(feature_idx, sidechain, subclass, feature, p, all_of(FUNC_plot_comparisons)) 
+  
   #find max -log10 (p)
  max_log10_p <- FUNC_data %>% 
     select(all_of(FUNC_plot_comparisons)) %>%
     log() %>%
     abs() %>%
     max()
-  
-  
+ 
+
   for(idx_str_data in FUNC_plot_comparisons){
-  
-  #browser()
-  
-  #title_text <- FUNC_title
-  
-  # create plot values
-  plot_Val <- FUNC_data %>% 
-    select(feature_idx, sidechain, subclass, feature, p, all_of(FUNC_plot_comparisons)) %>%
-    rename(lipid_class = subclass)
-  
-  #browser()
-  
-    temp_column_idx <- which(colnames(plot_Val) == idx_str_data)
+  temp_column_idx <- which(colnames(plot_Val) == idx_str_data)
     plot_Val_2 <- plot_Val %>%
       add_column(plot_Val[,temp_column_idx] %>%
                    log() %>%
                    abs() %>%
                    setNames(paste0("-Log10 (p)")))
  
-  
- # plot_Val_2 <- plot_Val %>%
-  
-  #browser()
-  
+
   #create factor for subclass
-  plot_Val_2$lipid_class_factor <- plot_Val_2$lipid_class %>% factor(levels = unique(plot_Val_2$lipid_class %>% sort()), ordered = TRUE)
+  plot_Val_2$lipid_class_factor <- plot_Val_2$subclass %>% factor(levels = unique(plot_Val_2$subclass %>% sort()), ordered = TRUE)
   
   plot_Val_2$lipid_sidechain_factor <- plot_Val_2$sidechain %>% factor(levels = unique(plot_Val_2$sidechain %>% sort()), ordered = TRUE)
 
@@ -126,7 +134,7 @@ lgw_lipid_plot <- function(FUNC_data,
                    legend.text=element_text(size=12))
   
   #create vertical lines to seprate classes on plot
-  x_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_class %>% unique())-1))+0.5
+  x_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_class_factor %>% unique())-1))+0.5 #here
   y_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_sidechain_factor %>% unique())-1))+0.5
   
   bp <- bp + geom_vline(xintercept=c(x_lipid_sequence),color="grey")

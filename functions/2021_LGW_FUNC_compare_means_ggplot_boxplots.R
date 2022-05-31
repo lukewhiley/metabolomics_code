@@ -2,6 +2,7 @@
 
 lgw_compare_means_ggplot_boxplot <- function(FUNC_data, 
                                FUNC_metabolite_list, 
+                               FUNC_class_to_include,
                                FUNC_HEADER_class, 
                                FUNC_HEADER_colour,
                                FUNC_OPTION_colour_choice,
@@ -10,7 +11,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                                FUNC_HEADER_paired,
                                FUNC_plot_comparisons,
                                FUNC_OPTION_plot_qc,
-                               FUNC_OPTION_plot_show_legend
+                               FUNC_OPTION_plot_show_legend,
+                               FUNC_OPTION_plot_outliers
                                ){
   
   #required packages
@@ -25,11 +27,9 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
   
   for(idx_metabolite in FUNC_metabolite_list){
 
-    #print(idx_metabolite)
-   
-    #browser()
     temp_func_data <- FUNC_data %>%
       select(all_of(FUNC_HEADER_class), all_of(FUNC_HEADER_colour), all_of(idx_metabolite)) %>%
+      filter(!!as.symbol(FUNC_HEADER_class) %in% FUNC_class_to_include) %>%
       rename(concentration = all_of(idx_metabolite), 
              plot_class = all_of(FUNC_HEADER_class))
     
@@ -159,8 +159,6 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       
     }
     
-    
-    
     #####WILCOX.TEST.PAIRED##########
 
     #complete pairwise paired wilcox test
@@ -240,8 +238,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       if(FUNC_OPTION_compare_means_method == "wilcox.test"){
         compare_means_result$method <- "wilcox.test"
       }
-      
-    }
+      }
     
   
     #SECOND box plots
@@ -252,21 +249,30 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
         filter(plot_class != "QC")
     }
     
-    #browser()
-    if(FUNC_OPTION_log_plot_data == TRUE){
-      y_axis_title <- "LOG Concentration (µM)"
-      temp_func_plot_data <- temp_func_data
-      temp_func_plot_data$concentration <- log(temp_func_plot_data$concentration+1)
-      bp_y_max <- temp_func_plot_data$concentration %>% max() 
-          }
+    temp_func_plot_data <- temp_func_data
     
-    if(FUNC_OPTION_log_plot_data == FALSE){
-      temp_func_plot_data <- temp_func_data
-      y_axis_title <- "Concentration (µM)"
-      bp_y_max <- temp_func_plot_data$concentration %>% max() 
+    #browser()
+    if(FUNC_OPTION_plot_outliers == FALSE){
+      FUNC_Q1 <- quantile(temp_func_plot_data$concentration, .25)
+      FUNC_Q3 <- quantile(temp_func_plot_data$concentration, .75)
+      FUNC_IQR <- IQR(temp_func_plot_data$concentration)
+      
+      temp_func_plot_data <- subset(temp_func_plot_data, 
+                            temp_func_plot_data$concentration > (FUNC_Q1 - 1.5*FUNC_IQR) & 
+                              temp_func_plot_data$concentration < (FUNC_Q3 + 1.5*FUNC_IQR)
+      )
     }
     
+    if(FUNC_OPTION_log_plot_data == TRUE){
+      y_axis_title <- "LOG Concentration (µM)"
+      temp_func_plot_data$concentration <- log(temp_func_plot_data$concentration+1)
+    }
     
+    if(FUNC_OPTION_log_plot_data == FALSE){
+      y_axis_title <- "Concentration (µM)"
+    }
+    
+    bp_y_max <- temp_func_plot_data$concentration %>% max() 
     
       bp <- ggplot(data=temp_func_plot_data,
                    aes(x=as.factor(plot_class),
@@ -293,18 +299,34 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     bp <- bp +  theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1))
     bp <- bp + theme(axis.title = element_text(size = 5)) 
     bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
-
-    #add significance to plot
-   # if(FUNC_OPTION_compare_means_method == "kruskal.test"){
-    if(FUNC_OPTION_compare_means_method != "wilcox.test.paired"){
-    bp <- bp + stat_compare_means(
-      data = temp_func_data,
-      comparisons = dunn_test_comparisons,
-      label = "p.signif",
-      size = 2
-      )
-    }
     
+    
+    plot_y_max <- ggplot_build(bp)$layout$panel_params[[1]]$y.range[2]
+    plot_y_range <- ggplot_build(bp)$layout$panel_params[[1]]$y.range[2] - ggplot_build(bp)$layout$panel_params[[1]]$y.range[1]
+    
+    #browser()
+    #add significance to plot
+    if(FUNC_OPTION_compare_means_method != "wilcox.test.paired"){
+    
+    #create list of y values for the significance to be added
+    label_y_list <- NULL
+    for (idx in 1:length(dunn_test_comparisons)){
+      label_y_list <- c(label_y_list, plot_y_max+(plot_y_range*(idx*0.1)))
+    }
+  
+    #add significance to plot
+        bp <- bp + stat_compare_means(
+          data = temp_func_data,
+          comparisons = dunn_test_comparisons,
+          label = "p.signif",
+          size = 2,
+          label.y = label_y_list,
+          tip.length = 0,
+          inherit.aes = FALSE
+          )
+      }
+    
+
     if(FUNC_OPTION_compare_means_method == "wilcox.test.paired"){
       loop_FUNC_plot_comparisons <- NULL
       for(idx in 1:length(dunn_test_comparisons)){
@@ -316,17 +338,17 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
         temp_func_paired_data <- temp_func_paired_data %>%
           slice(which(duplicated(temp_func_paired_data$pair_group)|duplicated(temp_func_paired_data$pair_group, fromLast = TRUE))) %>%
           arrange(pair_group)
+        
+        label_y_list = plot_y_max+(plot_y_range*(idx*0.1))
         #browser()
         bp <- bp + stat_compare_means(data = temp_func_paired_data,
                                     paired = TRUE,
                                     comparisons = dunn_test_comparisons[idx],
                                     label = "p.signif",
                                     size = 2,
-                                    label.y = max(temp_func_plot_data$concentration)+
-                                      (max(temp_func_plot_data$concentration)-min(temp_func_plot_data$concentration))/100*((idx-1)*10),
+                                    label.y = label_y_list,
                                     tip.length = 0
-                                      #(0.01/max(temp_func_plot_data$concentration))
-                                    )
+        )
       }
     }
    

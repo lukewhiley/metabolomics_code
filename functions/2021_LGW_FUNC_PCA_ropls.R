@@ -13,23 +13,18 @@ lgw_pca <- function(FUNC_data,
                     FUNC_title,
                     FUNC_project_colours,
                     FUNC_option_invert_y,
-                    FUNC_option_invert_x,
-                    FUNC_option_plot_qc){
+                    FUNC_option_invert_x){
   require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
   require(plotly)
+  require(ropls)
   
   pca_output <- list()
   
   #browser()
   
   title_text <- FUNC_title
-  
-  if(FUNC_option_plot_qc == FALSE){
-    FUNC_data <- FUNC_data %>% 
-      filter(sample_type != "qc")
-  }
   
   #create data matrix for PCA
   pca_x <- FUNC_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix()+1 

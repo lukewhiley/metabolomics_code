@@ -31,7 +31,34 @@ lgw_lipid_plot <- function(FUNC_data,
     rename(lipid_class = subclass)
 }
 if(FUNC_plot_class_or_sidechain == "sidechain"){
-plot_Val <- FUNC_data %>% 
+
+FUNC_sidechains <- list()
+#extract chain length data from inside brackets
+FUNC_sidechains$all <- gsub("[\\(\\)]", "", regmatches(FUNC_data$feature, gregexpr("\\(.*?\\)", FUNC_data$feature)))
+
+#extract data either side of "/" for sidechain 1 and sidechain 2
+FUNC_sidechains$sidechain_1 <- sub('/.*', '', FUNC_sidechains$all)
+FUNC_sidechains$sidechain_2 <- sub('.*/', '', FUNC_sidechains$all)
+
+#delete TAG from sidechain 1 because they do not contain specific sidechain data
+FUNC_sidechains$sidechain_1[which(master_list$lipid_plot$data$subclass == "TAG")] <- NA
+FUNC_sidechains$sidechain_1[!grepl("/", master_list$lipid_plot$data$feature)] <- NA
+
+
+#drop the extra P- and O- and d, allows for focus on just chain length
+FUNC_sidechains$sidechain_1 <- sub('P-', '', FUNC_sidechains$sidechain_1)
+FUNC_sidechains$sidechain_1 <- sub('O-', '', FUNC_sidechains$sidechain_1)
+FUNC_sidechains$sidechain_1 <- sub('d', '', FUNC_sidechains$sidechain_1)
+FUNC_sidechains$sidechain_2 <- sub('FA', '', FUNC_sidechains$sidechain_2)
+
+#melt into longer list and stack side chains into single column
+FUNC_sidechains$plot <- FUNC_data %>% 
+  add_column(sidechain = FUNC_sidechains$sidechain_1) %>%
+  bind_rows(FUNC_data %>% 
+              add_column(sidechain = FUNC_sidechains$sidechain_2)) %>%
+  filter(!is.na(sidechain))
+
+plot_Val <- FUNC_sidechains$plot %>% 
   select(feature_idx, sidechain, subclass, feature, p, all_of(FUNC_plot_comparisons)) %>%
   rename(lipid_class = subclass)
 }
@@ -40,7 +67,7 @@ plot_Val <- FUNC_data %>%
   
   temp_list <- list()
   for(idx_plot_comparisons in 1:length(FUNC_plot_comparisons)){
-    temp_column_idx <- which(colnames(plot_Val) == FUNC_plot_comparisons[idx_plot_comparisons])
+    temp_column_idx <- which(colnames(plot_Val) %in% FUNC_plot_comparisons[idx_plot_comparisons])
     temp_list[[idx_plot_comparisons]] <- plot_Val %>%
       add_column(plot_Val[,temp_column_idx] %>% 
                    log() %>% 
@@ -119,13 +146,13 @@ plot_Val <- FUNC_data %>%
 
     
   # add scatter points to plot
-  bp <- bp + geom_point(aes(text = feature,
+  bp <- bp + geom_point(aes(#text = feature,
                             fill = `Dunn's test comparison`,
                             group =`Dunn's test comparison`,
                             size = point_size
                             ),
                           position=position_dodge(0.7),
-                          width = 0.01,
+                          #width = 0.01,
                           shape = 16
                          )
   bp <- bp + scale_fill_manual(values = FUNC_project_colours[colour_idx])
@@ -171,7 +198,7 @@ if(FUNC_plot_class_or_sidechain=="class"){
   #                          hjust = 2))
   
   #remove legends
-  bp <- bp + guides(size=FALSE)
+  bp <- bp + guides(size= "none")
   
   
  #add scaleing factor that controls points on the plot

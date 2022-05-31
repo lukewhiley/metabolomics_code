@@ -11,19 +11,15 @@
 
 ## REQUIRED ARGUMENTS
 
-# -> FUNC_data = a tibble or data from containing data
-# -> FUNC_opls_y = column name for column containing class data as y in OPLS-DA
-# -> FUNC_metabolite_list = array of metabolites to use - must match appropiate column names
-# -> FUNC_colour_by = column name for column containing character string or factor to colour OPLS-DA 
-# -> FUNC_plot_label = column name for column containing character string or factor to label OPLS-DA plotly
-# -> FUNC_scaling = scaling argument for metabom8 - only use UV or Pareto
-# -> FUNC_title = title for OPLS-DA plot
-# -> FUNC_project_colours = array of colours - must match length of unique number of groups
-
-# -> FUNC_data_predict = use if wanting to predict data to model - a tibble or data from containing data to predict. Set as FALSE if no predicition required
-
-
-#FUNC_data = read_csv(file = "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/Ryan - CABIN/lipids/analysis/test.csv")
+# -> FUNC_project_directory: directory to create output files
+# -> FUNC_data: data to be batch corrected
+# -> FUNC_metabolite_list: list of metabolite targets
+# -> FUNC_header_sample_id: string header of column name containing sample_id info
+# -> FUNC_header_batch: string header of column name containing batch ID
+# -> FUNC_header_sample_type: string header of column name containing sample_type (sample or qc)
+# -> FUNC_header_run_order: string header of column name containing sample run order idx
+# -> FUNC_option_method: string; RF or loess
+# -> FUNC_option_coCV: %RSD in qc cut off. default is 30
 
 lgw_signal_correction <- function(FUNC_project_directory,
                                   FUNC_data,
@@ -37,8 +33,9 @@ lgw_signal_correction <- function(FUNC_project_directory,
                                   ){
 
 require(statTarget)
-  
+  #browser()
 #create directories for use later
+dir.create(paste(FUNC_project_directory))
 dir.create(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", sep=""))
 setwd(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", sep=""))  
 
@@ -95,7 +92,7 @@ for(idx_batch in FUNC_list$PhenoFile$template %>%
 loop_qc_idx <- which(loop_temp_data %>% 
                        select(all_of(FUNC_header_sample_type)) 
                       == "qc")
-
+# browser()
 #if qc is not run before the samples - artificially move first qc to run order position 1. This is required for statTarget
 if(loop_qc_idx[1] > 1){
   loop_temp_data <- loop_temp_data %>%
