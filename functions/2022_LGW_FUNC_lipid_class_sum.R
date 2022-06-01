@@ -24,16 +24,18 @@ lgw_lipid_class_data_summed <- function(FUNC_data,
               na.rm = TRUE) %>% as_tibble() %>%
           setNames(idx_lipid_class))
      )
-    
-      
-    
     }
   
-  # FUNC_class_data <- FUNC_class_data %>%
-  #   setNames(c(
-  #     FUNC_data %>% select(contains("sample")) %>% names(),
-  #     lipid_class
-  #  ))
+#add column with total summed data (not class specific)
 
-  FUNC_class_data
+FUNC_class_data <-  bind_cols(
+  FUNC_class_data, 
+  (rowSums(x = FUNC_data %>%
+             select(!contains("sample")),
+           na.rm = TRUE) %>% as_tibble() %>%
+     setNames("total_summed_signal"))
+)
+
+FUNC_class_data
+    
 }

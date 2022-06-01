@@ -291,9 +291,14 @@ for(idx_metabolite in FUNC_list$ProfileFile$metabolite_list_update$name){
     select(correction_ratio) %>% 
     as.numeric()
 }
-
-FUNC_list$corrected_data$data_qc_mean_adjusted %>% 
+ #browser()
+output_list <- list()
+output_list$scaled_data <- FUNC_list$corrected_data$data_with_header %>%
   select(-sample)
+output_list$concentration_data <- FUNC_list$corrected_data$data_qc_mean_adjusted %>% 
+  select(-sample)
+
+output_list
 }
 
 #drop extra column "sample" that is added in the function and then export final corrected data

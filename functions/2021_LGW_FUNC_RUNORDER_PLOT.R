@@ -23,9 +23,9 @@ lgw_runorder_plot <- function(FUNC_data,
   
   title_text <- FUNC_title
   
-  
   for(idx_feature in FUNC_metabolite_list){
-  # create plot values
+   # browser()
+    # create plot values
   plot_Val <- FUNC_data %>% 
     select(
       all_of(FUNC_HEADER_colour_by), 
@@ -39,6 +39,7 @@ lgw_runorder_plot <- function(FUNC_data,
   
   #create sample idx factor for plotting
   plot_Val$sample_idx <- seq(1:nrow(plot_Val)) %>% factor()
+
 
     #produce plot
   bp <- ggplot(data=plot_Val,
