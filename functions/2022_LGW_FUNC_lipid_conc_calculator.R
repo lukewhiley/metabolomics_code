@@ -21,7 +21,7 @@ lipid_features <- FUNC_metabolite_list[!grepl("SIL",FUNC_metabolite_list)]
     
     #set empty list
 FUNC_list$out <- FUNC_data %>%
-      select(sample_name)
+      select(contains("sample"))
     
     for(idx_lipid in lipid_features){
       #find appropriate SIL IS from SIL_guide
@@ -51,7 +51,8 @@ FUNC_list$out <- FUNC_data %>%
                   by= "sample_name"
         )
     }
+
+FUNC_list$out
+
   }
   
-FUNC_data
-}
