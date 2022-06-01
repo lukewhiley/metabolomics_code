@@ -48,7 +48,7 @@ lgw_runorder_plot <- function(FUNC_data,
   )
   
   bp <- bp + geom_point(aes(text = sample_name,
-                            fill = sample_type_factor#,
+                            fill = get(FUNC_HEADER_colour_by)#,
                             #color = sample_type_factor
   ),
   shape = 21
@@ -83,7 +83,12 @@ lgw_runorder_plot <- function(FUNC_data,
   bp <- bp + geom_vline(xintercept=c(batch_idx),color="grey")
 
   run_plot_output[[idx_feature]]$ggplot <- bp
-  run_plot_output[[idx_feature]]$plotly <- bp %>% ggplotly() %>% layout(legend = list(orientation = 'h'))
+  run_plot_output[[idx_feature]]$plotly <- bp %>% ggplotly() %>% layout(legend = list(orientation = "h",   # show entries horizontally
+                                                                                      xanchor = "center",  # use center of legend as anchor
+                                                                                      x = 0.5,
+                                                                                      y = -0.2,
+                                                                                      title=list(text="Group comparison:"))
+                                                                        )
   }
 
   run_plot_output
