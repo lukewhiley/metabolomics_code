@@ -10,8 +10,7 @@ lgw_lipid_feature_filter <- function(FUNC_data,
                                         FUNC_metabolite_list,
                                         FUNC_IS_tag,
                                         FUNC_OPTION_missing_value_threshold,
-                                        FUNC_OPTION_intensity_threshold#,
-                                        #FUNC_OPTION_show_boxplots
+                                        FUNC_OPTION_intensity_threshold
                                        ){
   
   FUNC_list <- list()

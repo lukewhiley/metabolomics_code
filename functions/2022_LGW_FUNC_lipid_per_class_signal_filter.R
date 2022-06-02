@@ -48,9 +48,9 @@ lgw_summed_class_signal_filter <- function(FUNC_data,
   FUNC_Q3 <- quantile(FUNC_row_sums$total_signal, .75)
   FUNC_IQR <- IQR(FUNC_row_sums$total_signal)
   
-  #set pass filter to keep all features that are higher than quartile 1 - 2* the interquartile range - looking for samples that have a clear overall low signal (i.e. miss injection) or high (incorrect splitting i.e double pipetting)
+  #set pass filter to keep all features that are lower than [quartile 1 - 2* the interquartile range] - looking for samples that have a clear overall low signal (i.e. miss injection)
   FUNC_list$pass_list[[idx_lipid]] <-  subset(FUNC_row_sums, 
-         FUNC_row_sums$total_signal > (FUNC_Q1 - FUNC_OPTION_NON_SIL_filter*FUNC_IQR) & FUNC_row_sums$total_signal < (FUNC_Q3 + FUNC_OPTION_NON_SIL_filter*FUNC_IQR)) 
+         FUNC_row_sums$total_signal > (FUNC_Q1 - FUNC_OPTION_NON_SIL_filter*FUNC_IQR)) #& FUNC_row_sums$total_signal < (FUNC_Q3 + FUNC_OPTION_NON_SIL_filter*FUNC_IQR)) 
   
   FUNC_list$pass_list[[idx_lipid]] <- FUNC_list$pass_list[[idx_lipid]] %>%
     add_column("class" = rep(idx_lipid, nrow(FUNC_list$pass_list[[idx_lipid]]))) %>%
@@ -58,8 +58,8 @@ lgw_summed_class_signal_filter <- function(FUNC_data,
   
   #create fail list
   FUNC_list$fail_list[[idx_lipid]] <- subset(FUNC_row_sums, 
-                      FUNC_row_sums$total_signal < (FUNC_Q1 - FUNC_OPTION_NON_SIL_filter*FUNC_IQR) | FUNC_row_sums$total_signal > (FUNC_Q3 + FUNC_OPTION_NON_SIL_filter*FUNC_IQR) 
-                      ) 
+                      FUNC_row_sums$total_signal < (FUNC_Q1 - FUNC_OPTION_NON_SIL_filter*FUNC_IQR)) #| FUNC_row_sums$total_signal > (FUNC_Q3 + FUNC_OPTION_NON_SIL_filter*FUNC_IQR) 
+  
   FUNC_list$fail_list[[idx_lipid]] <- FUNC_list$fail_list[[idx_lipid]] %>%
     add_column("class" = rep(idx_lipid, nrow(FUNC_list$fail_list[[idx_lipid]]))) %>%
     add_column("filter" = rep("total signal", nrow(FUNC_list$fail_list[[idx_lipid]])))
@@ -94,14 +94,14 @@ lgw_summed_class_signal_filter <- function(FUNC_data,
   FUNC_IQR_SIL <- IQR(FUNC_row_sums_SIL$total_signal)
   
   FUNC_list$pass_list_SIL[[idx_lipid]] <-  subset(FUNC_row_sums_SIL, 
-                                 FUNC_row_sums_SIL$total_signal > (FUNC_Q1_SIL - FUNC_OPTION_SIL_filter*FUNC_IQR_SIL) & FUNC_row_sums_SIL$total_signal < (FUNC_Q3_SIL + FUNC_OPTION_SIL_filter*FUNC_IQR_SIL)) #wider threshold for IS - should be more consistent so smaller IQR
+                                 FUNC_row_sums_SIL$total_signal > (FUNC_Q1_SIL - FUNC_OPTION_SIL_filter*FUNC_IQR_SIL)) #& FUNC_row_sums_SIL$total_signal < (FUNC_Q3_SIL + FUNC_OPTION_SIL_filter*FUNC_IQR_SIL)) #wider threshold for IS - should be more consistent so smaller IQR
   
   FUNC_list$pass_list_SIL[[idx_lipid]] <- FUNC_list$pass_list_SIL[[idx_lipid]] %>%
     add_column("class" = rep(idx_lipid, nrow(FUNC_list$pass_list_SIL[[idx_lipid]]))) %>%
     add_column("filter" = rep("SIL signal", nrow(FUNC_list$pass_list_SIL[[idx_lipid]])))
   
   FUNC_list$fail_list_SIL[[idx_lipid]] <- subset(FUNC_row_sums_SIL, 
-                                FUNC_row_sums_SIL$total_signal < (FUNC_Q1_SIL - FUNC_OPTION_SIL_filter*FUNC_IQR_SIL) | FUNC_row_sums_SIL$total_signal > (FUNC_Q3_SIL + FUNC_OPTION_SIL_filter*FUNC_IQR_SIL)) #wider threshold for IS - should be more consistent so smaller IQR
+                                FUNC_row_sums_SIL$total_signal < (FUNC_Q1_SIL - FUNC_OPTION_SIL_filter*FUNC_IQR_SIL)) #| FUNC_row_sums_SIL$total_signal > (FUNC_Q3_SIL + FUNC_OPTION_SIL_filter*FUNC_IQR_SIL)) #wider threshold for IS - should be more consistent so smaller IQR
   
   FUNC_list$fail_list_SIL[[idx_lipid]] <- FUNC_list$fail_list_SIL[[idx_lipid]] %>%
     add_column("class" = rep(idx_lipid, nrow(FUNC_list$fail_list_SIL[[idx_lipid]]))) %>%

@@ -59,8 +59,8 @@ lgw_summed_signal_filter <- function(FUNC_data,
   
   #create fail list
   FUNC_list$fail_list <- subset(FUNC_row_sums, 
-                      FUNC_row_sums$total_signal < (FUNC_Q1 - FUNC_OPTION_NON_SIL_filter*FUNC_IQR) | FUNC_row_sums$total_signal > (FUNC_Q3 + FUNC_OPTION_NON_SIL_filter*FUNC_IQR) 
-                      ) 
+                      FUNC_row_sums$total_signal < (FUNC_Q1 - FUNC_OPTION_NON_SIL_filter*FUNC_IQR) | FUNC_row_sums$total_signal > (FUNC_Q3 + FUNC_OPTION_NON_SIL_filter*FUNC_IQR))
+                      
   
   FUNC_list$fail_list <- FUNC_list$fail_list %>%
     #add_column("class" = rep(idx_lipid, nrow(FUNC_list$fail_list))) %>%

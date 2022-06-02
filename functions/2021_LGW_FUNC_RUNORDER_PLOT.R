@@ -8,10 +8,8 @@ lgw_runorder_plot <- function(FUNC_data,
                         FUNC_HEADER_plot_label,
                         FUNC_HEADER_batch,
                         FUNC_title,
-                        FUNC_project_colours
-                    #FUNC_option_invert_y,
-                    #FUNC_option_invert_x,
-                    #FUNC_option_plot_qc
+                        FUNC_project_colours,
+                        FUNC_OPTION_log_data
                     ){
   
   require(tidyverse)
@@ -34,12 +32,18 @@ lgw_runorder_plot <- function(FUNC_data,
       all_of(idx_feature)
       ) %>%
     rename("concentration" = all_of(idx_feature))
+  
+  
+  y_title = "Summed Class Concentration"
+  
+  if(FUNC_OPTION_log_data == TRUE){
   #log data
   plot_Val$concentration <- (plot_Val$concentration + 1) %>% log()
+  y_title = "Log[Summed Class Concentration]"
+  }
   
   #create sample idx factor for plotting
   plot_Val$sample_idx <- seq(1:nrow(plot_Val)) %>% factor()
-
 
     #produce plot
   bp <- ggplot(data=plot_Val,
@@ -58,7 +62,7 @@ lgw_runorder_plot <- function(FUNC_data,
   #bp <- bp + scale_color_manual("black")
   
   bp <- bp + labs(x = paste("Sample order"),
-                  y = paste("Log[Summed Class Concentration]"))
+                  y = y_title)
   bp <- bp + ggtitle(paste0(FUNC_title, " - ", idx_feature))
   bp <- bp + theme_cowplot() 
   bp <- bp + theme(
