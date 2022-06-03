@@ -15,7 +15,8 @@ lgw_pca_filter <- function(FUNC_data,
                     FUNC_option_invert_y,
                     FUNC_option_invert_x,
                     FUNC_option_plot_qc,
-                    FUNC_option_iqr_filter
+                    FUNC_option_iqr_filter_samples,
+                    FUNC_option_iqr_filter_qc
                     ){
   require(metabom8)
   require(RColorBrewer)
@@ -86,8 +87,8 @@ lgw_pca_filter <- function(FUNC_data,
   FUNC_all_data_iqr <- IQR(all_data[[idx_PC]])
   
 
-  PC_threshold_low <- FUNC_all_data_q1 - (FUNC_all_data_iqr*FUNC_option_iqr_filter)
-  PC_threshold_high <- FUNC_all_data_q3 + (FUNC_all_data_iqr*FUNC_option_iqr_filter)
+  PC_threshold_low <- FUNC_all_data_q1 - (FUNC_all_data_iqr*FUNC_option_iqr_filter_samples)
+  PC_threshold_high <- FUNC_all_data_q3 + (FUNC_all_data_iqr*FUNC_option_iqr_filter_samples)
 
   pca_output[[idx_PC]]$sample_fail_idx <- which(plot_Val[[idx_PC]] < PC_threshold_low | 
                                           plot_Val[[idx_PC]] > PC_threshold_high)
@@ -98,11 +99,17 @@ lgw_pca_filter <- function(FUNC_data,
   #for qc data
   
   FUNC_qc_data <- plot_Val %>% filter(sample_type == "qc") #%>% select(all_of(idx_PC))
-  FUNC_qc_median <- median(FUNC_qc_data[[idx_PC]])
-  FUNC_qc_iqr <- IQR(FUNC_qc_data[[idx_PC]])
+  FUNC_qc_data_median <- median(FUNC_qc_data[[idx_PC]])
+  FUNC_qc_data_sd <- sd(FUNC_qc_data[[idx_PC]])
+  FUNC_qc_data_q1 <- quantile(FUNC_qc_data[[idx_PC]], 0.25) %>% as.numeric()
+  FUNC_qc_data_q3 <- quantile(FUNC_qc_data[[idx_PC]], 0.75) %>% as.numeric()
+  FUNC_qc_data_iqr <- IQR(FUNC_qc_data[[idx_PC]])
   
-  pca_output[[idx_PC]]$qc_fail_idx <- intersect(which(plot_Val[[idx_PC]] < PC_threshold_low | 
-                                      plot_Val[[idx_PC]] > PC_threshold_high),
+  PC_threshold_low_qc <- FUNC_qc_data_q1 - (FUNC_qc_data_iqr*FUNC_option_iqr_filter_qc)
+  PC_threshold_high_qc <- FUNC_qc_data_q3 + (FUNC_qc_data_iqr*FUNC_option_iqr_filter_qc)
+  
+  pca_output[[idx_PC]]$qc_fail_idx <- intersect(which(plot_Val[[idx_PC]] < PC_threshold_low_qc | 
+                                      plot_Val[[idx_PC]] > PC_threshold_high_qc),
                              which(plot_Val$sample_type == "qc"))
   
                      
