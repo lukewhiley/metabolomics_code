@@ -13,7 +13,7 @@ lgw_lipid_plot <- function(FUNC_data,
                     FUNC_project_colour_reference,
                     FUNC_project_colours,
                     FUNC_plot_class_or_sidechain){
-  require(metabom8)
+  #require(metabom8)
   require(RColorBrewer)
   require(tidyverse)
   require(plotly)

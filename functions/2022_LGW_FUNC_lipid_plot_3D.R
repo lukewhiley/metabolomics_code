@@ -6,7 +6,9 @@
 # FUNC_scaling = UV or Pareto
 
 lgw_lipid_3D_plot <- function(FUNC_data,
-                           FUNC_plot_comparisons
+                           FUNC_plot_comparisons,
+                           FUNC_plot_colour_low,
+                           FUNC_plot_colour_high
                     ){
   require(metabom8)
   require(RColorBrewer)
@@ -101,7 +103,9 @@ lgw_lipid_3D_plot <- function(FUNC_data,
   plot_Val_2 <- plot_Val_2 %>%
     filter(point_size == 1) %>%
     bind_rows(temp_plot_Val) %>% 
-    arrange(feature_idx)
+    #arrange(feature_idx)
+    arrange(`-Log10 (p)`)
+    #arrange(desc(sidechain))
   
   #browser()
   
@@ -111,16 +115,20 @@ lgw_lipid_3D_plot <- function(FUNC_data,
                    y=lipid_sidechain_factor)
                )
   
-  bp <- bp + geom_point(aes(text = feature,
-                            fill = `-Log10 (p)`,
-                            color = `-Log10 (p)`,
+ 
+
+    #add points
+  bp <- bp + geom_quasirandom(#cex = 2,
+    #position = "beeswarm",
+                        #dodge.width = 0.1,
+                        #size = 0.5,
+                        colour = "black",
+                        shape = 21,
+                        aes(fill = `-Log10 (p)`,
+                            #color = `-Log10 (p)`,
                             size = point_size
-                            ),
-                          position=position_dodge(0.7),
-                          width = 0.01,
-                          #size = 0.5,
-                          shape = 21
-                         )
+                            ))
+  
   bp <- bp + labs(x = paste("Lipid Class"),
                   y = paste("Sidechain"))
   bp <- bp + ggtitle(paste0(str_split(idx_str_data, "_")[[1]][1], " vs ", str_split(idx_str_data, "_")[[1]][2]))
@@ -132,22 +140,29 @@ lgw_lipid_3D_plot <- function(FUNC_data,
   bp <- bp + theme(axis.title = element_text(size = 14)) 
   bp <- bp + theme(legend.title=element_text(size=12), 
                    legend.text=element_text(size=12))
+  bp <- bp + scale_size(limits = c(0,100))
+  bp <- bp + scale_fill_gradient(low = FUNC_plot_colour_low, high = FUNC_plot_colour_high)
+  bp <- bp + guides(size="none")
   
   #create vertical lines to seprate classes on plot
-  x_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_class_factor %>% unique())-1))+0.5 #here
-  y_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_sidechain_factor %>% unique())-1))+0.5
+  x_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_class_factor %>% unique())-1))+0.5  
+  y_lipid_sequence <- seq(1:(length(plot_Val_2$lipid_sidechain_factor %>% unique())-1))+0.5 
   
   bp <- bp + geom_vline(xintercept=c(x_lipid_sequence),color="grey")
   bp <- bp + geom_hline(yintercept=c(y_lipid_sequence),color="grey")
-  bp <- bp + guides(size=FALSE)
   
-  bp <- bp + scale_size(limits = c(0,100))
-  #bp <- bp + scale_fill_gradient()
-  bp <- bp + scale_fill_viridis_c(option = "magma", limits = c(0, max_log10_p))
-  bp <- bp + scale_color_viridis_c(option = "magma", limits = c(0, max_log10_p))
+  #bp <- bp + scale_color_gradient(low = FUNC_plot_colour_low, high = FUNC_plot_colour_high)
+
+  
+  
+  #bp <- bp + scale_fill_viridis_c(option = "magma", limits = c(0, max_log10_p))
+  #bp <- bp + scale_color_viridis_c(option = "magma", limits = c(0, max_log10_p))
   #bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
+  lipid_plot_output[[idx_str_data]] <- list()
+  lipid_plot_output[[idx_str_data]]$ggplot <- bp 
   
-  lipid_plot_output[[idx_str_data]] <- bp %>% ggplotly() %>% layout(legend = list(orientation = 'h'))
+  # #create plot_ly
+  lipid_plot_output[[idx_str_data]]$plotly <- bp %>% ggplotly()
   
   }
   lipid_plot_output

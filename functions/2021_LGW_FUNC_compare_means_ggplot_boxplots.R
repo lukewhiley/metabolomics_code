@@ -143,7 +143,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
      
      wilcox_test_result_t_num <-wilcox_test_result_t %>% 
        as.numeric() %>% 
-       as_data_frame() %>% 
+       as_tibble() %>% 
        t() %>% 
        as_tibble() %>% 
        setNames(names(wilcox_test_result_t)) 
