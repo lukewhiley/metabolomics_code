@@ -35,7 +35,7 @@ lgw_signal_correction <- function(FUNC_project_directory,
 require(statTarget)
   #browser()
 #create directories for use later
-dir.create(paste(FUNC_project_directory))
+#dir.create(paste(FUNC_project_directory))
 dir.create(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", sep=""))
 setwd(paste(FUNC_project_directory, "/", Sys.Date(), "_signal_correction_results", sep=""))  
 

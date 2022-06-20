@@ -7,10 +7,12 @@
 # FUNC_IS_tag - are internal standards tagged with any string? e.g. SIL (stable isotope labelled) or IS  in their name
 
 lgw_missing_value_filter <- function(FUNC_data,
-                                        FUNC_metabolite_list,
-                                        FUNC_IS_tag,
-                                        FUNC_OPTION_missing_value_threshold,
+                                      FUNC_metabolite_list,
+                                      FUNC_IS_tag,
+                                      FUNC_OPTION_missing_value_threshold_sample,
+                                      FUNC_OPTION_missing_value_threshold_feature,
                                         FUNC_OPTION_intensity_threshold
+                                        
                                        ){
   
   FUNC_list <- list()
@@ -20,8 +22,9 @@ lgw_missing_value_filter <- function(FUNC_data,
     select(all_of(FUNC_metabolite_list)) %>%
     select(!contains(FUNC_IS_tag))
   
-  sample_zero_value_threshold <- (ncol(FUNC_summed_data)/100)*FUNC_OPTION_missing_value_threshold
-  feature_zero_value_threshold <- (nrow(FUNC_summed_data)/100)*FUNC_OPTION_missing_value_threshold
+  feature_zero_value_threshold <- nrow(FUNC_summed_data)*FUNC_OPTION_missing_value_threshold_feature
+                                 
+  sample_zero_value_threshold <- ncol(FUNC_summed_data)*FUNC_OPTION_missing_value_threshold_sample
   
   
   #step 1 - replace all NAs with 0
