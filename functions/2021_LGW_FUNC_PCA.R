@@ -175,7 +175,7 @@ lgw_pca <- function(FUNC_data,
                              titleY = TRUE
   ) %>% layout(showlegend = TRUE, 
                margin = list(l = 65, r = 50, b=65, t=85),
-               title = paste0(FUNC_title,": PCA", "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
+               title = paste0(FUNC_title, "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features")
   )
   
 
