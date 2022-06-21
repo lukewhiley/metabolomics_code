@@ -12,6 +12,7 @@ lgw_pca_filter <- function(FUNC_data,
                     FUNC_scaling,
                     FUNC_title,
                     FUNC_project_colours,
+                    FUNC_option_point_size,
                     FUNC_option_invert_y,
                     FUNC_option_invert_x,
                     FUNC_option_plot_qc,
@@ -146,7 +147,8 @@ lgw_pca_filter <- function(FUNC_data,
                             fill = pca_plot_colour#,
                             #color = sample_type_factor
   ),
-  shape = 21
+  shape = 21,
+  size = FUNC_option_point_size
   )
   
   bp <- bp + scale_fill_manual(values = c(plot_colours))
