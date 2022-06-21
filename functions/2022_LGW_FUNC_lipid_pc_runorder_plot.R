@@ -161,7 +161,8 @@ lgw_pc_run_plot <- function(FUNC_data,
   
   bp <- bp + labs(x = paste("Sample order"),
                   y = paste0(idx_PC))
-  bp <- bp + ggtitle(paste0(FUNC_title, " - ", idx_PC))
+  #bp <- bp + ggtitle(paste0(FUNC_title, " - ", idx_PC))
+  bp <- bp + ggtitle(paste0(idx_PC))
   bp <- bp + theme_cowplot() 
   bp <- bp + theme(
     plot.title = element_text(hjust = 0.5, size=14),
