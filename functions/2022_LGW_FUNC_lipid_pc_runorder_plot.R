@@ -151,7 +151,8 @@ lgw_pc_run_plot <- function(FUNC_data,
                             fill = pca_plot_colour#,
                             #color = sample_type_factor
   ),
-  shape = 21
+  shape = 21,
+  size = 10
   )
   
   bp <- bp + scale_fill_manual(values = c(plot_colours))
