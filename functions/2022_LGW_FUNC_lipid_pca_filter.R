@@ -164,7 +164,6 @@ lgw_pca_filter <- function(FUNC_data,
     #legend.text=element_text(size=12),
     legend.title=element_blank(),
     axis.ticks.x = element_blank(),
-    
   )
   
   #create vertical lines to separate classes on plot
@@ -180,7 +179,7 @@ lgw_pca_filter <- function(FUNC_data,
                                                                                       xanchor = "center",  # use center of legend as anchor
                                                                                       x = 0.5,
                                                                                       y = -0.2,
-                                                                                      title=list(text="Group comparison:"))
+                                                                                      title=list(text="Group comparison x:"))
   )
                                                                         
   }
