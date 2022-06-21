@@ -176,12 +176,15 @@ lgw_pc_run_plot <- function(FUNC_data,
   #create vertical lines to separate classes on plot
   FUNC_data_batches <- plot_Val$sample_batch %>% unique()
   batch_idx <- NULL
+  
+  if(length(FUNC_data_batches) > 1){
    for(idx_batch in FUNC_data_batches[2:length(FUNC_data_batches)]){
      batch_idx <- c(batch_idx, min(which(plot_Val$sample_batch == idx_batch)))
    }
+    
+    bp <- bp + geom_vline(xintercept=c(batch_idx),color="grey")
+    }
 
-  bp <- bp + geom_vline(xintercept=c(batch_idx),color="grey")
-  
   pca_output$plots[[idx_PC]]$plotly <- bp %>% ggplotly() %>% layout(legend = list(orientation = "h",   # show entries horizontally
                                                                                       xanchor = "center",  # use center of legend as anchor
                                                                                       x = 0.5,
