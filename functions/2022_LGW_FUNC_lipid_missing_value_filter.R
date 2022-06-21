@@ -11,7 +11,7 @@ lgw_missing_value_filter <- function(FUNC_data,
                                       FUNC_IS_tag,
                                       FUNC_OPTION_missing_value_threshold_sample,
                                       FUNC_OPTION_missing_value_threshold_feature,
-                                        FUNC_OPTION_intensity_threshold
+                                      FUNC_OPTION_intensity_threshold
                                         
                                        ){
   
