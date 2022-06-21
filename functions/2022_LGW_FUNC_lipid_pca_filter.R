@@ -179,7 +179,7 @@ lgw_pca_filter <- function(FUNC_data,
                                                                                       xanchor = "center",  # use center of legend as anchor
                                                                                       x = 0.5,
                                                                                       y = -0.2,
-                                                                                      title=list(text="Group comparison x:"))
+                                                                                      title=list(text="Group comparison:"))
   )
                                                                         
   }
