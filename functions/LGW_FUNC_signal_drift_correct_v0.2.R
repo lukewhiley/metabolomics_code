@@ -299,7 +299,7 @@ output_list$scaled_data <- FUNC_list$corrected_data$data_with_header %>%
 output_list$concentration_data <- FUNC_list$corrected_data$data_qc_mean_adjusted %>% 
   select(-sample)
 
-output_list
+output_list$concentration_data
 }
 
 #drop extra column "sample" that is added in the function and then export final corrected data
