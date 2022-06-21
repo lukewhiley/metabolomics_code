@@ -218,7 +218,7 @@ lgw_pca_filter <- function(FUNC_data,
                                     colors = plot_colours,
                                     legendgroup = ~pca_colour,
                                     showlegend = NULL,
-                                    marker = list(#size = 10, 
+                                    marker = list(size = 10, 
                                                   #color = '#1E90FF', 
                                                   opacity = 1,
                                                   line = list(
