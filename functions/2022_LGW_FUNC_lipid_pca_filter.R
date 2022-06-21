@@ -143,10 +143,7 @@ lgw_pca_filter <- function(FUNC_data,
                    y=get(idx_PC))
   )
   
-  bp <- bp + geom_point(aes(#text = sample_name,
-                            fill = pca_plot_colour#,
-                            #color = sample_type_factor
-  ),
+  bp <- bp + geom_point(aes(fill = pca_plot_colour),
   shape = 21,
   size = FUNC_option_point_size
   )
@@ -192,8 +189,6 @@ lgw_pca_filter <- function(FUNC_data,
   ##################  ##################  ##################  ##################  ##################
   #produce plot_ly PCA scores plot
   
-
-  
   #axis settings
   x_axis_settings_scores <- list(
     zeroline = TRUE,
@@ -224,7 +219,7 @@ lgw_pca_filter <- function(FUNC_data,
                                     colors = plot_colours,
                                     legendgroup = ~pca_colour,
                                     showlegend = NULL,
-                                    marker = list(size = 10, 
+                                    marker = list(#size = 10, 
                                                   #color = '#1E90FF', 
                                                   opacity = 1,
                                                   line = list(
