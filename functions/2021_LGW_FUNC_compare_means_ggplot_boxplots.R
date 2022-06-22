@@ -11,6 +11,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                                FUNC_HEADER_paired,
                                FUNC_plot_comparisons,
                                FUNC_OPTION_plot_qc,
+                               FUNC_OPTION_point_size,
                                FUNC_OPTION_plot_show_legend,
                                FUNC_OPTION_plot_outliers
                                ){
