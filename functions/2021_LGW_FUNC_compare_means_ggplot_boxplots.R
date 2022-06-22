@@ -26,7 +26,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
   #compare_means_list() <- list()
   
   for(idx_metabolite in FUNC_metabolite_list){
-
+print(idx_metabolite)
     temp_func_data <- FUNC_data %>%
       select(all_of(FUNC_HEADER_class), all_of(FUNC_HEADER_colour), all_of(idx_metabolite)) %>%
       filter(!!as.symbol(FUNC_HEADER_class) %in% FUNC_class_to_include) %>%
@@ -36,7 +36,10 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     
     if(!is.na(FUNC_HEADER_paired)){
     temp_func_data <- FUNC_data %>%
-      select(all_of(FUNC_HEADER_class), all_of(FUNC_HEADER_colour), all_of(idx_metabolite),all_of(FUNC_HEADER_paired)) %>%
+      select(all_of(FUNC_HEADER_class), 
+             all_of(FUNC_HEADER_colour), 
+             all_of(idx_metabolite),
+             all_of(FUNC_HEADER_paired)) %>%
       rename(concentration = all_of(idx_metabolite), 
              plot_class = all_of(FUNC_HEADER_class),
              pair_group = all_of(FUNC_HEADER_paired))
@@ -274,6 +277,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     
     bp_y_max <- temp_func_plot_data$concentration %>% max() 
     
+    
+    #start to build boxplot
       bp <- ggplot(data=temp_func_plot_data,
                    aes(x=as.factor(plot_class),
                        y=as.numeric(concentration))
@@ -286,7 +291,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                       alpha=0.05)  
     bp <- bp +  geom_jitter(aes(fill = get(FUNC_HEADER_temp_colour)), 
                   width = 0.01,
-                  size = 1,
+                  size = FUNC_OPTION_point_size,
                   shape = 21)
     bp <- bp + scale_fill_manual(values = c(FUNC_OPTION_colour_choice))
                   #size = 1)
@@ -300,7 +305,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     bp <- bp + theme(axis.title = element_text(size = 5)) 
     bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
     
-    
+    #
     plot_y_max <- ggplot_build(bp)$layout$panel_params[[1]]$y.range[2]
     plot_y_range <- ggplot_build(bp)$layout$panel_params[[1]]$y.range[2] - ggplot_build(bp)$layout$panel_params[[1]]$y.range[1]
     
