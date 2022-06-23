@@ -1,14 +1,14 @@
 #ANPC PCA quality control visualisation
 
-# FUNC_data = data containing individual lipid data - MUST CONTAIN sampleID column 
+# FUNC_compare_means_table = data containing individual lipid data - MUST CONTAIN sampleID column 
 # FUNC_colour_by = how to colour the plot (e.g. sample class, is_ltr or cohort)
 # FUNC_plot label = what to label the scores plot with (e.g. sampleID)
 # FUNC_scaling = UV or Pareto
 
-lgw_lipid_3D_plot <- function(FUNC_data,
-                           FUNC_plot_comparisons,
-                           FUNC_plot_colour_low,
-                           FUNC_plot_colour_high
+lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
+                              FUNC_plot_comparisons,
+                              FUNC_plot_colour_low,
+                              FUNC_plot_colour_high
                     ){
   require(metabom8)
   require(RColorBrewer)
@@ -17,20 +17,30 @@ lgw_lipid_3D_plot <- function(FUNC_data,
   
   lipid_plot_output <- list()
   
-  #browser()
+  #Add lipid class column to results table
+  FUNC_compare_means_table <- FUNC_compare_means_table %>%
+    add_column("FUNC_class" =
+                 sub("\\(.*", "", FUNC_compare_means_table$feature),
+               .after = "feature") %>%
+    add_column("FUNC_feature_idx" = 
+                 c(1:nrow(FUNC_compare_means_table)),
+               .before = "feature")
   
   FUNC_sidechains <- list()
   #extract chain length data from inside brackets
-  FUNC_sidechains$all <- gsub("[\\(\\)]", "", regmatches(FUNC_data$feature, gregexpr("\\(.*?\\)", FUNC_data$feature)))
+  FUNC_sidechains$all <- sub("[\\(\\)]", "", regmatches(FUNC_compare_means_table$feature, gregexpr("\\(.*?\\)", FUNC_compare_means_table$feature)))
   
   #extract data either side of "/" for sidechain 1 and sidechain 2
   FUNC_sidechains$sidechain_1 <- sub('/.*', '', FUNC_sidechains$all)
   FUNC_sidechains$sidechain_2 <- sub('.*/', '', FUNC_sidechains$all)
   
-  #delete TAG from sidechain 1 because they do not contain specific sidechain data
-  FUNC_sidechains$sidechain_1[which(master_list$lipid_plot$data$subclass == "TAG")] <- NA
-  FUNC_sidechains$sidechain_1[!grepl("/", master_list$lipid_plot$data$feature)] <- NA
+  #delete TAG from sidechain 1 because they do not contain specific 1x sidechain data
+  FUNC_sidechains$sidechain_1[which(FUNC_compare_means_table$FUNC_class == "TAG")] <- NA
   
+  #delete single chain lipids from sidechain 1 because they only have 1x chain and it will be stored in sidechain 2 in this table
+  # nomenclature may use an "_" or a "/" hence two lines
+  FUNC_sidechains$sidechain_1[!grepl("/", FUNC_compare_means_table$feature)] <- NA
+  FUNC_sidechains$sidechain_1[!grepl("_", FUNC_compare_means_table$feature)] <- NA
   
   #drop the extra P- and O- and d, allows for focus on just chain length
   FUNC_sidechains$sidechain_1 <- sub('P-', '', FUNC_sidechains$sidechain_1)
@@ -39,17 +49,17 @@ lgw_lipid_3D_plot <- function(FUNC_data,
   FUNC_sidechains$sidechain_2 <- sub('FA', '', FUNC_sidechains$sidechain_2)
   
   #melt into longer list and stack side chains into single column
-  FUNC_sidechains$plot <- FUNC_data %>% 
+  FUNC_sidechains$plot <- FUNC_compare_means_table %>% 
     add_column(sidechain = FUNC_sidechains$sidechain_1) %>%
-    bind_rows(FUNC_data %>% 
+    bind_rows(FUNC_compare_means_table %>% 
                 add_column(sidechain = FUNC_sidechains$sidechain_2)) %>%
     filter(!is.na(sidechain))
   
   plot_Val <- FUNC_sidechains$plot %>% 
-    select(feature_idx, sidechain, subclass, feature, p, all_of(FUNC_plot_comparisons)) 
+    select(FUNC_feature_idx, sidechain, FUNC_class, feature, p, all_of(FUNC_plot_comparisons)) 
   
   #find max -log10 (p)
- max_log10_p <- FUNC_data %>% 
+ max_log10_p <- FUNC_compare_means_table %>% 
     select(all_of(FUNC_plot_comparisons)) %>%
     log() %>%
     abs() %>%
@@ -66,7 +76,7 @@ lgw_lipid_3D_plot <- function(FUNC_data,
  
 
   #create factor for subclass
-  plot_Val_2$lipid_class_factor <- plot_Val_2$subclass %>% factor(levels = unique(plot_Val_2$subclass %>% sort()), ordered = TRUE)
+  plot_Val_2$lipid_class_factor <- plot_Val_2$FUNC_class %>% factor(levels = unique(plot_Val_2$FUNC_class %>% sort()), ordered = TRUE)
   
   plot_Val_2$lipid_sidechain_factor <- plot_Val_2$sidechain %>% factor(levels = unique(plot_Val_2$sidechain %>% sort()), ordered = TRUE)
 
@@ -150,14 +160,7 @@ lgw_lipid_3D_plot <- function(FUNC_data,
   
   bp <- bp + geom_vline(xintercept=c(x_lipid_sequence),color="grey")
   bp <- bp + geom_hline(yintercept=c(y_lipid_sequence),color="grey")
-  
-  #bp <- bp + scale_color_gradient(low = FUNC_plot_colour_low, high = FUNC_plot_colour_high)
 
-  
-  
-  #bp <- bp + scale_fill_viridis_c(option = "magma", limits = c(0, max_log10_p))
-  #bp <- bp + scale_color_viridis_c(option = "magma", limits = c(0, max_log10_p))
-  #bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
   lipid_plot_output[[idx_str_data]] <- list()
   lipid_plot_output[[idx_str_data]]$ggplot <- bp 
   
@@ -168,5 +171,13 @@ lgw_lipid_3D_plot <- function(FUNC_data,
   lipid_plot_output
   
 }
+
+
+#Archive backup code
+
+#bp <- bp + scale_color_gradient(low = FUNC_plot_colour_low, high = FUNC_plot_colour_high)
+#bp <- bp + scale_fill_viridis_c(option = "magma", limits = c(0, max_log10_p))
+#bp <- bp + scale_color_viridis_c(option = "magma", limits = c(0, max_log10_p))
+#bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
   
 

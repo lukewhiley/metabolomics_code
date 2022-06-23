@@ -15,6 +15,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                                FUNC_OPTION_plot_show_legend,
                                FUNC_OPTION_plot_outliers
                                ){
+  require("doParallel")
+  
   ##FIRST - COMPARE MEANS
   bp_plotlist <- list()
   #compare_means_list() <- list()
