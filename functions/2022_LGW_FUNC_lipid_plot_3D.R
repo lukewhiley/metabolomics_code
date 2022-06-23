@@ -8,7 +8,8 @@
 lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
                               FUNC_plot_comparisons,
                               FUNC_plot_colour_low,
-                              FUNC_plot_colour_high
+                              FUNC_plot_colour_high,
+                              FUNC_sidechain_sep
                     ){
   require(metabom8)
   require(RColorBrewer)
@@ -165,7 +166,7 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
   bp <- bp + geom_hline(yintercept=c(y_lipid_sequence),color="grey")
 
  
-  lipid_plot_output[[idx_str_data]]
+  lipid_plot_output[[idx_str_data]] <- bp
   
   #lipid_plot_output[[idx_str_data]] <- list()
   #lipid_plot_output[[idx_str_data]]$ggplot <- bp 
