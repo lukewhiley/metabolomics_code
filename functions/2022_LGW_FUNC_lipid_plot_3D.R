@@ -11,10 +11,9 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
                               FUNC_plot_colour_high,
                               FUNC_sidechain_sep
                     ){
-  require(metabom8)
-  require(RColorBrewer)
-  require(tidyverse)
-  require(plotly)
+  require(tidyverse)  
+  require(ggplot2)
+  require(rstatix)
   
   lipid_plot_output <- list()
   
@@ -43,7 +42,7 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
   FUNC_sidechains$sidechain_1[which(FUNC_compare_means_table$FUNC_class == "TAG")] <- NA
   
   #delete single chain lipids from sidechain 1 because they only have 1x chain and it will be stored in sidechain 2 in this table
-    FUNC_sidechains$sidechain_1[!grepl(FUNC_sidechain_sep, FUNC_compare_means_table$feature)] <- NA
+  FUNC_sidechains$sidechain_1[!grepl(FUNC_sidechain_sep, FUNC_compare_means_table$feature)] <- NA
 
   
   #drop the extra P- and O- and d, allows for focus on just chain length
@@ -62,90 +61,73 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
   plot_Val <- FUNC_sidechains$plot %>% 
     select(FUNC_feature_idx, sidechain, FUNC_class, feature, p, all_of(FUNC_plot_comparisons)) 
   
-  #find max -log10 (p)
- max_log10_p <- FUNC_compare_means_table %>% 
-    select(all_of(FUNC_plot_comparisons)) %>%
-    log() %>%
-    abs() %>%
-    max()
+  ###########
+  #pivot to a long table to control plotting scales
+  plot_Val_long <- plot_Val %>% 
+    select(-p) %>%
+    pivot_longer(
+      cols = c(FUNC_plot_comparisons),
+      names_to = "comparison",
+      values_to = "p")
+  plot_Val_long <- plot_Val_long %>%
+    #add column for -Log10 p
+    add_column("-Log10 (p)" = 
+                 plot_Val_long$p %>% log() %>% abs()) %>%
+    #add column for lipid class as unique ordered factors
+    add_column("lipid_class_factor" =
+                 plot_Val_long$FUNC_class %>% 
+                 factor(levels = unique(plot_Val_long$FUNC_class %>% sort()), 
+                        ordered = TRUE)) %>%
+    #add column for lipid sidechains as unique ordered factors
+    add_column("lipid_sidechain_factor" =
+                 plot_Val_long$sidechain %>% 
+                 factor(levels = unique(plot_Val_long$sidechain %>% sort()), 
+                        ordered = TRUE))
+    #add column for plot point size as rank ordered -log10 p 
+  plot_Val_long <-  plot_Val_long %>%
+    add_column("point_size" = 
+                 rank(plot_Val_long$`-Log10 (p)`))
+  
+  #reset plot point size scale so that all features p<0.05 are set to size 1
+  plot_Val_long$point_size[which(plot_Val_long$p > 0.05)] <- 1
+  #create plot point size integer breaks
+  plot_Val_long$point_size[which(plot_Val_long$p < 0.05)] <- as.integer(
+    cut(plot_Val_long$point_size[which(plot_Val_long$p < 0.05)], 
+        breaks = 100))
+  # define plot point size integer break
+  plot_Val_long$point_size[intersect(which(plot_Val_long$point_size > 1),
+                                     which(plot_Val_long$point_size < 26))] <- 2.5
+  plot_Val_long$point_size[intersect(which(plot_Val_long$point_size > 2.5),
+                                     which(plot_Val_long$point_size < 51))] <- 5
+  plot_Val_long$point_size[intersect(which(plot_Val_long$point_size > 5),
+                                     which(plot_Val_long$point_size < 81))] <- 10
+  plot_Val_long$point_size[intersect(which(plot_Val_long$point_size > 10),
+                                     which(plot_Val_long$point_size < 81))] <- 20
+  plot_Val_long$point_size[which(plot_Val_long$point_size > 20)] <- 40
  
+  #find max value (resulting from smallest p) for plot axis
+  max_log10_p <- plot_Val_long$`-Log10 (p)` %>% max()
+  
+  #run loop to create boxplot
+for(idx_str_data in FUNC_plot_comparisons){
+  plot_Val_2 <- plot_Val_long %>%
+    filter(comparison == idx_str_data)
 
-  for(idx_str_data in FUNC_plot_comparisons){
-  temp_column_idx <- which(colnames(plot_Val) == idx_str_data)
-    plot_Val_2 <- plot_Val %>%
-      add_column(plot_Val[,temp_column_idx] %>%
-                   log() %>%
-                   abs() %>%
-                   setNames(paste0("-Log10 (p)")))
- 
-
-  #create factor for subclass
-  plot_Val_2$lipid_class_factor <- plot_Val_2$FUNC_class %>% factor(levels = unique(plot_Val_2$FUNC_class %>% sort()), ordered = TRUE)
+  #produce ggboxplot
   
-  plot_Val_2$lipid_sidechain_factor <- plot_Val_2$sidechain %>% factor(levels = unique(plot_Val_2$sidechain %>% sort()), ordered = TRUE)
-
-  
-  #create values for point size
-  plot_Val_2 <- plot_Val_2 %>%
-    add_column(point_size = rank(plot_Val_2$`-Log10 (p)`))
-  
-  #reset scale so that all features p<0.05 are set to size 1
-  #plot_Val_2$point_size <- plot_Val_2$point_size - which(plot_Val_2$`-Log10 (p)` < (log(0.05) %>% abs())) %>% length()
-  
-  #reset scale so that all features p<0.05 are set to size 1
-  plot_Val_2$point_size[which(plot_Val_2$`-Log10 (p)` < (log(0.05) %>% abs()))] <- 1
- 
-  #arrange by point_size
-  plot_Val_2 <- plot_Val_2 %>% arrange(`-Log10 (p)`)
-  
-  plot_Val_2$point_size_rank <- 1
-  
-  #split off all features that are significant
-  temp_plot_Val <- plot_Val_2 %>%
-    filter(point_size >1)
-  
-  #set breaks
-  temp_plot_Val$point_size_rank <- as.integer(cut(temp_plot_Val$point_size, breaks = 100))
-  #define size breaks
-  temp_plot_Val$point_size <- 2.5
-  temp_plot_Val$point_size[which(temp_plot_Val$point_size_rank>25)] <- 5
-  temp_plot_Val$point_size[which(temp_plot_Val$point_size_rank>50)] <- 10
-  temp_plot_Val$point_size[which(temp_plot_Val$point_size_rank>80)] <- 20
-  temp_plot_Val$point_size[which(temp_plot_Val$point_size_rank>95)] <- 40
-  
-  #re-build plot_Val_2 table
-  plot_Val_2 <- plot_Val_2 %>%
-    filter(point_size == 1) %>%
-    bind_rows(temp_plot_Val) %>% 
-    #arrange(feature_idx)
-    arrange(`-Log10 (p)`)
-    #arrange(desc(sidechain))
-  
-  #browser()
-  
-  #produce plot
   bp <- ggplot(data=plot_Val_2,
                aes(x=lipid_class_factor,
-                   y=lipid_sidechain_factor)
-               )
-  
- 
-
+                   y=lipid_sidechain_factor))
     #add points
-  bp <- bp + geom_quasirandom(#cex = 2,
-    #position = "beeswarm",
-                        #dodge.width = 0.1,
-                        #size = 0.5,
-                        colour = "black",
-                        shape = 21,
-                        aes(fill = `-Log10 (p)`,
-                            #color = `-Log10 (p)`,
-                            size = point_size
-                            ))
+  bp <- bp + geom_quasirandom(
+    colour = "black",
+    shape = 21,
+    aes(fill = `-Log10 (p)`,
+    size = point_size))
   
   bp <- bp + labs(x = paste("Lipid Class"),
                   y = paste("Sidechain"))
-  bp <- bp + ggtitle(paste0(str_split(idx_str_data, "_")[[1]][1], " vs ", str_split(idx_str_data, "_")[[1]][2]))
+  bp <- bp + ggtitle(paste0(str_split(idx_str_data, " - ")[[1]][1], " vs ", str_split(idx_str_data, " - ")[[1]][2]))
   bp <- bp + theme_cowplot() 
   bp <- bp + theme(plot.title = element_text(hjust = 0.5)) 
   bp <- bp + theme(plot.title = element_text(size=14)) 
@@ -155,7 +137,8 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
   bp <- bp + theme(legend.title=element_text(size=12), 
                    legend.text=element_text(size=12))
   bp <- bp + scale_size(limits = c(0,100))
-  bp <- bp + scale_fill_gradient(low = FUNC_plot_colour_low, high = FUNC_plot_colour_high)
+  bp <- bp + scale_fill_gradient(low = FUNC_plot_colour_low, high = FUNC_plot_colour_high,
+                                 limits = c(0, max_log10_p))
   bp <- bp + guides(size="none")
   
   #create vertical lines to seprate classes on plot
