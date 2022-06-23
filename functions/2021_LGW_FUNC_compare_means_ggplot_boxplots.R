@@ -27,7 +27,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
   #compare_means_list() <- list()
   
   for(idx_metabolite in FUNC_metabolite_list){
-print(idx_metabolite)
+ #print(idx_metabolite)
     temp_func_data <- FUNC_data %>%
       select(all_of(FUNC_HEADER_class), all_of(FUNC_HEADER_colour), all_of(idx_metabolite)) %>%
       filter(!!as.symbol(FUNC_HEADER_class) %in% FUNC_class_to_include) %>%
