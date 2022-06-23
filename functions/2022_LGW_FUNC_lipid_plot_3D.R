@@ -28,19 +28,22 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
   
   FUNC_sidechains <- list()
   #extract chain length data from inside brackets
-  FUNC_sidechains$all <- sub("[\\(\\)]", "", regmatches(FUNC_compare_means_table$feature, gregexpr("\\(.*?\\)", FUNC_compare_means_table$feature)))
+  FUNC_sidechains$all <- regmatches(FUNC_compare_means_table$feature, gregexpr("\\(.*?\\)", FUNC_compare_means_table$feature)) %>% unlist()
+  FUNC_sidechains$all <- sub("\\(", "", FUNC_sidechains$all)
+  FUNC_sidechains$all <- sub("\\)", "", FUNC_sidechains$all)
   
   #extract data either side of "/" for sidechain 1 and sidechain 2
-  FUNC_sidechains$sidechain_1 <- sub('/.*', '', FUNC_sidechains$all)
-  FUNC_sidechains$sidechain_2 <- sub('.*/', '', FUNC_sidechains$all)
+  #FUNC_sidechains$sidechain_1 <- sub('/.*', '', FUNC_sidechains$all)
+  FUNC_sidechains$sidechain_1 <- sub(paste0(FUNC_sidechain_sep, ".*"), '', FUNC_sidechains$all)
+  #FUNC_sidechains$sidechain_2 <- sub('.*/', '', FUNC_sidechains$all)
+  FUNC_sidechains$sidechain_2 <- sub(paste0(".*", FUNC_sidechain_sep), '', FUNC_sidechains$all)
   
   #delete TAG from sidechain 1 because they do not contain specific 1x sidechain data
   FUNC_sidechains$sidechain_1[which(FUNC_compare_means_table$FUNC_class == "TAG")] <- NA
   
   #delete single chain lipids from sidechain 1 because they only have 1x chain and it will be stored in sidechain 2 in this table
-  # nomenclature may use an "_" or a "/" hence two lines
-  FUNC_sidechains$sidechain_1[!grepl("/", FUNC_compare_means_table$feature)] <- NA
-  FUNC_sidechains$sidechain_1[!grepl("_", FUNC_compare_means_table$feature)] <- NA
+    FUNC_sidechains$sidechain_1[!grepl(FUNC_sidechain_sep, FUNC_compare_means_table$feature)] <- NA
+
   
   #drop the extra P- and O- and d, allows for focus on just chain length
   FUNC_sidechains$sidechain_1 <- sub('P-', '', FUNC_sidechains$sidechain_1)
@@ -86,9 +89,9 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
     add_column(point_size = rank(plot_Val_2$`-Log10 (p)`))
   
   #reset scale so that all features p<0.05 are set to size 1
-  plot_Val_2$point_size <- plot_Val_2$point_size - which(plot_Val_2$`-Log10 (p)` < (log(0.05) %>% abs())) %>% length()
+  #plot_Val_2$point_size <- plot_Val_2$point_size - which(plot_Val_2$`-Log10 (p)` < (log(0.05) %>% abs())) %>% length()
   
-  #ser scale so that all features p<0.05 are set to size 1
+  #reset scale so that all features p<0.05 are set to size 1
   plot_Val_2$point_size[which(plot_Val_2$`-Log10 (p)` < (log(0.05) %>% abs()))] <- 1
  
   #arrange by point_size
@@ -161,11 +164,13 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
   bp <- bp + geom_vline(xintercept=c(x_lipid_sequence),color="grey")
   bp <- bp + geom_hline(yintercept=c(y_lipid_sequence),color="grey")
 
-  lipid_plot_output[[idx_str_data]] <- list()
-  lipid_plot_output[[idx_str_data]]$ggplot <- bp 
+ 
+  lipid_plot_output[[idx_str_data]]
   
+  #lipid_plot_output[[idx_str_data]] <- list()
+  #lipid_plot_output[[idx_str_data]]$ggplot <- bp 
   # #create plot_ly
-  lipid_plot_output[[idx_str_data]]$plotly <- bp %>% ggplotly()
+  #lipid_plot_output[[idx_str_data]]$plotly <- bp %>% ggplotly()
   
   }
   lipid_plot_output
