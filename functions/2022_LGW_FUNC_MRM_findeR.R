@@ -6,7 +6,6 @@ function(FUNC_data_path,
   require(MSnbase)
   #list mzML files
   mzML_filelist <- list.files(FUNC_data_path, pattern = ".mzML") %>% as_tibble() %>% filter(grepl(paste0(FUNC_qc_type), value)) %>% filter(!grepl("conditioning", value)) %>% filter(!grepl("blank", value))
-  FUNC_mrm_guide$explicit_retention_time_2 <- FUNC_mrm_guide$explicit_retention_time
   #if number of mzML qcs > FUNC_OPTION_max_qc_replicates samples in the mzML filelist then take a quartile sample of total LTRs
   if(length(mzML_filelist$value) > FUNC_OPTION_max_qc_replicates) {
     mzML_filelist_idx <- c(seq(1, nrow(mzML_filelist), by = floor(nrow(mzML_filelist)/FUNC_OPTION_max_qc_replicates)), nrow(mzML_filelist))
@@ -50,7 +49,7 @@ for (idx_mrm in 1:nrow(FUNC_mrm_guide)){
       #c() mzml rt apex from all mzml
       mzml_rt_apex_out <- c(mzml_rt_apex_out, mzml_rt_apex)
       mzml_median_rt <- median(mzml_rt_apex_out)
-      FUNC_mrm_guide$explicit_retention_time_2[idx_mrm] <- round(mzml_median_rt, 2)
+      FUNC_mrm_guide$explicit_retention_time[idx_mrm] <- round(mzml_median_rt, 2)
       }
       }
 }
