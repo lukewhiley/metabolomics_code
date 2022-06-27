@@ -22,7 +22,7 @@ function(FUNC_data_path,
   
   # find RT
   for(mzML_idx in mzML_filelist_crop$value){
-    test_spectra <- MSnbase::readSRMData(paste0(FUNC_data_path, "/", mzML_idx)) #read in mzML file 1
+    test_spectra <- MSnbase::readSRMData(paste0(FUNC_data_path, "/", mzML_idx)) #read in mzML file [mzML_idx]
     
     rt_find <- NULL
     #for each mrm transtion in the transition data
