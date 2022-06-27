@@ -3,7 +3,7 @@ mrm_findR <- function(FUNC_data_path,
          FUNC_mrm_guide,
          FUNC_OPTION_qc_type,
          FUNC_OPTION_max_qc_replicates){
-
+  #browser()
   require(MSnbase)
   #list mzML files
   mzML_filelist <- list.files(FUNC_data_path, pattern = ".mzML") %>% as_tibble() %>% filter(grepl(paste0(FUNC_qc_type), value)) %>% filter(!grepl("conditioning", value)) %>% filter(!grepl("blank", value))
@@ -23,7 +23,7 @@ mrm_findR <- function(FUNC_data_path,
   for(idx_mzML in mzML_filelist_crop$value){
     FUNC_spectra[[idx_mzML]] <- MSnbase::readSRMData(paste0(FUNC_data_path, "/", idx_mzML)) #read in mzML file [mzML_idx]
   }
-    
+#browser()    
 rt_find <- NULL
     #for each mrm transtion in the transition data
 for (idx_mrm in 1:nrow(FUNC_mrm_guide)){
