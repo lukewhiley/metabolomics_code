@@ -1,5 +1,5 @@
 # RT findeR
-test_func <- function(FUNC_data_path,
+mrm_findR <- function(FUNC_data_path,
          FUNC_mrm_guide,
          FUNC_OPTION_qc_type,
          FUNC_OPTION_max_qc_replicates){
