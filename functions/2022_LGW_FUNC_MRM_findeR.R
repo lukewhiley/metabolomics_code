@@ -45,10 +45,15 @@ function(FUNC_data_path,
         unique() 
       
       if(length(precursor_name) == 1){
-        FUNC_mrm_guide$explicit_retention_time[which(FUNC_mrm_guide$precursor_name == precursor_name)] <- round(apex_rt, 2)
+        FUNC_mrm_guide$explicit_retention_time_2 <- FUNC_mrm_guide$explicit_retention_time
+        FUNC_mrm_guide$explicit_retention_time_2[which(FUNC_mrm_guide$precursor_name == precursor_name)] <- round(apex_rt, 2)
       }
-    }
     
+      detach("package:MSnbase", unload = TRUE)
+      
+    }
+  }
+}
     
     
     
@@ -66,6 +71,3 @@ function(FUNC_data_path,
   #   transition_metadata$explicit_retention_time[which(transition_metadata$precursor_name == rt_find_master$lipid[lipid_idx])] <- rt_find_master$median_rt[lipid_idx]
   # }
   
-  detach("package:MSnbase", unload = TRUE)
-
-}
