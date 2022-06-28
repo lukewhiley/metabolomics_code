@@ -26,13 +26,14 @@ mrm_findR <- function(FUNC_mzml_data_path,
   
   #read in mzml files into a list
   FUNC_spectra <- list()
-  
   for(idx_mzML in mzML_filelist_crop$value){
-    #read in mzML file [mzML_idx])
-    FUNC_spectra[[idx_mzML]] <- q3ML::openFile(paste0(FUNC_mzml_data_path, "/", idx_mzML)) #read in mzML file [mzML_idx]
+    FUNC_spectra[[idx_mzML]] <- list()
+    #read in mzML file using mzR
+    FUNC_spectra[[idx_mzML]]$mzML <- mzR::openMSfile(paste0(FUNC_mzml_data_path, "/", idx_mzML)) #read in mzML file [mzML_idx]
+    FUNC_spectra[[idx_mzML]]$header <- mzR::chromatogramHeader(FUNC_spectra[[idx_mzML]]$mzML)
+    FUNC_spectra[[idx_mzML]]$chromatograms <- mzR::chromatograms(FUNC_spectra[[idx_mzML]]$mzML)
   }
  
-  
 #browser()    
 rt_find <- NULL
     #for each mrm transtion in the transition data
@@ -46,23 +47,25 @@ for (idx_mrm in 1:nrow(FUNC_mrm_guide)){
       
       #find transition in each mzML file and find median peak apex
       mzml_rt_apex_out <- NULL
-      for(idx_mzml in names(FUNC_spectra)){
+      for(idx_mzML_2 in names(FUNC_spectra)){
         #find the data channel in the mzml file containing the data
       idx_mrm_channel <- which(
-        FUNC_spectra[[idx_mzml]]$header$precursorIsolationWindowTargetMZ == precursor_mz &
-        FUNC_spectra[[idx_mzml]]$header$productIsolationWindowTargetMZ == product_mz)
+        FUNC_spectra[[idx_mzML_2]]$header$precursorIsolationWindowTargetMZ == precursor_mz &
+        FUNC_spectra[[idx_mzML_2]]$header$productIsolationWindowTargetMZ == product_mz)
       #only complete the below if idx_mrm_channel finds a single unique match
       if(length(idx_mrm_channel) ==1){
       #find scan index of max intensity within mrm channel
-        mzml_max_intensity <- which.max(FUNC_spectra[[idx_mzml]]$peaks[[idx_mrm_channel]][,2])
+      mzml_max_intensity <- which.max(FUNC_spectra[[idx_mzML_2]]$chromatograms[[idx_mrm_channel]][,2])
       #find rt_peak_apex
-      mzml_rt_apex <- FUNC_spectra[[idx_mzml]]$peaks[[idx_mrm_channel]]$time[mzml_max_intensity] %>% round(2)
+      mzml_rt_apex <- FUNC_spectra[[idx_mzML_2]]$chromatograms[[idx_mrm_channel]]$time[mzml_max_intensity] %>% round(2)
       #c() mzml rt apex from all mzml
       mzml_rt_apex_out <- c(mzml_rt_apex_out, mzml_rt_apex)
       }
       }
+      if(length(mzml_rt_apex_out) > 0){
       mzml_median_rt <- median(mzml_rt_apex_out)
       FUNC_mrm_guide$explicit_retention_time[idx_mrm] <- round(mzml_median_rt, 2)
+      }
 }
   #output final table
   FUNC_mrm_guide
