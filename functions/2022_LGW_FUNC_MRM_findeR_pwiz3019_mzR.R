@@ -39,18 +39,19 @@ for (idx_mrm in 1:nrow(FUNC_mrm_guide)){
       for(idx_mzML in mzML_filelist_crop){
         #find the data channel in the mzml file containing the data
         idx_mrm_channel <- which(
-          mzR::chromatogramHeader(FUNC_mzR[[idx_mzML]])$precursorIsolationWindowTargetMZ == precursor_mz &
-            mzR::chromatogramHeader(FUNC_mzR[[idx_mzML]])$productIsolationWindowTargetMZ == product_mz
+          FUNC_mzR[[idx_mzML]]$mzR_header$precursorIsolationWindowTargetMZ == precursor_mz &
+            FUNC_mzR[[idx_mzML]]$mzR_header$productIsolationWindowTargetMZ == product_mz
         )
 
       #only complete the below if idx_mrm_channel finds a single unique match
       if(length(idx_mrm_channel) ==1){
       #find scan index of max intensity within mrm channel
       mzml_max_intensity <- which.max(
-        mzR::chromatograms(FUNC_mzR[[idx_mzML]])[[idx_mrm_channel]][,2]
+        FUNC_mzR[[idx_mzML]]$mzR_chromatogram[[idx_mrm_channel]][,2]
       )
+
       #find rt_peak_apex
-      mzml_rt_apex <- mzR::chromatograms(FUNC_mzR[[idx_mzML]])[[idx_mrm_channel]]$time[mzml_max_intensity] %>% round(2)
+      mzml_rt_apex <- FUNC_mzR[[idx_mzML]]$mzR_chromatogram[[idx_mrm_channel]]$time[mzml_max_intensity] %>% round(2)
       #c() mzml rt apex from all mzml
       mzml_rt_apex_out <- c(mzml_rt_apex_out, mzml_rt_apex)
       }
