@@ -1,8 +1,9 @@
 # RT findeR
-mzR_mrm_findR <- function(FUNC_mzR,
-                      FUNC_mrm_guide,
-                      FUNC_OPTION_qc_type,
-                      FUNC_OPTION_max_qc_replicates){
+mzR_mrm_findR <- function(FUNC_mzR, #list for each sample containing $mzR_object; $mzR_header; $mzR_chromatogram
+                      FUNC_mrm_guide, #tibble of mrm details
+                      FUNC_OPTION_qc_type, #qc_type used in the experiment LTR; PQC; none
+                      FUNC_OPTION_max_qc_replicates #how many qc replicates to use to perform RT optimisation
+                      ){  #
   #browser()
   #list mzR objects
   mzML_filelist <- names(FUNC_mzR)
