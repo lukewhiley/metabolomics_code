@@ -1,11 +1,7 @@
 # RT findeR
-peak_boundary_findR <- function(FUNC_data_path,
-                          FUNC_mrm_guide,
-                          FUNC_OPTION_qc_type,
-                          FUNC_OPTION_max_qc_replicates){
+peak_boundary_findR <- function(FUNC_data,
+                          FUNC_OPTION_qc_type){
 
-
-FUNC_data <- read_csv(FUNC_data_path, show_col_types = FALSE) %>% clean_names()
 FUNC_filenames <- FUNC_data$replicate %>% unique()
 FUNC_metabolite <- unique(FUNC_data$peptide)
 
