@@ -1,8 +1,8 @@
 # RT findeR
 mzR_mrm_findR <- function(FUNC_mzR, #list for each sample containing $mzR_object; $mzR_header; $mzR_chromatogram
                       FUNC_mrm_guide, #tibble of mrm details
-                      FUNC_OPTION_qc_type, #qc_type used in the experiment LTR; PQC; none
-                      FUNC_OPTION_max_qc_replicates #how many qc replicates to use to perform RT optimisation
+                      FUNC_OPTION_qc_type #qc_type used in the experiment LTR; PQC; none
+                      #FUNC_OPTION_max_qc_replicates #percentage of how many qc replicates to use to perform RT optimisation
                       ){  #
   #browser()
   #list mzR objects
@@ -11,18 +11,19 @@ mzR_mrm_findR <- function(FUNC_mzR, #list for each sample containing $mzR_object
   mzML_filelist_qc <- mzML_filelist[grep(FUNC_OPTION_qc_type, mzML_filelist)]
   
   #if number of mzR[qc_type] > FUNC_OPTION_max_qc_replicates in the mzR filelist then take a filter subset of mzR to perform RT find
-  if(length(mzML_filelist_qc) > FUNC_OPTION_max_qc_replicates) {
-    mzML_filelist_idx <- c(seq(1, length(mzML_filelist_qc), 
-                               by = floor(length(mzML_filelist_qc)/
-                                            FUNC_OPTION_max_qc_replicates)), 
-                           length(mzML_filelist_qc))
-    mzML_filelist_crop <- mzML_filelist_qc[mzML_filelist_idx]
-  }
+  
+  # if(length(mzML_filelist_qc) > FUNC_OPTION_max_qc_replicates) {
+  #   mzML_filelist_idx <- c(seq(1, length(mzML_filelist_qc), 
+  #                              by = floor(length(mzML_filelist_qc)/
+  #                                           FUNC_OPTION_max_qc_replicates)), 
+  #                          length(mzML_filelist_qc))
+    #mzML_filelist_crop <- mzML_filelist_qc[mzML_filelist_idx]
+ # }
   
   #if number of mzR[qc_type] < | == FUNC_OPTION_max_qc_replicates in the mzR filelist then use all of the available mzR for RT optimisation
-  if(length(mzML_filelist_qc) < FUNC_OPTION_max_qc_replicates | length(mzML_filelist_qc) == FUNC_OPTION_max_qc_replicates){
+  #if(length(mzML_filelist_qc) < FUNC_OPTION_max_qc_replicates | length(mzML_filelist_qc) == FUNC_OPTION_max_qc_replicates){
     mzML_filelist_crop <- mzML_filelist_qc
-  }
+  #}
   
 #browser()    
 rt_find <- NULL
