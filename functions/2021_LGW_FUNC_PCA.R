@@ -68,8 +68,8 @@ lgw_pca <- function(FUNC_data,
   
   # create plot values
   plot_Val <- as_tibble(cbind(PC1, PC2))
-  plot_Val$pca_colour <- c(pca_colour)
-  plot_Val$pca_plot_label <- c(pca_plot_label)
+  plot_Val$pca_colour <- pca_colour
+  plot_Val$pca_plot_label <- pca_plot_label
 
   
   #axis settings
