@@ -11,10 +11,7 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
                               FUNC_plot_colour_high,
                               FUNC_sidechain_sep
                     ){
-  require(tidyverse)  
-  require(ggplot2)
-  require(rstatix)
-  
+
   lipid_plot_output <- list()
   
   #Add lipid class column to results table
@@ -59,14 +56,14 @@ lgw_lipid_3D_plot <- function(FUNC_compare_means_table,
     filter(!is.na(sidechain))
   
   plot_Val <- FUNC_sidechains$plot %>% 
-    select(FUNC_feature_idx, sidechain, FUNC_class, feature, p, all_of(FUNC_plot_comparisons)) 
+    select(FUNC_feature_idx, sidechain, FUNC_class, feature, p, all_of(FUNC_plot_comparisons))  
   
   ###########
   #pivot to a long table to control plotting scales
   plot_Val_long <- plot_Val %>% 
     select(-p) %>%
     pivot_longer(
-      cols = c(FUNC_plot_comparisons),
+      cols = all_of(FUNC_plot_comparisons),
       names_to = "comparison",
       values_to = "p")
   plot_Val_long <- plot_Val_long %>%
