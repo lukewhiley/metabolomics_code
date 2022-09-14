@@ -25,7 +25,6 @@
 lgw_opls <- function(FUNC_data, 
                      FUNC_OPLS_comparison_control,
                      FUNC_OPLS_comparison_test,
-                     # FUNC_opls_y, 
                      FUNC_metabolite_list, 
                      FUNC_colour_by, 
                      FUNC_plot_label, 
@@ -36,30 +35,29 @@ lgw_opls <- function(FUNC_data,
                      FUNC_option_invert_x,
                      FUNC_option_invert_y
                      ){
-  require(metabom8)
-  require(RColorBrewer)
-  require(tidyverse)
-  require(plotly)
-  
+
   opls_output <- list()
-  
-  
-  
-  for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
+
+for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
     
     #browser()
     
   #create data matrix for opls
   opls_x <- FUNC_data %>%  
-    filter(sample_type == "sample") %>%
-    filter(sample_class_factor == FUNC_OPLS_comparison_control| sample_class_factor == FUNC_idx_str_opls) %>%
+    filter(sample_type == "sample") %>% 
+    filter(sample_class_factor == FUNC_OPLS_comparison_control|
+             sample_class_factor == FUNC_idx_str_opls) %>%
     select(all_of(FUNC_metabolite_list)) %>% 
-    as.matrix()+1 
-  opls_x <- log(opls_x)
-  opls_x[opls_x == 0] <- NA #remove all 0 values
+    as.matrix()
+  
+  #impute missing values
+  opls_x[opls_x == 0] <- NA #remove all 0 values (above adds 1 to all values therefore anything that = 1 was a 0)
   opls_x[is.infinite(opls_x)] <- NA #remove all infinite values
   min_value <- min(opls_x, na.rm = TRUE) # find the lowest value in the matrix
-  opls_x[is.na(opls_x)] <- min_value # replace all NA, Inf, and 0 values with the lowest value in the matrix
+  opls_x[is.na(opls_x)] <- min_value/100 # replace all NA, Inf, and 0 values with the lowest value in the matrix/100 to represent a value below limit of detection
+  
+  #log data
+  opls_x <- log(opls_x+1) #log values for plotting
   
   opls_y <-  FUNC_data %>%  
     filter(sample_type == "sample") %>% 
