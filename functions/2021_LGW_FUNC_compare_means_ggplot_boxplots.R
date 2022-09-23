@@ -369,7 +369,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
   }
   
   #combine table into single tibble
-  bp_plotlist$table <- bp_plotlist$table[[idx_metabolite]] %>% bind_rows()
+  bp_plotlist$table <- bp_plotlist$table %>% bind_rows()
   
   bp_plotlist
   #compare_means_list
