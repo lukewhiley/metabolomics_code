@@ -235,7 +235,7 @@ for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
     layout(
       showlegend = TRUE, 
       margin = list(l = 65, r = 50, b=65, t=85),
-      title = paste0(master_list$project_details$project_name, ": OPLS-DA: ", FUNC_OPLS_comparison_control, " vs ", FUNC_idx_str_opls,  "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
+      title = paste0(FUNC_OPTION_title,": OPLS-DA: ", FUNC_OPLS_comparison_control, " vs ", FUNC_idx_str_opls,  "\n", nrow(plot_Val), " samples; ", nrow(plotly_loadings_data), " features; R2X = ", 
                      signif(opls_output[[FUNC_idx_str_opls]]$opls_model@summary$R2X[1],2)
                      )
     )
