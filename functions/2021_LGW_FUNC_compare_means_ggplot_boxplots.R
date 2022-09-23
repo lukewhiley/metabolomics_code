@@ -17,7 +17,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
                                ){
   ##FIRST - COMPARE MEANS
   bp_plotlist <- list()
-  #compare_means_list() <- list()
+  bp_plotlist$bp <- list()
+  bp_plotlist$table <- list()
   
   for(idx_metabolite in FUNC_metabolite_list){
  #print(idx_metabolite)
@@ -362,9 +363,9 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
      }
   
     # store plots for printing
-    bp_plotlist[[idx_metabolite]]$BP <- bp
+    bp_plotlist$bp[[idx_metabolite]] <- bp
     #View(compare_means_result)
-    bp_plotlist[[idx_metabolite]]$stats <- compare_means_result
+    bp_plotlist$table[[idx_metabolite]]$stats <- compare_means_result
   }
   
   # if(FUNC_OPTION_compare_means_method == "wilcox.test"){
