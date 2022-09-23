@@ -365,13 +365,12 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     # store plots for printing
     bp_plotlist$bp[[idx_metabolite]] <- bp
     #View(compare_means_result)
-    bp_plotlist$table[[idx_metabolite]]$stats <- compare_means_result
+    bp_plotlist$table[[idx_metabolite]] <- compare_means_result
   }
   
-  # if(FUNC_OPTION_compare_means_method == "wilcox.test"){
-  #   bp_plotlist$stats
-  # }
-  # browser()
+  #combine table into single tibble
+  bp_plotlist$table <- bp_plotlist$table[[idx_metabolite]] %>% bind_rows()
+  
   bp_plotlist
   #compare_means_list
 }
