@@ -115,6 +115,7 @@ for(idx_analyte in 1:length(master_list$targets[[idx_data]]$value)){
   
 }
 
+
 write_csv(master_list$data$flipped$area[[idx_data]],
           file = paste0(master_list$data_folder, "/csv_output/area/", sub(".TXT", "_area.csv", idx_data, ignore.case = TRUE)))
 
@@ -141,3 +142,78 @@ write_csv(master_list$data$flipped_all_plates$conc,
 ```
 
 
+```{r boxplot LTR metabolites by area}
+
+master_list$plots <- list()
+master_list$plots$area <- list()
+
+for(idx_analyte in names(master_list$data$flipped_all_plates$area %>% select(contains("M", ignore.case = FALSE)))){
+  master_list$data$flipped_all_plates$area[[idx_analyte]] <-  master_list$data$flipped_all_plates$area[[idx_analyte]] %>% as.numeric()
+  master_list$data$flipped_all_plates$area[[idx_analyte]][is.na(master_list$data$flipped_all_plates$area[[idx_analyte]])] <- 0
+  
+  
+#start to build boxplot
+      master_list$plots$area[[idx_analyte]] <- ggplot(data=master_list$data$flipped_all_plates$area %>% 
+                     filter(grepl("LTR", name)),
+                   aes(x=plate,
+                       y=get(idx_analyte))
+      ) + 
+        geom_boxplot(color = "black",
+                            aes(),
+                            outlier.shape = NA,
+                            alpha=0.05)  + 
+        geom_jitter(aes(), 
+                  width = 0.01,
+                  size = 1,
+                  shape = 21) +
+        labs(x = paste("plate"), y = paste("area")) +
+         ggtitle(paste0(idx_analyte, " - area"))
+        theme_bw() + 
+        theme(plot.title = element_text(hjust = 0.5)) + 
+        theme(plot.title = element_text(size=5)) +  
+        theme(axis.text.y = element_text(size = 5, margin = margin(t = 0, r = 0, b = 0, l = 2))) +  
+        theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1)) + 
+        theme(axis.title = element_text(size = 5)) 
+      
+      }
+
+master_list$plots$area
+
+```
+```{r boxplot LTR metabolites by conc}
+
+master_list$plots$conc <- list()
+
+for(idx_analyte in names(master_list$data$flipped_all_plates$conc %>% select(contains("M", ignore.case = FALSE)))){
+  master_list$data$flipped_all_plates$conc[[idx_analyte]] <-  master_list$data$flipped_all_plates$conc[[idx_analyte]] %>% as.numeric()
+  master_list$data$flipped_all_plates$conc[[idx_analyte]][is.na(master_list$data$flipped_all_plates$conc[[idx_analyte]])] <- 0
+  
+  
+#start to build boxplot
+      master_list$plots$conc[[idx_analyte]] <- ggplot(data=master_list$data$flipped_all_plates$conc %>% 
+                     filter(grepl("LTR", name)),
+                   aes(x=plate,
+                       y=get(idx_analyte))
+      ) + 
+        geom_boxplot(color = "black",
+                            aes(),
+                            outlier.shape = NA,
+                            alpha=0.05)  + 
+        geom_jitter(aes(), 
+                  width = 0.01,
+                  size = 1,
+                  shape = 21) +
+        labs(x = paste("plate"), y = paste("conc")) +
+        ggtitle(paste0(idx_analyte, " - conc")) +
+        theme_bw() + 
+        theme(plot.title = element_text(hjust = 0.5)) + 
+        theme(plot.title = element_text(size=5)) +  
+        theme(axis.text.y = element_text(size = 5, margin = margin(t = 0, r = 0, b = 0, l = 2))) +  
+        theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1)) + 
+        theme(axis.title = element_text(size = 5)) 
+      
+      }
+
+master_list$plots$conc
+
+```
