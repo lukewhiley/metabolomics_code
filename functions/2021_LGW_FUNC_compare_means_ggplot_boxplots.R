@@ -270,7 +270,6 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     
     bp_y_max <- temp_func_plot_data$concentration %>% max() 
     
-    
     #start to build boxplot
       bp <- ggplot(data=temp_func_plot_data,
                    aes(x=as.factor(plot_class),

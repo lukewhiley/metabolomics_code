@@ -1,0 +1,143 @@
+---
+title: "NGW tryptophan data explorer"
+output: html_notebook
+---
+
+This notebook will allow Nicola to look at some data :-)
+
+Please install these packages prior to running:
+  * tidyverse
+  * janitor
+
+It has been built in step by step code chunks
+
+Step 1.
+Select the folder that contains the .txt files
+
+```{r, read in data}
+#load packages
+library(tidyverse); library(janitor)
+
+#create empty master list
+master_list <- list()
+
+#select the folder where .txt masslynx export data is saved 
+master_list$data_folder <- rstudioapi::selectDirectory()
+
+#create output directory
+if(!dir.exists(paste0(master_list$data_folder, "/csv_output"))){
+  dir.create(paste0(master_list$data_folder, "/csv_output"))
+  dir.create(paste0(master_list$data_folder, "/csv_output/area"))
+  dir.create(paste0(master_list$data_folder, "/csv_output/conc"))
+}
+
+#create list of files in folder
+master_list$filelist <- list.files(path = master_list$data_folder, pattern = ".txt", ignore.case = TRUE, full.names =  FALSE, recursive = FALSE)
+
+#read in data (loop through filelist)
+master_list$data <- list()
+master_list$targets <- list()
+master_list$data$txt <- list()
+master_list$data$flipped <- list()
+master_list$data$flipped$area <- list()
+master_list$data$flipped$conc <- list()
+master_list$data$flipped_all_plates <- list()
+master_list$data$flipped_all_plates$area <- list()
+master_list$data$flipped_all_plates$conc <- list()
+
+for(idx_data in master_list$filelist){
+  #read in data
+  master_list$data$txt[[idx_data]] <- 
+    read.delim(paste0(master_list$data_folder,"/", idx_data), #
+               sep = "\t", # 
+               header=FALSE) %>% # read in txt file  
+    as_tibble() #convert to tibble
+
+  #find row index of names
+  idx_name <- which(master_list$data$txt[[idx_data]] == "Name", arr.ind = TRUE)[1,1] %>% as.numeric()
+
+  #set names
+  master_list$data$txt[[idx_data]] <-
+    set_names(x = master_list$data$txt[[idx_data]],
+              nm = master_list$data$txt[[idx_data]][idx_name,]) %>%
+    janitor::clean_names()
+  
+  #find target compounds
+  master_list$targets[[idx_data]] <- unique(master_list$data$txt[[idx_data]][["x"]]) %>%
+    as_tibble() %>% filter(grepl("Compound", value)) %>% filter(!grepl("Report", value))
+  
+  #tidy target list
+  #master_list$targets[[idx_data]]$value <- sub(".*:  ", "", master_list$targets[[idx_data]]$value)
+  master_list$targets[[idx_data]]$value_clean <- sub("Compound ", "M", master_list$targets[[idx_data]]$value)
+  master_list$targets[[idx_data]]$value_clean <- sub(":  ", "_", master_list$targets[[idx_data]]$value_clean)
+  master_list$targets[[idx_data]]$value_clean <- gsub(" ", "_", master_list$targets[[idx_data]]$value_clean)
+  
+  #flip data
+  #step 1. find compound start idx
+  master_list$targets[[idx_data]][["idx_start"]] <- grep(paste(master_list$targets[[idx_data]]$value, collapse =  "|"), 
+                     master_list$data$txt[[idx_data]]$x)
+  
+  #step 2. find compound end idx
+  master_list$targets[[idx_data]][["idx_end"]] <- c(master_list$targets[[idx_data]]$idx_start[-1]-1,
+                                                    nrow(master_list$data$txt[[idx_data]]))
+
+  #step 3. loop through analytes and create new tibble
+  #set analyte name in column "x"
+for(idx_analyte in 1:length(master_list$targets[[idx_data]]$value)){
+
+  #for area
+  master_list$data$flipped$area[[idx_data]] <- 
+    master_list$data$txt[[idx_data]][
+      seq(
+        master_list$targets[[idx_data]]$idx_start[idx_analyte],
+        master_list$targets[[idx_data]]$idx_end[idx_analyte]),
+      ] %>%
+    filter(name != "Name") %>%
+    filter(name != "") %>%
+    {if(idx_analyte ==  1) add_column(., "plate" = idx_data) else .} %>%
+    {if(idx_analyte ==  1) select(., name, plate, type, std_conc, area) else select(., name, area)} %>%
+    rename_with(~master_list$targets[[idx_data]]$value_clean[idx_analyte], area) %>%
+    {if(idx_analyte >  1) left_join(x=master_list$data$flipped$area[[idx_data]], y=., by = "name") else .}
+  
+  #for conc
+    master_list$data$flipped$conc[[idx_data]] <- 
+    master_list$data$txt[[idx_data]][
+      seq(
+        master_list$targets[[idx_data]]$idx_start[idx_analyte],
+        master_list$targets[[idx_data]]$idx_end[idx_analyte]),
+      ] %>%
+    filter(name != "Name") %>%
+    filter(name != "") %>%
+    {if(idx_analyte ==  1) add_column(., "plate" = idx_data) else .} %>%
+    {if(idx_analyte ==  1) select(., name, plate, type, std_conc, conc) else select(., name, conc)} %>%
+    rename_with(~master_list$targets[[idx_data]]$value_clean[idx_analyte], conc) %>%
+    {if(idx_analyte >  1) left_join(x=master_list$data$flipped$conc[[idx_data]], y=., by = "name") else .}
+  
+}
+
+write_csv(master_list$data$flipped$area[[idx_data]],
+          file = paste0(master_list$data_folder, "/csv_output/area/", sub(".TXT", "_area.csv", idx_data, ignore.case = TRUE)))
+
+write_csv(master_list$data$flipped$conc[[idx_data]],
+          file = paste0(master_list$data_folder, "/csv_output/conc/", sub(".TXT", "_conc.csv", idx_data, ignore.case = TRUE)))
+
+}
+
+# step 4 bind all plates into single plate
+#area
+master_list$data$flipped_all_plates$area <- master_list$data$flipped$area %>% bind_rows()
+#conc
+master_list$data$flipped_all_plates$conc <- master_list$data$flipped$conc %>% bind_rows()
+
+#step 5. write csv for bind all plates
+#area
+write_csv(master_list$data$flipped_all_plates$area,
+          file = paste0(master_list$data_folder, "/csv_output/area/all_plates_peak_area.csv"))
+
+#conc
+write_csv(master_list$data$flipped_all_plates$conc,
+          file = paste0(master_list$data_folder, "/csv_output/conc/all_plates_conc.csv"))
+
+```
+
+
