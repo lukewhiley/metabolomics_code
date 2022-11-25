@@ -124,7 +124,8 @@ for(idx_str_data in FUNC_plot_comparisons){
   
   bp <- bp + labs(x = paste("Lipid Class"),
                   y = paste("Sidechain"))
-  bp <- bp + ggtitle(paste0(str_split(idx_str_data, " - ")[[1]][1], " vs ", str_split(idx_str_data, " - ")[[1]][2]))
+  bp <- bp + ggtitle(idx_str_data)
+  #bp <- bp + ggtitle(paste0(str_split(idx_str_data, " - ")[[1]][1], " vs ", str_split(idx_str_data, " - ")[[1]][2]))
   bp <- bp + theme_cowplot() 
   bp <- bp + theme(plot.title = element_text(hjust = 0.5)) 
   bp <- bp + theme(plot.title = element_text(size=14)) 
