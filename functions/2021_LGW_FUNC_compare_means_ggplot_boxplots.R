@@ -98,22 +98,22 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     }
   
     #####WILCOX.TEST##########
-    #complete pairwise wilcox test
+    #complete wilcox test
     if(FUNC_OPTION_compare_means_method == "wilcox.test"){
-     wilcox_test_result <-  compare_means(data = temp_func_data %>%
+     wilcox_test_result <- compare_means(data = temp_func_data %>%
                       filter(plot_class != "qc") %>%
                       filter(plot_class != "QC"),
-                    concentration ~ plot_class,
-                    method = "wilcox.test",
-                    p.adjust.method = "BH") %>%
+                      concentration ~ plot_class,
+                      method = "wilcox.test",
+                      p.adjust.method = "BH") %>%
         rename(feature = .y.)
      
      wilcox_test_result$comparison <- paste0(wilcox_test_result$group1, 
                                              " - ",
                                              wilcox_test_result$group2)
      
-     wilcox_test_result <- wilcox_test_result %>%
-       filter(comparison %in% FUNC_plot_comparisons)
+     # wilcox_test_result <- wilcox_test_result %>%
+     #   filter(comparison %in% FUNC_plot_comparisons)
      
      #change name of object to match code to dunn test (above)
      dunn_test_result <- wilcox_test_result 
@@ -319,7 +319,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
           size = 2,
           label.y = label_y_list,
           tip.length = 0,
-          inherit.aes = FALSE
+          inherit.aes = FALSE,
+          test.args = list(paired = FALSE)
           )
       }
     
