@@ -132,6 +132,8 @@ for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     title = paste("t_pred", sep = "")
   )
   
@@ -141,6 +143,8 @@ for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     title = paste("t_orth", sep = "")
   )
   
@@ -190,6 +194,8 @@ for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
     linewidth = 2,
     showgrid = TRUE,
     title = paste("Cliff's Delta"),
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     range = c(-1,1)
   )
   #browser()
@@ -200,6 +206,8 @@ for(FUNC_idx_str_opls in FUNC_OPLS_comparison_test){
     linewidth = 2,
     showgrid = TRUE,
     title = paste("|Ppred|"),
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     range = c(0,plotly_loadings_data$p1 %>% max()*1.20)
   )
   

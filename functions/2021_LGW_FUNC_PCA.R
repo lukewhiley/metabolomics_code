@@ -76,6 +76,8 @@ lgw_pca <- function(FUNC_data,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     title = paste("PC1 (", round(pca_output$pca_model@Parameters$R2[1]*100,1), " %)", sep = "")
   )
   
@@ -85,6 +87,8 @@ lgw_pca <- function(FUNC_data,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     title = paste("PC2 (", round(pca_output$pca_model@Parameters$R2[2]*100,1), " %)", sep = "")
   )
   
@@ -134,6 +138,8 @@ lgw_pca <- function(FUNC_data,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     title = paste("")
   )
   
@@ -143,6 +149,8 @@ lgw_pca <- function(FUNC_data,
     linecolor = toRGB("black"),
     linewidth = 2,
     showgrid = TRUE,
+    tickfont = list(size = 20),
+    titlefont = list(size = 20),
     title = paste("")
   )
   
