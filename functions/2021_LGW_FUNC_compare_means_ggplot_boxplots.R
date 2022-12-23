@@ -312,6 +312,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     }
   
     #add significance to plot
+    sink("file")
         bp <- bp + stat_compare_means(
           data = temp_func_data,
           comparisons = dunn_test_comparisons,
@@ -322,6 +323,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
           inherit.aes = FALSE,
           test.args = list(paired = FALSE)
           )
+    sink()
       }
     
 
@@ -364,8 +366,25 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
   
     # store plots for printing
     bp_plotlist$bp[[idx_metabolite]] <- bp
+    
+    #add mean and standard deviation to compare_means_result
+    compare_means_result <- compare_means_result %>%
+      bind_cols(
+        temp_func_data %>% 
+          group_by(plot_class) %>% 
+          summarise(mean = mean(concentration)) %>% 
+          spread(plot_class, mean) %>%
+          rename_with( ~ paste0(.x, " mean")),
+        temp_func_data %>% 
+          group_by(plot_class) %>% 
+          summarise(sd = sd(concentration)) %>% 
+          spread(plot_class, sd) %>%
+          rename_with( ~ paste0(.x, " sd"))
+      )
+    
+    
     #View(compare_means_result)
-    bp_plotlist$table[[idx_metabolite]] <- compare_means_result
+    bp_plotlist$table[[idx_metabolite]] <- compare_means_result 
   }
   
   #combine table into single tibble
