@@ -295,63 +295,36 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     bp <- bp +  theme(axis.text.y = element_text(size = 5, margin = margin(t = 0, r = 0, b = 0, l = 2)))
     bp <- bp +  theme(axis.text.x = element_text(size = 5, angle = 45, vjust = 1, hjust = 1))
     bp <- bp + theme(axis.title = element_text(size = 5)) 
+    bp <- bp + ylim(0,NA)
     bp$labels$fill <- paste0(FUNC_HEADER_temp_colour) %>% str_to_title()
     
-    #
-    plot_y_max <- ggplot_build(bp)$layout$panel_params[[1]]$y.range[2]
-    plot_y_range <- ggplot_build(bp)$layout$panel_params[[1]]$y.range[2] - ggplot_build(bp)$layout$panel_params[[1]]$y.range[1]
     
-    #browser()
     #add significance to plot
     if(FUNC_OPTION_compare_means_method != "wilcox.test.paired"){
-    
-    #create list of y values for the significance to be added
-    label_y_list <- NULL
-    for (idx in 1:length(dunn_test_comparisons)){
-      label_y_list <- c(label_y_list, plot_y_max+(plot_y_range*(idx*0.1)))
-    }
-  
-    #add significance to plot
-    sink("file")
-        bp <- bp + stat_compare_means(
-          data = temp_func_data,
-          comparisons = dunn_test_comparisons,
-          label = "p.signif",
-          size = 2,
-          label.y = label_y_list,
-          tip.length = 0,
-          inherit.aes = FALSE,
-          test.args = list(paired = FALSE)
-          )
-    sink()
+      
+      #filter results to only annotate sig comparisons
+      plot_coord <- dunn_test_result %>% filter(p.adj.signif != "ns") 
+      
+      if(nrow(plot_coord) > 0){
+      
+      #create a list of comparisons and thir y coordinates for annotating sig values on boxplots
+      plot_comparisons <- list()
+      y_positions <- NULL
+    for (idx_comp in 1:nrow(plot_coord)){
+      # list comparisons
+      plot_comparisons[[idx_comp]] <- c(plot_coord$group1[idx_comp],
+                                        plot_coord$group2[idx_comp])
+      # concat coordinates
+      y_positions <- c(y_positions, (bp_y_max + (idx_comp * bp_y_max *0.1)))
       }
-    
-
-    if(FUNC_OPTION_compare_means_method == "wilcox.test.paired"){
-      loop_FUNC_plot_comparisons <- NULL
-      for(idx in 1:length(dunn_test_comparisons)){
-        loop_comparisons <- c(dunn_test_comparisons[[idx]][1], dunn_test_comparisons[[idx]][2])
-        
-        temp_func_paired_data <- temp_func_data %>%
-          filter(plot_class %in% loop_comparisons)
-        
-        temp_func_paired_data <- temp_func_paired_data %>%
-          slice(which(duplicated(temp_func_paired_data$pair_group)|duplicated(temp_func_paired_data$pair_group, fromLast = TRUE))) %>%
-          arrange(pair_group)
-        
-        label_y_list = plot_y_max+(plot_y_range*(idx*0.1))
-        #browser()
-        bp <- bp + stat_compare_means(data = temp_func_paired_data,
-                                    paired = TRUE,
-                                    comparisons = dunn_test_comparisons[idx],
-                                    label = "p.signif",
-                                    size = 2,
-                                    label.y = label_y_list,
-                                    tip.length = 0
-        )
-      }
-    }
+      
+      #add co-ordinate columns to tibble
+      plot_coord  <- plot_coord %>% add_column(y.position = y_positions) %>% add_x_position()
    
+    #add to bp
+    bp <- bp + stat_pvalue_manual(plot_coord, label = "p.adj.signif", tip.length = 0.008, vjust = 0.5, size = 2.5)
+      }
+    }
     
     #add legend
      bp <- bp + theme(legend.position = "right",
