@@ -1,0 +1,155 @@
+---
+title: "TargetLynxFlipR"
+author: "Luke Whiley"
+editor: visual
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    df-print: paged
+    toc: true
+    toc-depth: 5
+    self-contained: true
+theme: cosmo
+---
+
+<!--# Quarto notebook for flipping targetLynx data -->
+
+<!--# Notebook instructions: -->
+
+\
+<!--# User options are included in chunk 1 -->\
+<!--# project folder must be set up as parent_directory/data-->\
+<!--# default data type: import = .txt; export = .csv -->
+
+<!--# required packages: 'tidyverse', 'janitor', 'qualV', 'kableExtra' -->
+
+```{r user input, eval=TRUE, echo=TRUE}
+
+#USER INPUT REQUIRED BELOW
+mstr_lst <- list(proj_optns = list(
+  project_name = "gutCVD", #name of project
+  username = "LGW", #user of project
+  project_dir = "/Users/lukegraywhiley/Downloads/temp_data/heidelberg/",
+  project_data_subdir = "data", # sub directory contatining export data from TargetLynx
+  data_type = ".txt", # import flie type [.txt as default]
+  keep_header = c("conc", "area", "response", "percent_dev") # header to keep [e.g c("response", "conc", "area") etc]
+  ))
+
+```
+
+<!--# load packages and flip data-->
+
+```{r load packages and flip data, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE}
+
+#### load packages
+package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra')
+
+for(idx_package in package_list){
+  if(length(which(row.names(installed.packages()) == idx_package)) > 0){
+    suppressMessages(require(package = idx_package,
+                             character.only = TRUE))
+  } else {
+    paste0(idx_package, " is not installed. Please install ", idx_package, " before continuing.") %>% print()
+  }
+}
+
+#### source function
+targetlynx_flippR <- function(FUNC_txt_file_path,
+                              FUNC_keep_hdr){
+  #read in data as_tibble, set names, clean names, add metabolites element to list, filter blank space, filter column headers row, spread data
+  list(data = read.delim(file = paste(FUNC_txt_file_path), 
+                         sep = "\t",
+                         header=FALSE) %>% 
+         as_tibble() %>%
+         set_names(., .[which(. == "Name", arr.ind=TRUE)[1,1],]) %>%
+         clean_names()) %>%
+    list_modify(metabolites = (unique(.$data$x[grep("Compound", .$data$x)]) %>%
+                                 .[-grep("Report", .)] %>%
+                                 sub(".*:  ", "", .)),
+                filtered_data = .$data %>% filter(name != "" & name != "Name")) %>%
+    list_modify(spread_data = (add_column(.$filtered_data, 
+                                          metabolite = rep(.$metabolites, each = length(unique(.$filtered_data$name))))) %>% select(name, type, metabolite, all_of(FUNC_keep_hdr)) %>% 
+                  spread(metabolite, all_of(FUNC_keep_hdr))) %>%
+    .[["spread_data"]]
+}
+
+
+############## run function
+
+#create import filelist
+mstr_lst[["import"]] <- list.files(paste0(mstr_lst$proj_optns$project_dir,
+                                          mstr_lst$proj_optns$project_data_subdir),
+                                   full.names = TRUE)
+
+#create empty list for data export
+mstr_lst[["export"]] <- list()
+
+#export filename list 
+exprt_filename_lst <- NULL
+
+#create export table for printing
+export_table <- NULL
+
+#run function
+  for(idx_header in mstr_lst$proj_optns$keep_header){
+    for(idx_file in 1:length(mstr_lst[["import"]])){
+
+        #create export filename
+    exprt_filename <- gsub(x = tail(strsplit(mstr_lst[["import"]][idx_file], "/")[[1]], n=1), 
+                           pattern = mstr_lst$proj_optns$data_type, replacement = "")
+    #extract matched characters for file naming (e.g. drop plate nomenclature)
+    if(idx_file==1){common_filename = exprt_filename} else{
+    common_filename <- sapply(seq_along(common_filename), function(i)
+      paste(LCS(strsplit(common_filename[i], '')[[1]], strsplit(exprt_filename[i], '')[[1]])$LCS, collapse = ""))
+    }
+    
+    #create an export path name using the common filename
+    export_file_path <- paste0(mstr_lst$proj_optns$project_dir, common_filename, 
+                               "_FLIPPR_", toupper(idx_header), ".csv")
+    #run function
+    mstr_lst$export[[idx_header]] <- mstr_lst$export[[idx_header]] %>% 
+      bind_rows(targetlynx_flippR(FUNC_txt_file_path = mstr_lst$import[idx_file],
+                                  FUNC_keep_hdr = idx_header) %>%
+                  add_column(plate = exprt_filename, .before = 1))
+    
+    }
+    
+    #create summary table for report printing
+    export_table <- bind_rows(export_table,
+                              bind_cols(project = exprt_filename,
+                                        standards = nrow(mstr_lst$export[[idx_header]] %>% 
+                                                           filter(plate == exprt_filename & type == "Standard")),
+                                        qc = nrow(mstr_lst$export[[idx_header]] %>%
+                                                    filter(plate == exprt_filename & type == "QC")),
+                                        samples = nrow(mstr_lst$export[[idx_header]] %>% 
+                                                         filter(plate == exprt_filename & type == "Analyte")),
+                                        blanks = nrow(mstr_lst$export[[idx_header]] %>% 
+                                                        filter(plate == exprt_filename & type == "Blank")),
+                                        features = ncol(mstr_lst$export[[idx_header]])-1))
+    
+   
+    
+     #concatonate export filename for report printing
+    exprt_filename_lst <- c(exprt_filename_lst, export_file_path)
+    #export csv
+    write_csv(mstr_lst$export[[idx_header]], export_file_path)
+  }
+
+
+cat("data imported:")
+mstr_lst[["import"]]
+cat("data exported:")
+exprt_filename_lst %>% unique()
+cat("sample summary:")
+
+
+```
+
+```{r kable, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results='asis'}
+export_table %>%
+  kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+  kable_minimal("hover") %>%
+  kable_styling(font_size = 12) %>%
+  scroll_box() %>% print()
+```
