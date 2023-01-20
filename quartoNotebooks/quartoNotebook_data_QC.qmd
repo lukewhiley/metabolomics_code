@@ -1,5 +1,5 @@
 ---
-title: Metabolomics data analysis
+title: Metabolomics data QC
 format:
   html:
     code-fold: true
@@ -12,9 +12,20 @@ editor: visual
 theme: cosmo
 ---
 
-<!--# Quarto notebook for metabolomics data analysis -->
+<!--# Quarto notebook for metabolomics data quality control -->\
+<!--# Notebook will perform the following tasks: -->
 
-```{r notebook instructions, eval=FALSE, echo=FALSE}
+<!--# import data that has been exported from processing software --> \
+<!--# create calibration, QC data, filter data, report data-->
+
+<!--# Notebook instructions: -->\
+<!--# Enter user options in chunk 1 -->\
+<!--# project folder must be set up as parent_directory/data-->\
+<!--# default data type: import = .txt; export = .csv -->
+
+<!--# required packages: 'tidyverse', 'janitor', 'qualV', 'kableExtra' -->
+
+```{r notebook instructions and load packages, eval=TRUE, echo=FALSE}
 
 # CSV DATA FILES MUST CONTAIN THE FOLLOWING COLUMN HEADERS AS A MINIMUM:
   # "sample_idx" - numeric column containing numeric index of sample location
@@ -27,42 +38,163 @@ theme: cosmo
   # Column headers should contain metabolite or feature names: 
     #e.g. CE(14:0) or TRYPTOPHAN or 2.86_180.0882m/z etc
 
+#### load packages
+package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra')
+
+for(idx_package in package_list){
+  if(length(which(row.names(installed.packages()) == idx_package)) > 0){
+    suppressMessages(require(package = idx_package,
+                             character.only = TRUE))
+  } else {
+    paste0(idx_package, " is not installed. Please install ", idx_package, " before continuing.") %>% print()
+  }
+}
+
 
 ```
 
 <!--# USER INPUT HERE -->
 
-## Project details
+## Project set up and data import summary
 
-```{r user input, eval=TRUE, echo=TRUE}
+```{r user setup; project structure; load packages, eval=TRUE, echo=TRUE}
 
-# USER INPUT REQUIRED BELOW
-master_list <- list(project_options = list(
-  project_name = "COVID; Heidelberg; Tryptophan; ", #name of project
-  user_name = "LGW", # user of notebook
-  project_dir = "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/NICHOLSON-COVID/analysis/COVID_Heidelberg/tryptophan/", # project directory
-  project_data_subdir = "data", # sub directory containing .csv prepared using headers listed above
-  project_class_column_header = "sample_type",
-  project_classes =  c("sample", "qc"),  #descriptor strings for each class of data, inlcude qc here
-  opls = list(control = "neg", # descriptor string for the control group to be used in OPLS-DA analysis.
-             case = c("no O2", "low flow O2", "vent", "ECMO")),  # descriptor string for the case group. Used for OPLS-DA analysis. Case can contain multiple comparisons; e.g. c("x1", "x2") to produce multiple OPLS-DA
-  univariate = list(comparison = c("neg", "no O2", "low flow O2", "vent", "ECMO"),  # descriptor strings for desired univariate comparisons
-                   method = "kruskal.test"), #method used for univariate OPTIONS = kruskal.test, wilcox.test, wilcox.test.paired
-  project_outliers = NA # descriptor strings for samples to be removed from analysis. Note -  must match string in sample_name column.
-))
+#USER INPUT REQUIRED BELOW
+mstr_lst <- list(
+  proj_optns = list(
+    proj_name = "QC testR; Tryptophan", #name of project
+    usr_name = "LGW", #user of project
+    proj_dir = "/Users/lukegraywhiley/Downloads/temp_data/test_qc/",
+    proj_data_subdir = "data", # sub directory contatining export data from TargetLynx
+    data_type = ".txt", # import flie type [.txt as default]
+    keep_header = c("area") # header to keep [e.g c("response", "conc", "area") etc]
+  )) %>% list_modify(
+    
+  ##----------- set project structure
+  # NO USER INPUTE REQUIRED BELOW THIS LINE
+  data = list(
+    imprt_lst = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = TRUE),
+    imprt_lst_crop = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = FALSE),
+    std_conc = list(),
+    area = list()),
+  tbls = list(
+    imprt_tbl = list())
+)
 
-
-cat(paste0("Project: ", master_list$project_options$project_name)); cat(paste0("Author: ", master_list$project_options$user_name))
+cat(paste0("Project: ", mstr_lst$proj_optns$proj_name)); cat(paste0("Author: ", mstr_lst$proj_optns$usr_name))
 ```
 
 <!--# automated from this point forwards-->
 
-## Project set up and data import summary
+```{r load packages and flip data, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results='asis'}
 
-```{r load packages and set up project structure, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results = 'asis'}
+#--------- write flippR function
+#read in data, set names, clean names, list metabolite element, filter blank space, spread data
+targetlynx_flippR <- function(FUNC_txt_file_path,
+                              FUNC_keep_hdr){
+  list(data = read.delim(file = paste(FUNC_txt_file_path), sep = "\t",header=FALSE) %>% as_tibble() %>%
+         set_names(., .[which(. == "Name", arr.ind=TRUE)[1,1],]) %>% clean_names()) %>%
+    list_modify(metabolites = (unique(.$data$x[grep("Compound", .$data$x)]) %>% .[-grep("Report", .)] %>% sub(".*:  ", "", .)),
+                filtered_data = .$data %>% filter(name != "" & name != "Name")) %>%
+    list_modify(spread_data = (add_column(.$filtered_data, 
+                                          metabolite = rep(.$metabolites, each = length(unique(.$filtered_data$name))))) %>%
+                  select(name, type, metabolite,  all_of(FUNC_keep_hdr)) %>% 
+                  spread(key = metabolite, value = all_of(FUNC_keep_hdr))) %>% .[["spread_data"]]
+  }
+
+#--------- run flippR function
+#run flippR function and keep area and std_concs
+for(idx_file in 1:length(mstr_lst$data$imprt_lst)){
+  mstr_lst$data[["std_conc"]] <- mstr_lst$data[["std_conc"]] %>%
+    bind_rows(targetlynx_flippR(FUNC_txt_file_path = mstr_lst$data$imprt_lst[idx_file], FUNC_keep_hdr = "std_conc") %>%
+                add_column(plate = rep(mstr_lst$data$imprt_lst_crop[idx_file], nrow(.)), .before = 1))
+ mstr_lst$data[["area"]] <- mstr_lst$data[["area"]] %>%
+    bind_rows(targetlynx_flippR(FUNC_txt_file_path = mstr_lst$data$imprt_lst[idx_file], FUNC_keep_hdr = "area") %>%
+                add_column(plate = rep(mstr_lst$data$imprt_lst_crop[idx_file], nrow(.)), .before = 1))
+
+ #create summary table for report printing
+mstr_lst$tbls[["imprt_tbl"]] <- bind_rows(
+  mstr_lst$tbls[["imprt_tbl"]],
+  bind_cols(plate = mstr_lst$data$imprt_lst_crop[idx_file],
+            standards = nrow(
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "Standard")),
+            qc = nrow(
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "QC")),
+            samples = nrow(
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "Analyte")),
+            blanks = nrow(
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "Blank")),
+            features = ncol(mstr_lst$data$std_conc)-2
+            ))
+}
+   
+mstr_lst$tbls$imprt_tbl <- mstr_lst$tbls$imprt_tbl %>%
+  bind_rows(tibble(
+    plate = "total", standards = sum(.$standards), qc = sum(.$qc), samples = sum(.$samples), 
+    blanks = sum(.$blanks), features = sum(.$features))
+  )
+
+cat("data imported:")
+mstr_lst$tbls$imprt_tbl %>%
+  kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+  kable_minimal("hover") %>%
+  kable_styling(font_size = 12) %>%
+  scroll_box() %>% print()
+
+
+
+```
+
+## Perform calibration
+
+```{r, calibration of data, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results='asis'}
+
+tryptophan <- lst(
+  area = mstr_lst$data$area %>% clean_names %>% select(plate,  name, type, tryptophan, sil_tryptophan_pos_d5),
+  std_conc = mstr_lst$data$std_conc %>% clean_names %>% select(plate,  name, type, tryptophan, sil_tryptophan_pos_d5)
+) %>%
+  list_modify(
+    response = add_column(
+      .$area %>%
+      add_column(response = as.numeric(.$tryptophan)/as.numeric(.$sil_tryptophan_pos_d5)) %>%
+      select(-c(tryptophan, sil_tryptophan_pos_d5)),
+      std_conc = .$std_conc$tryptophan %>% as.numeric()
+      ) %>% add_column(
+        weights = 1/(.$response^2)),
+    plate_list = unique(.$area$plate)
+  ) %>%
+  list_modify(
+    to_plot = filter(.$response, type == "Standard" & plate == .$plate_list[1])
+  )
+
+x = lm(data = tryptophan$to_plot,
+   formula = response~std_conc,
+   weights = weights)
+  
+
+percent_dev = 100*(resid(x)/tryptophan$to_plot$response)
+
+percent_failed <- which(abs(as.numeric(percent_dev)) >20)
+
+if(length(percent_failed) > 1){
+  max_fail = which.max(abs(as.numeric(percent_dev)))
+  to_plot2 <- tryptophan$to_plot [-max_fail, ]
+}
+
+
+x = lm(data = to_plot2,
+   formula = response~std_conc,
+   weights = weights)
+
+percent_dev_2 = 100*(resid(x)/to_plot2$response)
+
+
+```
+
+```{r load packages and set up project structure, eval=FALSE, echo=TRUE, paged.print=TRUE, warning=FALSE, results = 'asis'}
 
 #### load packages
-package_list <- c('plyr', 'tidyverse', 'janitor', 'shiny', 'plotly', 'effsize', 'dunn.test', 'RColorBrewer', 'statTarget', 'ropls', 'metabom8', 'rstatix', 'ggpubr', 'cowplot', 'knitr', 'kableExtra', 'stats', 'viridisLite', 'stringr')
+package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra', '')
 
 for(idx_package in package_list){
   if(length(which(row.names(installed.packages()) == idx_package)) > 0){
@@ -77,15 +209,15 @@ for(idx_package in package_list){
 func_dir = "/Users/lukegraywhiley/Documents/GitHub/metabolomics_code/functions/"
 
 #filelist of datafiles from project path to undergo analysis. Data must be stored in appropiate subfolder.
-data_filelist <- list.files(path = paste0(master_list$project_options$project_dir,
-                                          master_list$project_options$project_data_subdir),
-                            pattern = ".csv",
+data_filelist <- list.files(path = paste0(mstr_lst$proj_optns$proj_dir,
+                                          mstr_lst$proj_optns$proj_data_subdir),
+                            pattern = ".txt",
                             full.names = TRUE)
 
 #set up project list structure and append colours (autogenerated using brewer.pal)
-master_list <- lst(project_details = master_list$project_options %>%
+mstr_lst <- lst(proj_details = mstr_lst$proj_optns %>%
                      list_modify(., 
-                                 project_colours = brewer.pal(n= length(.[["project_classes"]]), name = "Accent"),
+                                 proj_colours = brewer.pal(n= length(.[["proj_classes"]]), name = "Accent"),
                                  sub_projects = array(dim = length(data_filelist))),
                    functions = lst(
                      LGW_FUNC_dataRead = source(paste0(func_dir ,"LGW_FUNC_dataRead.R")),
@@ -94,18 +226,18 @@ master_list <- lst(project_details = master_list$project_options %>%
                      LGW_FUNC_rOPLS = source(paste0(func_dir, "Quarto_LGW_FUNC_rOPLS.R")),
                      LGW_FUNC_univariate = source(paste0(func_dir, "2021_LGW_FUNC_compare_means_ggplot_boxplots.R"))
                      ),
-                   tables = lst(project_overview = lst()))
+                   tables = lst(proj_overview = lst()))
 
 # read in data
 
 
 #execute function
 for(idx_filepath in 1:length(data_filelist)){
-  master_list$project_details$sub_projects[idx_filepath] <- gsub(x = strsplit(data_filelist[idx_filepath], paste0(master_list$project_details$project_data_subdir, "/"))[[1]][2], pattern = ".csv", replacement = "")
+  mstr_lst$proj_details$sub_projects[idx_filepath] <- gsub(x = strsplit(data_filelist[idx_filepath], paste0(mstr_lst$proj_details$proj_data_subdir, "/"))[[1]][2], pattern = ".csv", replacement = "")
  
-  master_list[[master_list$project_details$sub_projects[idx_filepath]]] <- lst(
+  mstr_lst[[mstr_lst$proj_details$sub_projects[idx_filepath]]] <- lst(
     data = lst(
-      master_data = master_list$functions$LGW_FUNC_dataRead$value(
+      master_data = mstr_lst$functions$LGW_FUNC_dataRead$value(
         FUNC_datapath = data_filelist[idx_filepath],
         FUNC_annotation_tag = "sample"),
       sample_filtered = lst(),
@@ -113,13 +245,13 @@ for(idx_filepath in 1:length(data_filelist)){
       imputed_data = lst()
   ))
   
-  idx_data <- master_list$project_details$sub_projects[idx_filepath]
+  idx_data <- mstr_lst$proj_details$sub_projects[idx_filepath]
   
 #add factor columns for control of colours for plotting
-  master_list[[idx_data]]$data$master_data$annotation <- master_list[[idx_data]]$data$master_data$annotation %>%
+  mstr_lst[[idx_data]]$data$master_data$annotation <- mstr_lst[[idx_data]]$data$master_data$annotation %>%
     #sample_class
-    mutate(across(.cols = all_of(master_list$project_details$project_class_column_header),
-                  .fns = ~factor(.x, levels = c(master_list$project_details$project_classes), ordered = TRUE),
+    mutate(across(.cols = all_of(mstr_lst$proj_details$proj_class_column_header),
+                  .fns = ~factor(.x, levels = c(mstr_lst$proj_details$proj_classes), ordered = TRUE),
                   .names = "sample_class_factor")) %>%
     #sample type
     mutate(across(.cols = sample_type,
@@ -131,91 +263,91 @@ for(idx_filepath in 1:length(data_filelist)){
                   .names = "sample_batch_factor"))
              
   #filter to only include sample classes desired by user
-        #find idx of rows containg sample_class defined by user as project_classes in chunk 1.
+        #find idx of rows containg sample_class defined by user as proj_classes in chunk 1.
   keep_idx_class <- which(
-    master_list[[idx_data]]$data$master_data$annotation[[master_list$project_details$project_class_column_header]] %in% master_list$project_details$project_classes)
+    mstr_lst[[idx_data]]$data$master_data$annotation[[mstr_lst$proj_details$proj_class_column_header]] %in% mstr_lst$proj_details$proj_classes)
 
     #run apply to remove sample classes not desired by user
-  master_list[[idx_data]]$data$master_data[1:2] <- lapply(
-    X = master_list[[idx_data]]$data$master_data[1:2], 
+  mstr_lst[[idx_data]]$data$master_data[1:2] <- lapply(
+    X = mstr_lst[[idx_data]]$data$master_data[1:2], 
     FUN = function(x) x[keep_idx_class,])
   
   #create summary tibble for printing
-  master_list$tables$project_overview <- master_list$tables$project_overview %>%
+  mstr_lst$tables$proj_overview <- mstr_lst$tables$proj_overview %>%
     bind_rows(., tibble(
       project = idx_data,
-      features = ncol(master_list[[idx_data]]$data$master_data$data),
-      total_samples = nrow(master_list[[idx_data]]$data$master_data$annotation),
-      qc_samples = nrow(master_list[[idx_data]]$data$master_data$annotation %>% 
+      features = ncol(mstr_lst[[idx_data]]$data$master_data$data),
+      total_samples = nrow(mstr_lst[[idx_data]]$data$master_data$annotation),
+      qc_samples = nrow(mstr_lst[[idx_data]]$data$master_data$annotation %>% 
                           filter(sample_type =="qc")),
-      study_samples = nrow(master_list[[idx_data]]$data$master_data$annotation %>% 
+      study_samples = nrow(mstr_lst[[idx_data]]$data$master_data$annotation %>% 
                              filter(sample_type =="sample"))
       ) %>% bind_cols(.,
-      master_list[[idx_data]]$data$master_data$annotation[[master_list$project_details$project_class_column_header]] %>%
+      mstr_lst[[idx_data]]$data$master_data$annotation[[mstr_lst$proj_details$proj_class_column_header]] %>%
         table() %>% as.matrix %>% t %>% as_tibble())
     )
   
   #set result lst for exporting results
-  master_list[[idx_data]]$results <- lst()
+  mstr_lst[[idx_data]]$results <- lst()
   }
 
 
 #print table for report
-master_list$tables$project_overview %>% 
+mstr_lst$tables$proj_overview %>% 
   kbl(align = "c") %>% 
   kable_minimal("hover", full_width = T)
 ```
 
 ## Sample outlier removal
 
-```{r sample outlier removal, eval = TRUE, echo = TRUE, warning=FALSE}
+```{r sample outlier removal, eval = FALSE, echo = TRUE, warning=FALSE}
 
 # this chunk is to subset data, removing outliers
 # if no outliers - set as NA
 
 #set empty list
-master_list$tables$project_overview_filtered <- lst()
+mstr_lst$tables$proj_overview_filtered <- lst()
 
-for(idx_data in master_list$project_details$sub_projects){
+for(idx_data in mstr_lst$proj_details$sub_projects){
   
-  if(is.na(master_list$project_details$project_outliers)){
-  master_list[[idx_data]]$data$sample_filtered <- master_list[[idx_data]]$data$master_data
-  master_list$tables$project_overview_filtered <- master_list$tables$project_overview
+  if(is.na(mstr_lst$proj_details$proj_outliers)){
+  mstr_lst[[idx_data]]$data$sample_filtered <- mstr_lst[[idx_data]]$data$master_data
+  mstr_lst$tables$proj_overview_filtered <- mstr_lst$tables$proj_overview
   #cat("No outliers removed")
   } else {
   
-  #find idx of rows containg sample_class defined by user as project_classes in chunk 1.
-  keep_idx_class <- which(master_list[[idx_data]]$data$master_data$annotation[[master_list$project_details$project_class_column_header]] %in% master_list$project_details$sample_class)  
-  #find idx of rows that are not outliers defined by user as project_outliers in chunk 1.
-  keep_idx_outlier <- which(!master_list[[idx_data]]$data$master_data$annotation$sample_name %in% master_list$project_details$project_outliers)
+  #find idx of rows containg sample_class defined by user as proj_classes in chunk 1.
+  keep_idx_class <- which(mstr_lst[[idx_data]]$data$master_data$annotation[[mstr_lst$proj_details$proj_class_column_header]] %in% mstr_lst$proj_details$sample_class)  
+  #find idx of rows that are not outliers defined by user as proj_outliers in chunk 1.
+  keep_idx_outlier <- which(!mstr_lst[[idx_data]]$data$master_data$annotation$sample_name %in% mstr_lst$proj_details$proj_outliers)
 
   #run apply to remove outliers
-  master_list[[idx_data]]$data$sample_filtered[1:2] <- lapply(X = master_list[[idx_data]]$data$master_data[1:2], 
+  mstr_lst[[idx_data]]$data$sample_filtered[1:2] <- lapply(X = mstr_lst[[idx_data]]$data$master_data[1:2], 
                                                             FUN = function(x) x[keep_idx_outlier,])
   
   #add feature list to filtered data
-   master_list[[idx_data]]$data$sample_filtered[3] <-  master_list[[idx_data]]$data$master_data[3]
+   mstr_lst[[idx_data]]$data$sample_filtered[3] <-  mstr_lst[[idx_data]]$data$master_data[3]
   
-     master_list$tables$project_overview_filtered <- master_list$tables$project_overview_filtered %>%
+     mstr_lst$tables$proj_overview_filtered <- mstr_lst$tables$proj_overview_filtered %>%
     bind_rows(.,
-              tibble(project = (master_list[[idx_data]]$data$sample_filtered %>% names()),
-                     features = ncol(master_list[[idx_data]]$data$sample_filtered$data),
-                     total_samples = nrow(master_list[[idx_data]]$data$sample_filtered$annotation),
-                     qc_samples = nrow(master_list$data$master_data[[idx_filepath]]$annotation %>% filter(sample_type =="qc")),
-                     study_samples = nrow(master_list[[idx_data]]$data$sample_filtered$annotation %>% filter(sample_type =="sample"))
+              tibble(project = (mstr_lst[[idx_data]]$data$sample_filtered %>% names()),
+                     features = ncol(mstr_lst[[idx_data]]$data$sample_filtered$data),
+                     total_samples = nrow(mstr_lst[[idx_data]]$data$sample_filtered$annotation),
+                     qc_samples = nrow(mstr_lst$data$master_data[[idx_filepath]]$annotation %>% filter(sample_type =="qc")),
+                     study_samples = nrow(mstr_lst[[idx_data]]$data$sample_filtered$annotation %>% filter(sample_type =="sample"))
                      ) %>%
                 bind_cols(. ,
-                          master_list[[idx_data]]$data$sample_filtered$annotation[[master_list$project_details$project_class_column_header]] %>% table() %>% as.matrix %>% t %>% as_tibble())
+                          mstr_lst[[idx_data]]$data$sample_filtered$annotation[[mstr_lst$proj_details$proj_class_column_header]] %>% table() %>% as.matrix %>% t %>% as_tibble())
               )
   }
 }
 
 #clean environment
-rm(list = c(ls()[which(ls() != "master_list")]))
+rm(list = c(ls()[which(ls() != "mstr_lst")]))
 
-if(is.na(master_list$project_details$project_outliers)){cat("No outliers removed")} else {
+if(is.na(mstr_lst$proj_details$proj_outliers)){cat("No outliers removed")} else {
   cat("Updated sample table:")
-  master_list$tables$project_overview_filtered %>% 
+  mstr_lst$tables$proj_overview_filtered %>% 
   kbl(align = "c") %>% 
   kable_minimal("hover", full_width = T)
 }
@@ -227,27 +359,27 @@ if(is.na(master_list$project_details$project_outliers)){cat("No outliers removed
 
 -   Removed features:
 
-```{r feature outlier removal, eval = TRUE, echo = TRUE, warning=FALSE}
+```{r feature outlier removal, eval = FALSE, echo = TRUE, warning=FALSE}
 
 #remove features that have > x missing values
 
-for(idx_data in master_list$project_details$sub_projects){
+for(idx_data in mstr_lst$proj_details$sub_projects){
   #set data
-  master_list[[idx_data]]$data[["feature_filtered"]] <- master_list[[idx_data]]$data$sample_filtered
+  mstr_lst[[idx_data]]$data[["feature_filtered"]] <- mstr_lst[[idx_data]]$data$sample_filtered
   
   #get names of metabolites with >50% missing values
-master_list[[idx_data]]$data$feature_filtered[["failed_features"]] <- which(
-  (colSums(is.na(master_list[[idx_data]]$data$sample_filtered$data))/
-     nrow(master_list[[idx_data]]$data$sample_filtered$data))*100 > 50) %>% names()
+mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]] <- which(
+  (colSums(is.na(mstr_lst[[idx_data]]$data$sample_filtered$data))/
+     nrow(mstr_lst[[idx_data]]$data$sample_filtered$data))*100 > 50) %>% names()
  
-master_list[[idx_data]]$data[["feature_filtered"]]$data <-  master_list[[idx_data]]$data[["feature_filtered"]]$data %>%
-  select(-all_of(master_list[[idx_data]]$data$feature_filtered[["failed_features"]]))
+mstr_lst[[idx_data]]$data[["feature_filtered"]]$data <-  mstr_lst[[idx_data]]$data[["feature_filtered"]]$data %>%
+  select(-all_of(mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]]))
 
-master_list[[idx_data]]$data[["feature_filtered"]]$features <- master_list[[idx_data]]$data[["feature_filtered"]]$data %>%
+mstr_lst[[idx_data]]$data[["feature_filtered"]]$features <- mstr_lst[[idx_data]]$data[["feature_filtered"]]$data %>%
   names()
 }
 
-master_list[[idx_data]]$data$feature_filtered[["failed_features"]]
+mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]]
 ```
 
 ## Missing value and imputation overview
@@ -260,32 +392,32 @@ master_list[[idx_data]]$data$feature_filtered[["failed_features"]]
 
 -   Missing values are filled using the half minimum concentration value for each metabolite.
 
-```{r missing value overview and impute, eval = TRUE, echo = TRUE}
+```{r missing value overview and impute, eval = FALSE, echo = TRUE}
 
-master_list$functions$LGW_FUNC_impute <- source('/Users/lukegraywhiley/Documents/GitHub/metabolomics_code/functions/LGW_FUNC_impute_halfmin.R')
+mstr_lst$functions$LGW_FUNC_impute <- source('/Users/lukegraywhiley/Documents/GitHub/metabolomics_code/functions/LGW_FUNC_impute_halfmin.R')
 
 #set empty table for output
-master_list$tables$missing_values_table <- lst()
+mstr_lst$tables$missing_values_table <- lst()
 
 #run impution loop for each dataset
-for(idx_data in master_list$project_details$sub_projects){
-      master_list[[idx_data]]$data$imputed_data <- list(
-        annotation = master_list[[idx_data]]$data$feature_filtered$annotation,
-        data = master_list$functions$LGW_FUNC_impute$value(x = master_list[[idx_data]]$data$feature_filtered$data),
-        features = master_list[[idx_data]]$data$feature_filtered$features
+for(idx_data in mstr_lst$proj_details$sub_projects){
+      mstr_lst[[idx_data]]$data$imputed_data <- list(
+        annotation = mstr_lst[[idx_data]]$data$feature_filtered$annotation,
+        data = mstr_lst$functions$LGW_FUNC_impute$value(x = mstr_lst[[idx_data]]$data$feature_filtered$data),
+        features = mstr_lst[[idx_data]]$data$feature_filtered$features
       )
   
       #create table for report
       
       #1. data to shorthand object
-      pre_data <- master_list[[idx_data]]$data$feature_filtered$data
+      pre_data <- mstr_lst[[idx_data]]$data$feature_filtered$data
       pre_data_missing <- length(which(pre_data==0)) + length(which(is.na(pre_data)))
-      post_data <- master_list[[idx_data]]$data$imputed_data$data
+      post_data <- mstr_lst[[idx_data]]$data$imputed_data$data
       post_data_missing <- length(which(post_data==0)) + length(which(is.na(post_data)))
       
     
       #. calculate output table
-    master_list$tables$missing_values_table <- master_list$tables$missing_values_table %>%
+    mstr_lst$tables$missing_values_table <- mstr_lst$tables$missing_values_table %>%
       bind_rows(., bind_cols(
         "project" = idx_data,
         "pre-impute: missing values (%)" = paste0(pre_data_missing, " (", round((100/prod(dim(pre_data)))*pre_data_missing,2),")"),
@@ -295,10 +427,10 @@ for(idx_data in master_list$project_details$sub_projects){
 
 
 #clean environment
-rm(list = c(ls()[which(ls() != "master_list")]))
+rm(list = c(ls()[which(ls() != "mstr_lst")]))
 
 #print table for report
-master_list$tables$missing_values_table %>% 
+mstr_lst$tables$missing_values_table %>% 
   kbl(align = "c") %>% 
   kable_minimal("hover", full_width = T)
 
@@ -318,35 +450,35 @@ master_list$tables$missing_values_table %>%
 
 ##### Pre-processed data - no batch or signal drift correction
 
-```{r PCA, eval = TRUE, echo = TRUE, warning = FALSE}
+```{r PCA, eval = FALSE, echo = TRUE, warning = FALSE}
 
 #create a html taglist (work around for rendering plotly html in a loop in .RMD documents) and set up iterative idx (i)
 print_lst <- htmltools::tagList(); i <- 1
 
 #run loop
-for(idx_data in master_list$project_details$sub_projects){
+for(idx_data in mstr_lst$proj_details$sub_projects){
   #pca_lst to store PCA settings for loop
   pca_lst <- lst(
     "sample type" = lst(header = "sample_type_factor", include_qc = TRUE, include_sample = TRUE,
                         plot_colours = c("steelblue1", "white")),
     "batch [all samples]" = lst(header = "sample_batch_factor", include_qc = TRUE, include_sample = TRUE,
                                 plot_colours = c(brewer.pal(n = length(unique(
-                                  master_list[[idx_data]]$data$imputed_data$annotation$sample_batch_factor)), name = "Accent"))),
+                                  mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_batch_factor)), name = "Accent"))),
     "batch [qc samples only]" = lst(header = "sample_batch_factor", include_qc = TRUE, include_sample = FALSE,
                                     c(brewer.pal(n = length(unique(
-master_list[[idx_data]]$data$imputed_data$annotation$sample_batch_factor)), name = "Accent"))),
+mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_batch_factor)), name = "Accent"))),
     "sample class" = lst(header = "sample_class_factor", include_qc = TRUE, include_sample = TRUE,
-                         plot_colours = master_list$project_details$project_colours[which(
-                           levels(master_list[[idx_data]]$data$imputed_data$annotation$sample_class_factor) %in%
-                             unique( master_list[[idx_data]]$data$imputed_data$annotation[[master_list$project_details$project_class_column_header]]))]),
+                         plot_colours = mstr_lst$proj_details$proj_colours[which(
+                           levels(mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_class_factor) %in%
+                             unique( mstr_lst[[idx_data]]$data$imputed_data$annotation[[mstr_lst$proj_details$proj_class_column_header]]))]),
   )
 
   # complete PCA analysis
   for(idx_pca in names(pca_lst)){
-    master_list[[idx_data]]$results$pca[[idx_pca]] <- master_list$functions$LGW_FUNC_pca$value(
-                    FUNC_data = bind_cols(master_list[[idx_data]]$data$imputed_data$annotation, 
-                                          master_list[[idx_data]]$data$imputed_data$data),
-                    FUNC_metabolite_list = master_list[[idx_data]]$data$imputed_data$features,
+    mstr_lst[[idx_data]]$results$pca[[idx_pca]] <- mstr_lst$functions$LGW_FUNC_pca$value(
+                    FUNC_data = bind_cols(mstr_lst[[idx_data]]$data$imputed_data$annotation, 
+                                          mstr_lst[[idx_data]]$data$imputed_data$data),
+                    FUNC_metabolite_list = mstr_lst[[idx_data]]$data$imputed_data$features,
                     FUNC_STRING_title = paste0("PCA (coloured by ",idx_pca,"); ", idx_data),
                     FUNC_STRING_legend_title = idx_pca,
                     FUNC_HEADER_colour_by = pca_lst[[idx_pca]]$header,
@@ -359,7 +491,7 @@ master_list[[idx_data]]$data$imputed_data$annotation$sample_batch_factor)), name
                     FUNC_OPTION_include_qc = pca_lst[[idx_pca]]$include_qc,
                     FUNC_OPTION_include_sample = pca_lst[[idx_pca]]$include_sample
     )
-        print_lst[[i]] <- master_list[[idx_data]]$results$pca[[idx_pca]]$plot_combined; i <- i+1
+        print_lst[[i]] <- mstr_lst[[idx_data]]$results$pca[[idx_pca]]$plot_combined; i <- i+1
       }}
   
 print_lst
@@ -377,31 +509,31 @@ print_lst
 #create a html taglist (work around for rendering plotly html in a loop in .RMD documents) and start iterative idx for printing
 print_list <- htmltools::tagList(); i <- 1
 
-for(idx_data in master_list$project_details$sub_projects){ 
-  master_list[[idx_data]]$results$opls <- lst()
+for(idx_data in mstr_lst$proj_details$sub_projects){ 
+  mstr_lst[[idx_data]]$results$opls <- lst()
   #create OPLS-DA
-  master_list[[idx_data]]$results$opls <- master_list$functions$LGW_FUNC_rOPLS$value(
-    FUNC_data = bind_cols(master_list[[idx_data]]$data$imputed_data$annotation,
-                          master_list[[idx_data]]$data$imputed_data$data), 
-    FUNC_metabolite_list = master_list[[idx_data]]$data$imputed_data$features,
-    FUNC_OPLS_comparison_control = master_list$project_details$opls$control,
-    FUNC_OPLS_comparison_test = master_list$project_details$opls$case,
+  mstr_lst[[idx_data]]$results$opls <- mstr_lst$functions$LGW_FUNC_rOPLS$value(
+    FUNC_data = bind_cols(mstr_lst[[idx_data]]$data$imputed_data$annotation,
+                          mstr_lst[[idx_data]]$data$imputed_data$data), 
+    FUNC_metabolite_list = mstr_lst[[idx_data]]$data$imputed_data$features,
+    FUNC_OPLS_comparison_control = mstr_lst$proj_details$opls$control,
+    FUNC_OPLS_comparison_test = mstr_lst$proj_details$opls$case,
     FUNC_HEADER_class = "sample_class_factor",
     FUNC_OPTION_colour_by = "sample_class_factor",
     FUNC_OPTION_plot_label = "sample_id",
     FUNC_OPTION_scaling = "pareto",
     FUNC_OPTION_log_data = TRUE,
     FUNC_OPTION_title = "",
-    FUNC_OPTION_project_colours = master_list$project_details$project_colours,
+    FUNC_OPTION_proj_colours = mstr_lst$proj_details$proj_colours,
     FUNC_OPTION_max_orth = 1,
     FUNC_OPTION_invert_x = FALSE,
     FUNC_OPTION_invert_y = FALSE
   )
  
   #add to print list for rendering in report, add iterative idx
-  for(idx_case in names(master_list[[idx_data]]$results$opls)){
-  print_list[[i]] <- master_list[[idx_data]]$results$opls[[idx_case]]$plot_combined; i <- i+1
-  print_list[[i]] <- master_list[[idx_data]]$results$opls[[idx_case]]$loading_bar; i <- i+1
+  for(idx_case in names(mstr_lst[[idx_data]]$results$opls)){
+  print_list[[i]] <- mstr_lst[[idx_data]]$results$opls[[idx_case]]$plot_combined; i <- i+1
+  print_list[[i]] <- mstr_lst[[idx_data]]$results$opls[[idx_case]]$loading_bar; i <- i+1
 }
 }
 print_list
@@ -420,26 +552,26 @@ print_list
 
 ```{r compare means, eval=FALSE, echo=TRUE, warning=FALSE, error=FALSE, message=FALSE,results='asis'}
 
-for(idx_data in master_list$project_details$sub_projects){
-  master_list[[idx_data]]$results$univariate <- lst()
+for(idx_data in mstr_lst$proj_details$sub_projects){
+  mstr_lst[[idx_data]]$results$univariate <- lst()
 
 #create a html taglist (work around for rendering kable html in a loop in .RMD documents) and start iterative idx for printing
 print_list <- htmltools::tagList(); i <- 1
   #find project colours to use to consistently match PCA and OPLS
-  plot_colours <- master_list$project_details$project_colours[which(
-    levels(master_list[[idx_data]]$data$imputed_data$annotation$sample_class_factor) %in% master_list$project_details$univariate$comparison)]
+  plot_colours <- mstr_lst$proj_details$proj_colours[which(
+    levels(mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_class_factor) %in% mstr_lst$proj_details$univariate$comparison)]
 
     #perform univariate and stats 
-  master_list[[idx_data]]$results$univariate <- master_list$functions$LGW_FUNC_univariate$value(
-    FUNC_data = bind_cols(master_list[[idx_data]]$data$imputed_data$annotation,
-                          master_list[[idx_data]]$data$imputed_data$data),
-    FUNC_metabolite_list = master_list[[idx_data]]$data$imputed_data$features,
-    FUNC_class_to_include = master_list$project_details$univariate$comparison,
+  mstr_lst[[idx_data]]$results$univariate <- mstr_lst$functions$LGW_FUNC_univariate$value(
+    FUNC_data = bind_cols(mstr_lst[[idx_data]]$data$imputed_data$annotation,
+                          mstr_lst[[idx_data]]$data$imputed_data$data),
+    FUNC_metabolite_list = mstr_lst[[idx_data]]$data$imputed_data$features,
+    FUNC_class_to_include = mstr_lst$proj_details$univariate$comparison,
     FUNC_HEADER_class = "sample_class_factor",
     FUNC_HEADER_colour = "sample_class_factor",
     FUNC_OPTION_colour_choice <- plot_colours, 
     FUNC_OPTION_log_plot_data = FALSE,
-    FUNC_OPTION_compare_means_method = master_list$project_details$univariate$method, #OPTIONS = kruskal.test, wilcox.test, wilcox.test.paired
+    FUNC_OPTION_compare_means_method = mstr_lst$proj_details$univariate$method, #OPTIONS = kruskal.test, wilcox.test, wilcox.test.paired
     FUNC_HEADER_paired = NA, #if paired test is desired add here the linking column header, else = NA
     FUNC_plot_comparisons = NA, ##only required for specific Mann.Whitney; e.g. c("admission - presurgery")
     FUNC_OPTION_plot_qc = FALSE,
@@ -449,14 +581,14 @@ print_list <- htmltools::tagList(); i <- 1
 )
   
   # p value control for multiple testing
-  master_list[[idx_data]]$results$univariate$table <- master_list[[idx_data]]$results$univariate$table %>%
+  mstr_lst[[idx_data]]$results$univariate$table <- mstr_lst[[idx_data]]$results$univariate$table %>%
     select(-"p.adj", - "p.format") %>%
-    add_column(padj = p.adjust(p =  master_list[[idx_data]]$results$univariate$table$p, method = "BH"), 
+    add_column(padj = p.adjust(p =  mstr_lst[[idx_data]]$results$univariate$table$p, method = "BH"), 
                .after = "p") %>%
     arrange(p)
   
   #add kable to print_list for report
-master_list[[idx_data]]$results$univariate$table %>%
+mstr_lst[[idx_data]]$results$univariate$table %>%
   kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
   kable_minimal("hover") %>%
   kable_styling(font_size = 10) %>%
@@ -485,10 +617,10 @@ Boxplot annotation:\
 ```{r print boxplots, eval=FALSE, echo=TRUE, warning=FALSE, error=FALSE, message=FALSE,results='asis', fig.width=2.8, fig.height=2.8, out.height="80%", out.width = "80%", dpi=300, fig.show="hold"}
 
   #print sig boxplots
-  for(idx_data in master_list$project_details$sub_projects){
-sig_max <- which(master_list[[idx_data]]$results$univariate$table$padj <0.05) %>% max()
-for (idx_plot in master_list[[idx_data]]$results$univariate$table$feature[1:sig_max]){
-print(master_list[[idx_data]]$results$univariate$bp[[idx_plot]])
+  for(idx_data in mstr_lst$proj_details$sub_projects){
+sig_max <- which(mstr_lst[[idx_data]]$results$univariate$table$padj <0.05) %>% max()
+for (idx_plot in mstr_lst[[idx_data]]$results$univariate$table$feature[1:sig_max]){
+print(mstr_lst[[idx_data]]$results$univariate$bp[[idx_plot]])
 }
 }
 
