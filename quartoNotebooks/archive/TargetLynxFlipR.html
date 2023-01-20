@@ -3909,7 +3909,7 @@ window.onload = function() {
 <!--# User options are included in chunk 1 --><br>
 <!--# project folder must be set up as parent_directory/data--><br>
 <!--# default data type: import = .txt; export = .csv --></p>
-<!--# required packages: 'tidyverse' and 'janitor' -->
+<!--# required packages: 'tidyverse', 'janitor', 'qualV', 'kableExtra' -->
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -3917,7 +3917,7 @@ window.onload = function() {
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>mstr_lst <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">proj_optns =</span> <span class="fu">list</span>(</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;gutCVD&quot;</span>, <span class="co">#name of project</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">username =</span> <span class="st">&quot;LGW&quot;</span>, <span class="co">#user of project</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/&quot;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/&quot;</span>,</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_data_subdir =</span> <span class="st">&quot;data&quot;</span>, <span class="co"># sub directory contatining export data from TargetLynx</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data_type =</span> <span class="st">&quot;.txt&quot;</span>, <span class="co"># import flie type [.txt as default]</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">keep_header =</span> <span class="fu">c</span>(<span class="st">&quot;conc&quot;</span>, <span class="st">&quot;area&quot;</span>, <span class="st">&quot;response&quot;</span>, <span class="st">&quot;percent_dev&quot;</span>) <span class="co"># header to keep [e.g c(&quot;response&quot;, &quot;conc&quot;, &quot;area&quot;) etc]</span></span>
@@ -4033,13 +4033,8 @@ window.onload = function() {
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/data/covid19_heidelberg_SER_MS_TRY_COVP086_05Dec2022_NG_reviewed.txt&quot;
-[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/data/covid19_heidelberg_SER_MS_TRY_COVP087_05Dec2022_NG_reviewed.txt&quot;
-[3] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/data/covid19_heidelberg_SER_MS_TRY_COVP088_05Dec2022_NG_reviewed.txt&quot;
-[4] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/data/covid19_heidelberg_SER_MS_TRY_COVP089_05Dec2022_NG_reviewed.txt&quot;
-[5] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/data/covid19_heidelberg_SER_MS_TRY_COVP090_05Dec2022_NG_reviewed.txt&quot;
-[6] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/data/covid19_heidelberg_SER_MS_TRY_COVP091_05Dec2022_NG_reviewed.txt&quot;
-[7] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/data/covid19_heidelberg_SER_MS_TRY_COVP092_05Dec2022_NG_reviewed.txt&quot;</code></pre>
+<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/data/Adilah_gutCVD_bile_Acids_STDp041_NG_reviewed.txt&quot;
+[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/data/Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed.txt&quot;</code></pre>
 </div>
 <details>
 <summary>Code</summary>
@@ -4053,10 +4048,10 @@ window.onload = function() {
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/covid19_heidelberg_SER_MS_TRY_COVP0_05Dec2022_NG_reviewed_FLIPPR_CONC.csv&quot;       
-[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/covid19_heidelberg_SER_MS_TRY_COVP0_05Dec2022_NG_reviewed_FLIPPR_AREA.csv&quot;       
-[3] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/covid19_heidelberg_SER_MS_TRY_COVP0_05Dec2022_NG_reviewed_FLIPPR_RESPONSE.csv&quot;   
-[4] &quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/covid19_heidelberg_SER_MS_TRY_COVP0_05Dec2022_NG_reviewed_FLIPPR_PERCENT_DEV.csv&quot;</code></pre>
+<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_CONC.csv&quot;       
+[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_AREA.csv&quot;       
+[3] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_RESPONSE.csv&quot;   
+[4] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_PERCENT_DEV.csv&quot;</code></pre>
 </div>
 <details>
 <summary>Code</summary>
@@ -4103,82 +4098,82 @@ features
 <tbody>
 <tr>
 <td style="text-align:center;">
-covid19_heidelberg_SER_MS_TRY_COVP092_05Dec2022_NG_reviewed
+Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
 </td>
 <td style="text-align:center;">
-8
+10
 </td>
 <td style="text-align:center;">
-4
+3
 </td>
 <td style="text-align:center;">
-79
+81
 </td>
 <td style="text-align:center;">
-11
+2
 </td>
 <td style="text-align:center;">
-45
-</td>
-</tr>
-<tr>
-<td style="text-align:center;">
-covid19_heidelberg_SER_MS_TRY_COVP092_05Dec2022_NG_reviewed
-</td>
-<td style="text-align:center;">
-8
-</td>
-<td style="text-align:center;">
-4
-</td>
-<td style="text-align:center;">
-79
-</td>
-<td style="text-align:center;">
-11
-</td>
-<td style="text-align:center;">
-45
+34
 </td>
 </tr>
 <tr>
 <td style="text-align:center;">
-covid19_heidelberg_SER_MS_TRY_COVP092_05Dec2022_NG_reviewed
+Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
 </td>
 <td style="text-align:center;">
-8
+10
 </td>
 <td style="text-align:center;">
-4
+3
 </td>
 <td style="text-align:center;">
-79
+81
 </td>
 <td style="text-align:center;">
-11
+2
 </td>
 <td style="text-align:center;">
-45
+34
 </td>
 </tr>
 <tr>
 <td style="text-align:center;">
-covid19_heidelberg_SER_MS_TRY_COVP092_05Dec2022_NG_reviewed
+Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
 </td>
 <td style="text-align:center;">
-8
+10
 </td>
 <td style="text-align:center;">
-4
+3
 </td>
 <td style="text-align:center;">
-79
+81
 </td>
 <td style="text-align:center;">
-11
+2
 </td>
 <td style="text-align:center;">
-45
+34
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
+</td>
+<td style="text-align:center;">
+10
+</td>
+<td style="text-align:center;">
+3
+</td>
+<td style="text-align:center;">
+81
+</td>
+<td style="text-align:center;">
+2
+</td>
+<td style="text-align:center;">
+34
 </td>
 </tr>
 </tbody>
@@ -4399,7 +4394,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!--# project folder must be set up as parent_directory/data--&gt;</span>\</span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!--# default data type: import = .txt; export = .csv --&gt;</span></span>
 <span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!--# required packages: &#39;tidyverse&#39; and &#39;janitor&#39; --&gt;</span></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a><span class="co">&lt;!--# required packages: &#39;tidyverse&#39;, &#39;janitor&#39;, &#39;qualV&#39;, &#39;kableExtra&#39; --&gt;</span></span>
 <span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="in">```{r user input, eval=TRUE, echo=TRUE}</span></span>
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a></span>
@@ -4407,7 +4402,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>mstr_lst <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">proj_optns =</span> <span class="fu">list</span>(</span>
 <span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;gutCVD&quot;</span>, <span class="co">#name of project</span></span>
 <span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">username =</span> <span class="st">&quot;LGW&quot;</span>, <span class="co">#user of project</span></span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/heidelberg/&quot;</span>,</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/&quot;</span>,</span>
 <span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_data_subdir =</span> <span class="st">&quot;data&quot;</span>, <span class="co"># sub directory contatining export data from TargetLynx</span></span>
 <span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">data_type =</span> <span class="st">&quot;.txt&quot;</span>, <span class="co"># import flie type [.txt as default]</span></span>
 <span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">keep_header =</span> <span class="fu">c</span>(<span class="st">&quot;conc&quot;</span>, <span class="st">&quot;area&quot;</span>, <span class="st">&quot;response&quot;</span>, <span class="st">&quot;percent_dev&quot;</span>) <span class="co"># header to keep [e.g c(&quot;response&quot;, &quot;conc&quot;, &quot;area&quot;) etc]</span></span>

@@ -30,7 +30,7 @@ theme: cosmo
 mstr_lst <- list(proj_optns = list(
   project_name = "gutCVD", #name of project
   username = "LGW", #user of project
-  project_dir = "/Users/lukegraywhiley/Downloads/temp_data/heidelberg/",
+  project_dir = "/Users/lukegraywhiley/Downloads/temp_data/gutCVD/",
   project_data_subdir = "data", # sub directory contatining export data from TargetLynx
   data_type = ".txt", # import flie type [.txt as default]
   keep_header = c("conc", "area", "response", "percent_dev") # header to keep [e.g c("response", "conc", "area") etc]
