@@ -65,7 +65,8 @@ mstr_lst <- list(
     proj_name = "QC testR; Tryptophan", #name of project
     usr_name = "LGW", #user of project
     proj_dir = "/Users/lukegraywhiley/Downloads/temp_data/test_qc/",
-    proj_data_subdir = "data", # sub directory contatining export data from TargetLynx
+    proj_data_subdir = "data",# sub directory contatining export data from TargetLynx
+    proj_SILtemplate_subdir = "SIL_template",
     data_type = ".txt", # import flie type [.txt as default]
     keep_header = c("area") # header to keep [e.g c("response", "conc", "area") etc]
   )) %>% list_modify(
@@ -74,11 +75,15 @@ mstr_lst <- list(
   # NO USER INPUTE REQUIRED BELOW THIS LINE
   data = list(
     imprt_lst = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = TRUE),
-    imprt_lst_crop = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = FALSE),
+    plate_lst = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = FALSE),
+    SIL_template = read.csv(
+      file = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_SILtemplate_subdir), full.names = TRUE)),
     std_conc = list(),
-    area = list()),
+    area = list(),
+    response = list()),
   tbls = list(
-    imprt_tbl = list())
+    imprt_tbl = list()),
+  calib = list()
 )
 
 cat(paste0("Project: ", mstr_lst$proj_optns$proj_name)); cat(paste0("Author: ", mstr_lst$proj_optns$usr_name))
@@ -107,23 +112,23 @@ targetlynx_flippR <- function(FUNC_txt_file_path,
 for(idx_file in 1:length(mstr_lst$data$imprt_lst)){
   mstr_lst$data[["std_conc"]] <- mstr_lst$data[["std_conc"]] %>%
     bind_rows(targetlynx_flippR(FUNC_txt_file_path = mstr_lst$data$imprt_lst[idx_file], FUNC_keep_hdr = "std_conc") %>%
-                add_column(plate = rep(mstr_lst$data$imprt_lst_crop[idx_file], nrow(.)), .before = 1))
+                add_column(plate = rep(mstr_lst$data$plate_lst[idx_file], nrow(.)), .before = 1))
  mstr_lst$data[["area"]] <- mstr_lst$data[["area"]] %>%
     bind_rows(targetlynx_flippR(FUNC_txt_file_path = mstr_lst$data$imprt_lst[idx_file], FUNC_keep_hdr = "area") %>%
-                add_column(plate = rep(mstr_lst$data$imprt_lst_crop[idx_file], nrow(.)), .before = 1))
+                add_column(plate = rep(mstr_lst$data$plate_lst[idx_file], nrow(.)), .before = 1))
 
  #create summary table for report printing
 mstr_lst$tbls[["imprt_tbl"]] <- bind_rows(
   mstr_lst$tbls[["imprt_tbl"]],
-  bind_cols(plate = mstr_lst$data$imprt_lst_crop[idx_file],
+  bind_cols(plate = mstr_lst$data$plate_lst[idx_file],
             standards = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "Standard")),
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "Standard")),
             qc = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "QC")),
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "QC")),
             samples = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "Analyte")),
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "Analyte")),
             blanks = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$imprt_lst_crop[idx_file] & type == "Blank")),
+              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "Blank")),
             features = ncol(mstr_lst$data$std_conc)-2
             ))
 }
@@ -149,46 +154,179 @@ mstr_lst$tbls$imprt_tbl %>%
 
 ```{r, calibration of data, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results='asis'}
 
-tryptophan <- lst(
-  area = mstr_lst$data$area %>% clean_names %>% select(plate,  name, type, tryptophan, sil_tryptophan_pos_d5),
-  std_conc = mstr_lst$data$std_conc %>% clean_names %>% select(plate,  name, type, tryptophan, sil_tryptophan_pos_d5)
-) %>%
-  list_modify(
-    response = add_column(
-      .$area %>%
-      add_column(response = as.numeric(.$tryptophan)/as.numeric(.$sil_tryptophan_pos_d5)) %>%
-      select(-c(tryptophan, sil_tryptophan_pos_d5)),
-      std_conc = .$std_conc$tryptophan %>% as.numeric()
-      ) %>% add_column(
-        weights = 1/(.$response^2)),
-    plate_list = unique(.$area$plate)
-  ) %>%
-  list_modify(
-    to_plot = filter(.$response, type == "Standard" & plate == .$plate_list[1])
-  )
-
-x = lm(data = tryptophan$to_plot,
-   formula = response~std_conc,
-   weights = weights)
+#--------- write calibratR function
+calibratR <- function(FUNC_data,
+                      FUNC_HEADER_cal,
+                      FUNC_STRING_std,
+                      FUNC_STRING_qc,
+                      FUNC_STRING_sample,
+                      FUNC_STRING_title){
+  FUNC_list <- list(
+    lmX_data = FUNC_data %>%
+      filter(type == FUNC_STRING_std) %>%
+      add_column("weights" = 1/(.[[FUNC_HEADER_cal]]^2))
+    ) %>%
+    list_modify(
+    #build lm model (FUNC_HEADER_cal ~ std_conc, weighted by 1/x^2)
+    lmX = lm(data = .$lmX_data,
+             formula = paste0(FUNC_HEADER_cal, " ~ std_conc"),
+             weights = weights)
+    ) %>% list_modify(
+      percent_dev = 100*(resid(.$lmX)/.$lmX_data[[FUNC_HEADER_cal]]), #calculate percentatge residuals
+      fail_list = NULL, #create empty list for fail list
+      cal_length = NULL #create empty list for cal length (# of cal points)
+    )
   
+  #run a while loop to assess calibration, and if necessary remove points and rebuild
+  while((summary(FUNC_list$lmX)$adj.r.squared < 0.99 | 
+        max(abs(FUNC_list$percent_dev)) > 25) &
+        length(FUNC_list$percent_dev) > 5){
+    max_fail_idx <- which.max(abs(as.numeric(FUNC_list$percent_dev)))
+    FUNC_list$fail_list <- c(FUNC_list$fail_list, FUNC_list$lmX_data$std_conc[[max_fail_idx]])
+    FUNC_list$lmX_data <- FUNC_list$lmX_data[-max_fail_idx, ]
+    FUNC_list$lmX <- lm(data = FUNC_list$lmX_data,
+                        formula = paste0(FUNC_HEADER_cal, " ~ std_conc"),
+                        weights = weights)
+    FUNC_list$cal_length <- length(FUNC_list$lmX_data$std_conc)
+    FUNC_list$percent_dev <- 100*(resid(FUNC_list$lmX)/FUNC_list$lmX_data[[FUNC_HEADER_cal]])
+  }
+  
+  #create tibble containing prediction data
+  FUNC_list$lmX_pred_data <- FUNC_data %>%
+      filter(!name %in% FUNC_list$lmX_data$name) %>%
+      add_column("weights" = 1/(.[[FUNC_HEADER_cal]]^2))
+  
+  #back calculate conc from response for remaining data
+  FUNC_list$lmX_pred_data$calc_conc <- 
+    (FUNC_list$lmX_pred_data[[FUNC_HEADER_cal]] - FUNC_list$lmX$coefficients[1])/FUNC_list$lmX$coefficients[2]
+  
+  #evaluate QC performance
+  FUNC_list$qc_summary <- FUNC_list$lmX_pred_data %>%
+    filter(type == FUNC_STRING_qc) %>%
+    add_column(residual = (.$std_conc/.$calc_conc)*100)
+  #ad pass/fail column
+  FUNC_list$qc_summary$pass <- TRUE
+  FUNC_list$qc_summary$pass[which(abs(100-FUNC_list$qc_summary$residual) > 25)] <- FALSE
+  
+  #create results table
+  FUNC_list$summary_tbl <- tibble(
+    plate = FUNC_STRING_title,
+    r2 = signif(summary(FUNC_list$lmX)$adj.r.squared, 4),
+    intercept = signif(FUNC_list$lmX$coef[[1]],2),
+    slope = signif(FUNC_list$lmX$coef[[2]], 2),
+    cal_length = length(FUNC_list$percent_dev),
+    cal_included = paste(FUNC_list$lmX_data$std_conc, collapse = "; "),
+    cal_failed = paste(FUNC_list$fail_list, collapse = "; "),
+    qc_pass = paste(FUNC_list$qc_summary$std_conc[which(FUNC_list$qc_summary$pass==TRUE)], collapse = "; "),
+    qc_fail = paste(FUNC_list$qc_summary$std_conc[which(FUNC_list$qc_summary$pass==FALSE)], collapse = "; ")
+  )
+  
+  #create calibration plot of calibrants
+ FUNC_list$cal_plot <- ggplot(
+    FUNC_list$lmX$model, x = std_conc, y = get(FUNC_HEADER_cal),
+    aes_string(x = names(FUNC_list$lmX$model)[2], y = names(FUNC_list$lmX$model)[1])) +
+      stat_smooth(geom = "line", alpha = 0.5, method = "lm", col = "darkgreen", fullrange = TRUE, se = FALSE,
+                mapping = aes(weight = `(weights)`)) +
+    geom_point(aes(colour = "std_pass", shape = "std_pass", size = "std_pass")) +
+    geom_point(data = filter(FUNC_list$lmX_pred_data, type == FUNC_STRING_std),
+               aes(colour = "std_fail", shape = "std_fail", size ="std_fail")) +
+    geom_point(data = filter(FUNC_list$qc_summary, pass == TRUE),
+               aes(colour = "qc_pass", shape = "qc_pass", size = "qc_pass", name = name)) +
+    geom_point(data = filter(FUNC_list$qc_summary, pass == FALSE),
+              aes(colour = "qc_fail", shape = "qc_fail", size = "qc_fail", name = name)) +
+    geom_point(data = (FUNC_list$lmX_pred_data %>% filter(type == FUNC_STRING_sample) %>%
+                         select(-std_conc) %>%
+                         rename(std_conc = calc_conc)),
+               aes(colour = "study_sample", shape = "study_sample", size = "study_sample", name = name)) +
+    scale_size_manual(values = c(2.5,2.5,2.5,2.5,1), guide = "none") +
+    scale_shape_manual(values = c(25,25,21,21,3), name = "sample_type", 
+                       labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_samples")) +
+    scale_color_manual(values = c( "red", "darkgreen", "red", "darkgreen", "black"), name = "sample_type", 
+                       labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_samples")) +
+    labs(title = paste0(FUNC_STRING_title, "\n",
+      "R2 = ",signif(summary(FUNC_list$lmX)$adj.r.squared, 4),
+      "; Intercept = ",signif(FUNC_list$lmX$coef[[1]],2),
+      "; Slope = ",signif(FUNC_list$lmX$coef[[2]], 2))) +
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5, size =12))
 
-percent_dev = 100*(resid(x)/tryptophan$to_plot$response)
+    
+    FUNC_list
+  }
+  
+  
+#--------- Run loop to perform calibration for each target analyte
 
-percent_failed <- which(abs(as.numeric(percent_dev)) >20)
+#set tibble for calibration data out
+mstr_lst$data$calib <- mstr_lst$data$area %>%
+  select(plate, name, type) %>%
+  filter(type == "Analyte")
 
-if(length(percent_failed) > 1){
-  max_fail = which.max(abs(as.numeric(percent_dev)))
-  to_plot2 <- tryptophan$to_plot [-max_fail, ]
-}
+#for(idx_metabolite in mstr_lst$data$SIL_template$standard){
+idx_metabolite = "(-)-Epinephrine"
+idx_metabolite = "tryptophan"
+      #create calibration output list()
+  mstr_lst$calib[[idx_metabolite]] <- lst(
+  #find SIL used from tempalte
+  SIL_used = mstr_lst$data$SIL_template$SIL_standard[which(mstr_lst$data$SIL_template$standard == idx_metabolite)],
+  all_plates = lst(
+    plots = lst(),
+    summary = NULL,
+    lmX_pred_data = NULL
+  ))
 
+  if(!is.na(mstr_lst$calib[[idx_metabolite]]$SIL_used)){
+  #create response ratio
+   mstr_lst$data$response[[idx_metabolite]] <- mstr_lst$data$area %>%
+     select(plate, name, type, all_of(c(idx_metabolite, mstr_lst$calib[[idx_metabolite]]$SIL_used))) %>%
+     add_column(std_conc = mstr_lst$data$std_conc[[idx_metabolite]], .before = idx_metabolite) %>%
+     mutate_at(c("std_conc", idx_metabolite, mstr_lst$calib[[idx_metabolite]]$SIL_used), as.numeric) %>%
+     mutate(response = .[[idx_metabolite]]/.[[mstr_lst$calib[[idx_metabolite]]$SIL_used]])
+  
+   #perform the below for each plate independantly
+   for(idx_plate in 1:length(mstr_lst$data$plate_lst)){
+   #run calibratR function
+  mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]] <- calibratR(
+    FUNC_data = mstr_lst$data$response[[idx_metabolite]] %>%
+      filter(plate == mstr_lst$data$plate_lst[idx_plate]),
+    FUNC_HEADER_cal = "response",
+    FUNC_STRING_std = "Standard",
+    FUNC_STRING_qc = "QC",
+    FUNC_STRING_sample = "Analyte",
+    FUNC_STRING_title = paste0(mstr_lst$data$plate_lst[idx_plate])
+    )
+  
+  #append to all_plates
+  mstr_lst$calib[[idx_metabolite]]$all_plates$plots[[idx_plate]] <-
+    mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]]$cal_plot
+  
+   mstr_lst$calib[[idx_metabolite]]$all_plates$summary <- mstr_lst$calib[[idx_metabolite]]$all_plates$summary %>%
+     bind_rows(mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]]$summary_tbl)
+   
+   mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data <-
+     mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data %>%
+     bind_rows(mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]]$lmX_pred_data)
+   }
+ 
+   mstr_lst$data$calib <- mstr_lst$data$calib %>%
+     left_join(select(mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data, name, all_of(idx_metabolite))) %>%
+     rename_at(idx_metabolite, list(~paste0(idx_metabolite, "_CONC")))
 
-x = lm(data = to_plot2,
-   formula = response~std_conc,
-   weights = weights)
+   }else{
+   mstr_lst$calib[[idx_metabolite]]$all_plates
+  }
+  
+ # }
 
-percent_dev_2 = 100*(resid(x)/to_plot2$response)
+# mstr_lst$calib$tryptophan$all_plates$plots[[1]] %>% 
+#   plotly::ggplotly(tooltip = c("std_conc", "response", "colour", "name"))
+# mstr_lst$calib$tryptophan$all_plates$summary %>%
+#   kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+#   kable_minimal("hover") %>%
+#   kable_styling(font_size = 12) %>%
+#   scroll_box() %>% print()
 
-
+  
 ```
 
 ```{r load packages and set up project structure, eval=FALSE, echo=TRUE, paged.print=TRUE, warning=FALSE, results = 'asis'}
