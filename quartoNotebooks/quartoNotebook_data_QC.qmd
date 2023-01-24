@@ -99,12 +99,20 @@ targetlynx_flippR <- function(FUNC_txt_file_path,
                               FUNC_keep_hdr){
   list(data = read.delim(file = paste(FUNC_txt_file_path), sep = "\t",header=FALSE) %>% as_tibble() %>%
          set_names(., .[which(. == "Name", arr.ind=TRUE)[1,1],]) %>% clean_names()) %>%
-    list_modify(metabolites = (unique(.$data$x[grep("Compound", .$data$x)]) %>% .[-grep("Report", .)] %>% sub(".*:  ", "", .)),
-                filtered_data = .$data %>% filter(name != "" & name != "Name")) %>%
-    list_modify(spread_data = (add_column(.$filtered_data, 
-                                          metabolite = rep(.$metabolites, each = length(unique(.$filtered_data$name))))) %>%
-                  select(name, type, metabolite,  all_of(FUNC_keep_hdr)) %>% 
-                  spread(key = metabolite, value = all_of(FUNC_keep_hdr))) %>% .[["spread_data"]]
+    list_modify(
+      metabolites = unique(
+        .$data$x[grep("Compound", .$data$x)]) %>% .[-grep("Report", .)] %>% sub(".*:  ", "", .), 
+      filtered_data = filter(.$data ,name != "" & name != "Name")
+      ) %>%
+    list_modify(
+      spread_data = add_column(.$filtered_data, 
+                               metabolite = rep(.$metabolites, 
+                                                each = length(unique(.$filtered_data$name)))) %>% 
+        select(name, type, metabolite,  all_of(FUNC_keep_hdr)) %>% 
+        mutate_at(.vars = all_of(FUNC_keep_hdr), .funs = as.numeric) %>%
+        spread(key = metabolite, value = all_of(FUNC_keep_hdr))
+      ) %>% 
+    .[["spread_data"]]
   }
 
 #--------- run flippR function
@@ -249,22 +257,20 @@ calibratR <- function(FUNC_data,
       "; Slope = ",signif(FUNC_list$lmX$coef[[2]], 2))) +
     theme_bw() +
     theme(plot.title = element_text(hjust = 0.5, size =12))
-
-    
+ 
     FUNC_list
   }
   
-  
-#--------- Run loop to perform calibration for each target analyte
+  #--------- Run loop to perform calibration for each target analyte
 
 #set tibble for calibration data out
 mstr_lst$data$calib <- mstr_lst$data$area %>%
   select(plate, name, type) %>%
   filter(type == "Analyte")
 
-#for(idx_metabolite in mstr_lst$data$SIL_template$standard){
-idx_metabolite = "(-)-Epinephrine"
-idx_metabolite = "tryptophan"
+for(idx_metabolite in mstr_lst$data$SIL_template$standard){
+# idx_metabolite = "(-)-Epinephrine"
+# idx_metabolite = "tryptophan"
       #create calibration output list()
   mstr_lst$calib[[idx_metabolite]] <- lst(
   #find SIL used from tempalte
@@ -307,16 +313,29 @@ idx_metabolite = "tryptophan"
      mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data %>%
      bind_rows(mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]]$lmX_pred_data)
    }
- 
+   
+   if(min(mstr_lst$calib[[idx_metabolite]]$all_plates$summary$r2) > 0.99){
    mstr_lst$data$calib <- mstr_lst$data$calib %>%
-     left_join(select(mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data, name, all_of(idx_metabolite))) %>%
+     left_join(., select(mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data, name, all_of(idx_metabolite)), 
+               by="name") %>%
      rename_at(idx_metabolite, list(~paste0(idx_metabolite, "_CONC")))
-
-   }else{
-   mstr_lst$calib[[idx_metabolite]]$all_plates
-  }
+   } else {
+       mstr_lst$data$calib <- mstr_lst$data$calib %>%
+     left_join(., select(mstr_lst$data$response[[idx_metabolite]], name, response),
+               by = "name") %>%
+     rename_at("response", list(~paste0(idx_metabolite, "_RESPONSE")))
+   }
+   
+  }else{
+     
+   mstr_lst$data$calib <- mstr_lst$data$calib %>%
+     left_join(., select(mstr_lst$data$area, name, all_of(idx_metabolite)), by = "name") %>%
+     rename_at(idx_metabolite, list(~paste0(idx_metabolite, "_AREA")))
+   }
   
- # }
+
+  
+}
 
 # mstr_lst$calib$tryptophan$all_plates$plots[[1]] %>% 
 #   plotly::ggplotly(tooltip = c("std_conc", "response", "colour", "name"))
