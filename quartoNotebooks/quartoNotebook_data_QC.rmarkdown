@@ -12,6 +12,7 @@ editor: visual
 theme: cosmo
 ---
 
+
 <!--# Quarto notebook for metabolomics data quality control -->
 
 \
@@ -30,6 +31,7 @@ theme: cosmo
 <!--# default data type: import = .txt; export = .csv -->
 
 <!--# required packages: 'tidyverse', 'janitor', 'qualV', 'kableExtra' -->
+
 
 ```{r notebook instructions and load packages, eval=TRUE, echo=FALSE}
 
@@ -59,9 +61,11 @@ for(idx_package in package_list){
 
 ```
 
+
 <!--# USER INPUT HERE -->
 
 ## Project set up and data import summary
+
 
 ```{r user setup; project structure, eval=TRUE, echo=TRUE}
 
@@ -100,7 +104,9 @@ mstr_lst <- list(
 cat(paste0("Project: ", mstr_lst$proj_optns$proj_name)); cat(paste0("Author: ", mstr_lst$proj_optns$usr_name))
 ```
 
+
 <!--# automated from this point forwards-->
+
 
 ```{r load packages and flip data, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results='asis'}
 
@@ -192,6 +198,7 @@ mstr_lst$tbls$imprt_tbl %>%
 
 ```
 
+
 ## Perform calibration
 
 Following calibration, metabolites are assigned either:
@@ -207,6 +214,7 @@ Following calibration, metabolites are assigned either:
 -   Response values: metabolite has an external calibration dilution series using response values created by calculating a ratio with the peak area of a matched (or surrogate) stable isotope labelled internal standard. Metabolites have failed quality control assessment described above.
 
 -   Peak area: metabolite does not have an external calibration dilution series and does not use a stable isotope labelled internal standard.
+
 
 ```{r calibration of data, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
 
@@ -451,7 +459,9 @@ mstr_lst$tbls$calib_summary %>%
 
 ```
 
+
 ## Concentration
+
 
 ```{r report, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
 
@@ -537,9 +547,11 @@ htmltools::tagList(mstr_lst$report$conc$dopamine)
 htmltools::tagList(mstr_lst$report$conc$kynurenine)
 ```
 
+
 # SPACE - NOT COMPLETE BELOW THIS LINE
 
 <!--# comment: IGNORE BELOW THIS LINE FOR NOW -->
+
 
 ```{r load packages and set up project structure, eval=FALSE, echo=TRUE, paged.print=TRUE, warning=FALSE, results = 'asis'}
 
@@ -648,7 +660,9 @@ mstr_lst$tables$proj_overview %>%
   kable_minimal("hover", full_width = T)
 ```
 
+
 ## Sample outlier removal
+
 
 ```{r sample outlier removal, eval = FALSE, echo = TRUE, warning=FALSE}
 
@@ -703,11 +717,13 @@ if(is.na(mstr_lst$proj_details$proj_outliers)){cat("No outliers removed")} else 
 }
 ```
 
+
 ## Feature outlier removal
 
 -   Features are removed that have \> 50% missing values
 
 -   Removed features:
+
 
 ```{r feature outlier removal, eval = FALSE, echo = TRUE, warning=FALSE}
 
@@ -732,6 +748,7 @@ mstr_lst[[idx_data]]$data[["feature_filtered"]]$features <- mstr_lst[[idx_data]]
 mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]]
 ```
 
+
 ## Missing value and imputation overview
 
 -   Missing values also include NA, NaN and zeros
@@ -741,6 +758,7 @@ mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]]
 -   Imputation is computed individually for each metabolite.
 
 -   Missing values are filled using the half minimum concentration value for each metabolite.
+
 
 ```{r missing value overview and impute, eval = FALSE, echo = TRUE}
 
@@ -786,6 +804,7 @@ mstr_lst$tables$missing_values_table %>%
 
 ```
 
+
 <br />
 
 ## Results
@@ -799,6 +818,7 @@ mstr_lst$tables$missing_values_table %>%
 -   Patterns in the data between samples can also be observed - this may be as a result of either biological or analytical differences - e.g. differences in sample collection, handling or storage
 
 ##### Pre-processed data - no batch or signal drift correction
+
 
 ```{r PCA, eval = FALSE, echo = TRUE, warning = FALSE}
 
@@ -848,11 +868,13 @@ print_lst
 
 ```
 
+
 #### Orthogonal Projections to Latent Structures Discriminant Analysis (OPLS-DA)
 
 -   Orthogonal Projections to Latent Structures Discriminant Analysis (OPLS-DA) was conducted to identify separation between the groups
 
 -   OPLS-DA is a supervised model, where groups are pre-defined before modelling. It can be used as a classifier to see observe differences in the metabolite data that exist between the two classes e.g. (control vs case).
+
 
 ```{r OPLS-DA, eval = FALSE, echo = TRUE,  warning=FALSE, results='asis'}
 
@@ -890,6 +912,7 @@ print_list
 
 ```
 
+
 ### Univariate analysis
 
 -   Inter-group means were compared using non-parametric analysis (Kruskal-Wallis)\
@@ -899,6 +922,7 @@ print_list
 #### Results table
 
 <br />
+
 
 ```{r compare means, eval=FALSE, echo=TRUE, warning=FALSE, error=FALSE, message=FALSE,results='asis'}
 
@@ -952,6 +976,7 @@ mstr_lst[[idx_data]]$results$univariate$table %>%
 
 ```
 
+
 #### Univariate boxplots
 
 -   Boxplots for metabolites that returned a Kruskal Wallis \<0.05 are displayed below
@@ -964,6 +989,7 @@ Boxplot annotation:\
 \*\*\* = p\<0.001\
 \*\*\*\* = p\<0.0001
 
+
 ```{r print boxplots, eval=FALSE, echo=TRUE, warning=FALSE, error=FALSE, message=FALSE,results='asis', fig.width=2.8, fig.height=2.8, out.height="80%", out.width = "80%", dpi=300, fig.show="hold"}
 
   #print sig boxplots
@@ -975,3 +1001,4 @@ print(mstr_lst[[idx_data]]$results$univariate$bp[[idx_plot]])
 }
 
 ```
+
