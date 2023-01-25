@@ -28,9 +28,9 @@ theme: cosmo
 
 #USER INPUT REQUIRED BELOW
 mstr_lst <- list(proj_optns = list(
-  project_name = "gutCVD", #name of project
+  project_name = "harvardc2", #name of project
   username = "LGW", #user of project
-  project_dir = "/Users/lukegraywhiley/Downloads/temp_data/gutCVD/",
+  project_dir = "/Users/lukegraywhiley/Downloads/temp_data/harvardC2/",
   project_data_subdir = "data", # sub directory contatining export data from TargetLynx
   data_type = ".txt", # import flie type [.txt as default]
   keep_header = c("conc", "area", "response", "percent_dev") # header to keep [e.g c("response", "conc", "area") etc]
@@ -57,22 +57,31 @@ for(idx_package in package_list){
 #### source function
 targetlynx_flippR <- function(FUNC_txt_file_path,
                               FUNC_keep_hdr){
-  #read in data as_tibble, set names, clean names, add metabolites element to list, filter blank space, filter column headers row, spread data
-  list(data = read.delim(file = paste(FUNC_txt_file_path), 
-                         sep = "\t",
-                         header=FALSE) %>% 
-         as_tibble() %>%
-         set_names(., .[which(. == "Name", arr.ind=TRUE)[1,1],]) %>%
-         clean_names()) %>%
-    list_modify(metabolites = (unique(.$data$x[grep("Compound", .$data$x)]) %>%
-                                 .[-grep("Report", .)] %>%
-                                 sub(".*:  ", "", .)),
-                filtered_data = .$data %>% filter(name != "" & name != "Name")) %>%
-    list_modify(spread_data = (add_column(.$filtered_data, 
-                                          metabolite = rep(.$metabolites, each = length(unique(.$filtered_data$name))))) %>% select(name, type, metabolite, all_of(FUNC_keep_hdr)) %>% 
-                  spread(metabolite, all_of(FUNC_keep_hdr))) %>%
-    .[["spread_data"]]
-}
+flippR_list <- list(data = read.delim(file = paste(FUNC_txt_file_path), sep = "\t",header=FALSE) %>% as_tibble() %>%
+         set_names(., .[which(. == "Name", arr.ind=TRUE)[1,1],]) %>% clean_names()) %>%
+    list_modify(
+      metabolites = unique(
+        .$data$x[grep("Compound", .$data$x)]) %>% .[-grep("Report", .)] %>% sub(".*:  ", "", .), 
+      filtered_data = filter(.$data ,name != "" & name != "Name")
+      ) %>% 
+  list_modify(
+    duplicate_samples = .$filtered_data[1:(length(unique(.$filtered_data$x))),][["name"]] %>% duplicated()
+  ) 
+#flag duplicates
+flippR_list$filtered_data$name[flippR_list$duplicate_samples] <- paste0(
+  flippR_list$filtered_data$name[flippR_list$duplicate_samples],"_DUPLICAED")
+#spread data
+ flippR_list <- flippR_list %>%
+   list_modify(
+      spread_data = add_column(.$filtered_data, 
+                               metabolite = rep(.$metabolites, 
+                                                each = length(unique(.$filtered_data$name)))) %>% 
+        select(name, type, metabolite,  all_of(FUNC_keep_hdr)) %>% 
+        mutate_at(.vars = all_of(FUNC_keep_hdr), .funs = as.numeric) %>%
+        spread(key = metabolite, value = all_of(FUNC_keep_hdr))
+      )
+    flippR_list$spread_data
+  }
 
 
 ############## run function

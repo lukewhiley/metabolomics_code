@@ -7,18 +7,24 @@ format:
     df-print: paged
     toc: true
     toc-depth: 5
-    self-contained: true
+    self-contained: TRUE
 editor: visual
 theme: cosmo
 ---
 
-<!--# Quarto notebook for metabolomics data quality control -->\
+<!--# Quarto notebook for metabolomics data quality control -->
+
+\
 <!--# Notebook will perform the following tasks: -->
 
-<!--# import data that has been exported from processing software --> \
+<!--# import data that has been exported from processing software -->
+
+\
 <!--# create calibration, QC data, filter data, report data-->
 
-<!--# Notebook instructions: -->\
+<!--# Notebook instructions: -->
+
+\
 <!--# Enter user options in chunk 1 -->\
 <!--# project folder must be set up as parent_directory/data-->\
 <!--# default data type: import = .txt; export = .csv -->
@@ -39,7 +45,7 @@ theme: cosmo
     #e.g. CE(14:0) or TRYPTOPHAN or 2.86_180.0882m/z etc
 
 #### load packages
-package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra')
+package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra', 'shiny', 'manipulateWidget')
 
 for(idx_package in package_list){
   if(length(which(row.names(installed.packages()) == idx_package)) > 0){
@@ -57,7 +63,7 @@ for(idx_package in package_list){
 
 ## Project set up and data import summary
 
-```{r user setup; project structure; load packages, eval=TRUE, echo=TRUE}
+```{r user setup; project structure, eval=TRUE, echo=TRUE}
 
 #USER INPUT REQUIRED BELOW
 mstr_lst <- list(
@@ -74,16 +80,21 @@ mstr_lst <- list(
   ##----------- set project structure
   # NO USER INPUTE REQUIRED BELOW THIS LINE
   data = list(
-    imprt_lst = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = TRUE),
-    plate_lst = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = FALSE),
+    imprt_lst = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = TRUE, pattern = ".txt"),
+    plate_lst = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_data_subdir), full.names = FALSE, pattern = ".txt"),
     SIL_template = read.csv(
       file = list.files(paste0(.$proj_optns$proj_dir, .$proj_optns$proj_SILtemplate_subdir), full.names = TRUE)),
     std_conc = list(),
     area = list(),
     response = list()),
   tbls = list(
-    imprt_tbl = list()),
-  calib = list()
+    imprt_tbl = list(),
+    calib_summary = list(tibble("metabolite" = character(), "data_type" = character(), "reason" = character()))),
+  calib = list(
+    conc = list(),
+    response = list(),
+    area = list()
+  )
 )
 
 cat(paste0("Project: ", mstr_lst$proj_optns$proj_name)); cat(paste0("Author: ", mstr_lst$proj_optns$usr_name))
@@ -95,25 +106,48 @@ cat(paste0("Project: ", mstr_lst$proj_optns$proj_name)); cat(paste0("Author: ", 
 
 #--------- write flippR function
 #read in data, set names, clean names, list metabolite element, filter blank space, spread data
+#### load packages
+package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra', 'plotly')
+
+for(idx_package in package_list){
+  if(length(which(row.names(installed.packages()) == idx_package)) > 0){
+    suppressMessages(require(package = idx_package,
+                             character.only = TRUE))
+  } else {
+    paste0(idx_package, " is not installed. Please install ", idx_package, " before continuing.") %>% print()
+  }
+}
+
+#### source function
 targetlynx_flippR <- function(FUNC_txt_file_path,
                               FUNC_keep_hdr){
-  list(data = read.delim(file = paste(FUNC_txt_file_path), sep = "\t",header=FALSE) %>% as_tibble() %>%
+flippR_list <- list(
+  data = read.delim(file = paste(FUNC_txt_file_path), sep = "\t",header=FALSE) %>% as_tibble() %>%
          set_names(., .[which(. == "Name", arr.ind=TRUE)[1,1],]) %>% clean_names()) %>%
     list_modify(
       metabolites = unique(
         .$data$x[grep("Compound", .$data$x)]) %>% .[-grep("Report", .)] %>% sub(".*:  ", "", .), 
       filtered_data = filter(.$data ,name != "" & name != "Name")
-      ) %>%
-    list_modify(
+      ) %>% 
+  list_modify(
+    duplicate_samples = .$filtered_data[1:(length(unique(.$filtered_data$x))),][["name"]] %>% duplicated()
+  ) 
+#flag duplicates
+flippR_list$filtered_data$name[flippR_list$duplicate_samples] <- paste0(
+  flippR_list$filtered_data$name[flippR_list$duplicate_samples],"_DUPLICATED")
+#spread data
+ flippR_list <- flippR_list %>%
+   list_modify(
       spread_data = add_column(.$filtered_data, 
                                metabolite = rep(.$metabolites, 
                                                 each = length(unique(.$filtered_data$name)))) %>% 
         select(name, type, metabolite,  all_of(FUNC_keep_hdr)) %>% 
         mutate_at(.vars = all_of(FUNC_keep_hdr), .funs = as.numeric) %>%
         spread(key = metabolite, value = all_of(FUNC_keep_hdr))
-      ) %>% 
-    .[["spread_data"]]
+      )
+    flippR_list$spread_data
   }
+
 
 #--------- run flippR function
 #run flippR function and keep area and std_concs
@@ -160,7 +194,21 @@ mstr_lst$tbls$imprt_tbl %>%
 
 ## Perform calibration
 
-```{r, calibration of data, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results='asis'}
+Following calibration, metabolites are assigned either:
+
+-   Concentration values: metabolite has an external calibration dilution series using response values created by calculating a ratio with the peak area of a matched (or surrogate) stable isotope labelled internal standard. Metabolites have passed quality control assessment consisting of:
+
+    -   r2 value \> 0.99
+
+    -   minimum of 6 calibration points with a residual deviation \<25% from expected concentration
+
+    -   minimum of 2 analytical QC with a residual deviation \<25% from expected concentration
+
+-   Response values: metabolite has an external calibration dilution series using response values created by calculating a ratio with the peak area of a matched (or surrogate) stable isotope labelled internal standard. Metabolites have failed quality control assessment described above.
+
+-   Peak area: metabolite does not have an external calibration dilution series and does not use a stable isotope labelled internal standard.
+
+```{r calibration of data, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
 
 #--------- write calibratR function
 calibratR <- function(FUNC_data,
@@ -230,34 +278,64 @@ calibratR <- function(FUNC_data,
   )
   
   #create calibration plot of calibrants
- FUNC_list$cal_plot <- ggplot(
-    FUNC_list$lmX$model, x = std_conc, y = get(FUNC_HEADER_cal),
-    aes_string(x = names(FUNC_list$lmX$model)[2], y = names(FUNC_list$lmX$model)[1])) +
-      stat_smooth(geom = "line", alpha = 0.5, method = "lm", col = "darkgreen", fullrange = TRUE, se = FALSE,
-                mapping = aes(weight = `(weights)`)) +
-    geom_point(aes(colour = "std_pass", shape = "std_pass", size = "std_pass")) +
-    geom_point(data = filter(FUNC_list$lmX_pred_data, type == FUNC_STRING_std),
-               aes(colour = "std_fail", shape = "std_fail", size ="std_fail")) +
-    geom_point(data = filter(FUNC_list$qc_summary, pass == TRUE),
-               aes(colour = "qc_pass", shape = "qc_pass", size = "qc_pass", name = name)) +
-    geom_point(data = filter(FUNC_list$qc_summary, pass == FALSE),
-              aes(colour = "qc_fail", shape = "qc_fail", size = "qc_fail", name = name)) +
-    geom_point(data = (FUNC_list$lmX_pred_data %>% filter(type == FUNC_STRING_sample) %>%
-                         select(-std_conc) %>%
-                         rename(std_conc = calc_conc)),
-               aes(colour = "study_sample", shape = "study_sample", size = "study_sample", name = name)) +
-    scale_size_manual(values = c(2.5,2.5,2.5,2.5,1), guide = "none") +
-    scale_shape_manual(values = c(25,25,21,21,3), name = "sample_type", 
-                       labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_samples")) +
-    scale_color_manual(values = c( "red", "darkgreen", "red", "darkgreen", "black"), name = "sample_type", 
-                       labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_samples")) +
-    labs(title = paste0(FUNC_STRING_title, "\n",
-      "R2 = ",signif(summary(FUNC_list$lmX)$adj.r.squared, 4),
-      "; Intercept = ",signif(FUNC_list$lmX$coef[[1]],2),
-      "; Slope = ",signif(FUNC_list$lmX$coef[[2]], 2))) +
-    theme_bw() +
-    theme(plot.title = element_text(hjust = 0.5, size =12))
- 
+  #create plot_data
+  FUNC_list$plot_data <- bind_rows(
+  #pass stds [calibration data]
+  FUNC_list$lmX$model %>% rename(conc = std_conc) %>% add_column(type = "std_pass", .before = 1),
+  #failed standards
+  FUNC_list$lmX_pred_data %>% 
+    filter(type == FUNC_STRING_std) %>% 
+    rename(conc = std_conc) %>%
+    select(response, conc) %>%
+    add_column(type = "std_fail"),
+  #pass qc
+  FUNC_list$lmX_pred_data %>% 
+    filter(type == FUNC_STRING_qc) %>% 
+    filter(name %in% (filter(FUNC_list$qc_summary, pass == TRUE))[["name"]]) %>%
+    rename(conc = std_conc) %>%
+    select(response, conc) %>%
+    add_column(type = "qc_pass"),
+  #fail qc
+  FUNC_list$lmX_pred_data %>% 
+    filter(type == FUNC_STRING_qc) %>% 
+    filter(name %in% (filter(FUNC_list$qc_summary, pass == FALSE))[["name"]]) %>%
+    rename(conc = std_conc) %>%
+    select(response, conc) %>%
+    add_column(type = "qc_fail"),
+  #Analyte
+  FUNC_list$lmX_pred_data %>% 
+    filter(type == FUNC_STRING_sample) %>% 
+    rename(conc = calc_conc) %>%
+    select(response, conc) %>%
+    add_column(type = "study_sample")
+) %>% as_tibble() %>%
+  add_column(
+    type_factor = factor(.$type, levels = c(unique(.$type)), ordered = TRUE))
+    
+  #create plot  
+  FUNC_list$cal_plot <- ggplot(data = FUNC_list$plot_data,
+                 aes(x=conc, y=response, color=type, shape=type, size=type)) +
+  geom_point() +
+  stat_smooth(data = filter(FUNC_list$plot_data, type == "std_pass"),
+               geom = "line", alpha = 0.5, size = 1,method = "lm", 
+               formula = y ~ x, col = "darkgreen", fullrange = TRUE, se = FALSE,
+               mapping = aes(weight = `(weights)`)) +
+  scale_size_manual(values = c(2.5,2.5,2.5,2.5,1), guide = "none") +
+  scale_shape_manual(values = c(25,25,21,21,3), name = "sample_type",
+                     labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_samples")) +
+  scale_color_manual(values = c( "red", "darkgreen", "red", "darkgreen", "black"), name = "sample_type",
+                     labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_samples")) +
+  labs(title = paste0(FUNC_STRING_title, "\n",
+                      "R2 = ",signif(summary(FUNC_list$lmX)$adj.r.squared, 4),
+                      "; Intercept = ",signif(FUNC_list$lmX$coef[[1]],2),
+                      "; Slope = ",signif(FUNC_list$lmX$coef[[2]], 2))) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5, size = 5),
+        axis.title = element_text(size = 5),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 5))
+
     FUNC_list
   }
   
@@ -269,10 +347,9 @@ mstr_lst$data$calib <- mstr_lst$data$area %>%
   filter(type == "Analyte")
 
 for(idx_metabolite in mstr_lst$data$SIL_template$standard){
-# idx_metabolite = "(-)-Epinephrine"
-# idx_metabolite = "tryptophan"
-      #create calibration output list()
-  mstr_lst$calib[[idx_metabolite]] <- lst(
+
+  #create calibration output list()
+  temp_lst <- lst(
   #find SIL used from tempalte
   SIL_used = mstr_lst$data$SIL_template$SIL_standard[which(mstr_lst$data$SIL_template$standard == idx_metabolite)],
   all_plates = lst(
@@ -281,18 +358,18 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
     lmX_pred_data = NULL
   ))
 
-  if(!is.na(mstr_lst$calib[[idx_metabolite]]$SIL_used)){
+  if(!is.na(temp_lst$SIL_used)){
   #create response ratio
    mstr_lst$data$response[[idx_metabolite]] <- mstr_lst$data$area %>%
-     select(plate, name, type, all_of(c(idx_metabolite, mstr_lst$calib[[idx_metabolite]]$SIL_used))) %>%
+     select(plate, name, type, all_of(c(idx_metabolite, temp_lst$SIL_used))) %>%
      add_column(std_conc = mstr_lst$data$std_conc[[idx_metabolite]], .before = idx_metabolite) %>%
-     mutate_at(c("std_conc", idx_metabolite, mstr_lst$calib[[idx_metabolite]]$SIL_used), as.numeric) %>%
-     mutate(response = .[[idx_metabolite]]/.[[mstr_lst$calib[[idx_metabolite]]$SIL_used]])
+     mutate_at(c("std_conc", idx_metabolite, temp_lst$SIL_used), as.numeric) %>%
+     mutate(response = .[[idx_metabolite]]/.[[temp_lst$SIL_used]])
   
-   #perform the below for each plate independantly
+   #perform the below for each plate independently
    for(idx_plate in 1:length(mstr_lst$data$plate_lst)){
    #run calibratR function
-  mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]] <- calibratR(
+  temp_lst[[paste0("plate_", idx_plate)]] <- calibratR(
     FUNC_data = mstr_lst$data$response[[idx_metabolite]] %>%
       filter(plate == mstr_lst$data$plate_lst[idx_plate]),
     FUNC_HEADER_cal = "response",
@@ -303,50 +380,163 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
     )
   
   #append to all_plates
-  mstr_lst$calib[[idx_metabolite]]$all_plates$plots[[idx_plate]] <-
-    mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]]$cal_plot
+  temp_lst$all_plates$plots[[idx_plate]] <-
+    temp_lst[[paste0("plate_", idx_plate)]]$cal_plot
   
-   mstr_lst$calib[[idx_metabolite]]$all_plates$summary <- mstr_lst$calib[[idx_metabolite]]$all_plates$summary %>%
-     bind_rows(mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]]$summary_tbl)
+   temp_lst$all_plates$summary <- temp_lst$all_plates$summary %>%
+     bind_rows(temp_lst[[paste0("plate_", idx_plate)]]$summary_tbl)
    
-   mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data <-
-     mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data %>%
-     bind_rows(mstr_lst$calib[[idx_metabolite]][[paste0("plate_", idx_plate)]]$lmX_pred_data)
+   temp_lst$all_plates$lmX_pred_data <-
+     temp_lst$all_plates$lmX_pred_data %>%
+     bind_rows(temp_lst[[paste0("plate_", idx_plate)]]$lmX_pred_data)
    }
    
-   if(min(mstr_lst$calib[[idx_metabolite]]$all_plates$summary$r2) > 0.99){
+   #if passes QC append concentration data to CONC
+   if(min(temp_lst$all_plates$summary$r2) > 0.99){
    mstr_lst$data$calib <- mstr_lst$data$calib %>%
-     left_join(., select(mstr_lst$calib[[idx_metabolite]]$all_plates$lmX_pred_data, name, all_of(idx_metabolite)), 
+     left_join(., select(temp_lst$all_plates$lmX_pred_data, name, all_of(idx_metabolite)), 
                by="name") %>%
      rename_at(idx_metabolite, list(~paste0(idx_metabolite, "_CONC")))
+   
+   #create record in calibration summary table
+   mstr_lst$tbls$calib_summary <- mstr_lst$tbls$calib_summary %>% 
+     bind_rows(
+       tibble(metabolite = idx_metabolite, data_type = "conc", reason = "pass calibration"))
+   
+   #append temp_list to mstr_lst$calib$conc
+   mstr_lst$calib$conc[[idx_metabolite]] <- temp_lst
+    
+     
    } else {
+     #if metabolite fails quantification QC, keep and append response values to mstr_lst
        mstr_lst$data$calib <- mstr_lst$data$calib %>%
      left_join(., select(mstr_lst$data$response[[idx_metabolite]], name, response),
                by = "name") %>%
      rename_at("response", list(~paste0(idx_metabolite, "_RESPONSE")))
+       
+       #create record in calibration summary table
+   mstr_lst$tbls$calib_summary <- mstr_lst$tbls$calib_summary %>% 
+     bind_rows(
+       tibble(metabolite = idx_metabolite, data_type = "area", reason = "failed calibration"))
+       
+    #append temp_list to mstr_lst$calib$conc
+   mstr_lst$calib$response[[idx_metabolite]] <- temp_lst
    }
    
   }else{
      
+    #if there is no IS only keep and append areas to mstr_lst
    mstr_lst$data$calib <- mstr_lst$data$calib %>%
      left_join(., select(mstr_lst$data$area, name, all_of(idx_metabolite)), by = "name") %>%
      rename_at(idx_metabolite, list(~paste0(idx_metabolite, "_AREA")))
+    
+   #create record in calibration summary table
+   mstr_lst$tbls$calib_summary <- mstr_lst$tbls$calib_summary %>% 
+     bind_rows(
+       tibble(metabolite = idx_metabolite, data_type = "area", reason = "no IS in template"))
+    
+   #append temp_list to mstr_lst$calib$conc
+   mstr_lst$calib$area[[idx_metabolite]] <- temp_lst
    }
-  
-
-  
 }
 
-# mstr_lst$calib$tryptophan$all_plates$plots[[1]] %>% 
-#   plotly::ggplotly(tooltip = c("std_conc", "response", "colour", "name"))
-# mstr_lst$calib$tryptophan$all_plates$summary %>%
-#   kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
-#   kable_minimal("hover") %>%
-#   kable_styling(font_size = 12) %>%
-#   scroll_box() %>% print()
+mstr_lst$tbls$calib_summary %>%
+        kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+        kable_minimal("hover") %>%
+        kable_styling(font_size = 10) %>%
+        scroll_box(height = "500px")
 
-  
 ```
+
+## Concentration
+
+```{r report, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
+
+#mstr_lst$calib$conc$tryptophan$all_plates$plots
+
+mstr_lst$report <- list(
+  conc = list()
+)
+
+for(idx_metabolite in names(mstr_lst$calib$conc)){
+  plot_freq <- length(mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plots)
+  plot_height <- (plot_freq+1) * 200
+  mstr_lst$report$conc[[idx_metabolite]] <- combineWidgets(
+    #combineWidgets for plots
+    # combineWidgets(
+    #   list=mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plots,
+    #   ncol = 3)
+    mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plots %>% 
+      subplot(
+        #nrows = 2
+          ),
+  #combine with kable of summary table
+mstr_lst$calib$conc[[idx_metabolite]]$all_plates$summary %>%
+  kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+  kable_minimal("hover") %>%
+  kable_styling(font_size = 10) %>%
+  scroll_box(),
+#CombineWidegets properties
+height = plot_height,
+width = 800,
+title = idx_metabolite,
+titleCSS = "height: 20px; width: 100%; background-color: powderblue; font-size: 15px;",
+rowsize = c(3,1)
+)
+  
+  # mstr_lst$report$conc[[idx_metabolite]] <-
+  #   mstr_lst$calib$conc$`3-hydroxyanthranilic acid`$all_plates$plots %>% subplot()
+  # 
+}
+
+```
+
+```{r create temp folders, warning=FALSE}
+
+temp_rmd_list <- list()
+
+for (idx_metabolite in names(mstr_lst$report$conc)) {
+
+  temp_rmd_path <- paste0("/Users/lukegraywhiley/Downloads/temp_data/test_qc/rmd/", idx_metabolite, ".rmd")
+  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
+
+
+  sink(file = temp_rmd_path)
+  cat("  \n",
+        "### ", idx_metabolite, "  \n",
+        "```{r, echo=FALSE, warning=FALSE}", "  \n",
+        'mstr_lst$report$conc[[idx_metabolite]]',
+        "  \n",
+        "```",
+      "  \n",
+      sep = "")
+  sink()
+}
+
+```
+
+```{r knit, results='asis', warning=FALSE}
+
+for (idx_metabolite in names(mstr_lst$report$conc)) {
+
+  # Knit the temporary RMD file
+  cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
+                        quiet = TRUE))
+
+  # Delete the temporary RMD file
+  #file.remove(temp_rmd_list[[table_name]])
+}
+```
+
+```{r}
+
+htmltools::tagList(mstr_lst$report$conc$dopamine)
+htmltools::tagList(mstr_lst$report$conc$kynurenine)
+```
+
+# SPACE - NOT COMPLETE BELOW THIS LINE
+
+<!--# comment: IGNORE BELOW THIS LINE FOR NOW -->
 
 ```{r load packages and set up project structure, eval=FALSE, echo=TRUE, paged.print=TRUE, warning=FALSE, results = 'asis'}
 

@@ -3915,9 +3915,9 @@ window.onload = function() {
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#USER INPUT REQUIRED BELOW</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>mstr_lst <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">proj_optns =</span> <span class="fu">list</span>(</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;gutCVD&quot;</span>, <span class="co">#name of project</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;harvardc2&quot;</span>, <span class="co">#name of project</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">username =</span> <span class="st">&quot;LGW&quot;</span>, <span class="co">#user of project</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/&quot;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/&quot;</span>,</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_data_subdir =</span> <span class="st">&quot;data&quot;</span>, <span class="co"># sub directory contatining export data from TargetLynx</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">data_type =</span> <span class="st">&quot;.txt&quot;</span>, <span class="co"># import flie type [.txt as default]</span></span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">keep_header =</span> <span class="fu">c</span>(<span class="st">&quot;conc&quot;</span>, <span class="st">&quot;area&quot;</span>, <span class="st">&quot;response&quot;</span>, <span class="st">&quot;percent_dev&quot;</span>) <span class="co"># header to keep [e.g c(&quot;response&quot;, &quot;conc&quot;, &quot;area&quot;) etc]</span></span>
@@ -3943,87 +3943,97 @@ window.onload = function() {
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="do">#### source function</span></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>targetlynx_flippR <span class="ot">&lt;-</span> <span class="cf">function</span>(FUNC_txt_file_path,</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>                              FUNC_keep_hdr){</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">#read in data as_tibble, set names, clean names, add metabolites element to list, filter blank space, filter column headers row, spread data</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">data =</span> <span class="fu">read.delim</span>(<span class="at">file =</span> <span class="fu">paste</span>(FUNC_txt_file_path), </span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>                         <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,</span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>                         <span class="at">header=</span><span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>         <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>         <span class="fu">set_names</span>(., .[<span class="fu">which</span>(. <span class="sc">==</span> <span class="st">&quot;Name&quot;</span>, <span class="at">arr.ind=</span><span class="cn">TRUE</span>)[<span class="dv">1</span>,<span class="dv">1</span>],]) <span class="sc">%&gt;%</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>         <span class="fu">clean_names</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list_modify</span>(<span class="at">metabolites =</span> (<span class="fu">unique</span>(.<span class="sc">$</span>data<span class="sc">$</span>x[<span class="fu">grep</span>(<span class="st">&quot;Compound&quot;</span>, .<span class="sc">$</span>data<span class="sc">$</span>x)]) <span class="sc">%&gt;%</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>                                 .[<span class="sc">-</span><span class="fu">grep</span>(<span class="st">&quot;Report&quot;</span>, .)] <span class="sc">%&gt;%</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>                                 <span class="fu">sub</span>(<span class="st">&quot;.*:  &quot;</span>, <span class="st">&quot;&quot;</span>, .)),</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>                <span class="at">filtered_data =</span> .<span class="sc">$</span>data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name <span class="sc">!=</span> <span class="st">&quot;&quot;</span> <span class="sc">&amp;</span> name <span class="sc">!=</span> <span class="st">&quot;Name&quot;</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list_modify</span>(<span class="at">spread_data =</span> (<span class="fu">add_column</span>(.<span class="sc">$</span>filtered_data, </span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">metabolite =</span> <span class="fu">rep</span>(.<span class="sc">$</span>metabolites, <span class="at">each =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.<span class="sc">$</span>filtered_data<span class="sc">$</span>name))))) <span class="sc">%&gt;%</span> <span class="fu">select</span>(name, type, metabolite, <span class="fu">all_of</span>(FUNC_keep_hdr)) <span class="sc">%&gt;%</span> </span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">spread</span>(metabolite, <span class="fu">all_of</span>(FUNC_keep_hdr))) <span class="sc">%&gt;%</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    .[[<span class="st">&quot;spread_data&quot;</span>]]</span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="do">############## run function</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a><span class="co">#create import filelist</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir,</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>                                          mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_data_subdir),</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a><span class="co">#create empty list for data export</span></span>
-<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;export&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>flippR_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">data =</span> <span class="fu">read.delim</span>(<span class="at">file =</span> <span class="fu">paste</span>(FUNC_txt_file_path), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,<span class="at">header=</span><span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>         <span class="fu">set_names</span>(., .[<span class="fu">which</span>(. <span class="sc">==</span> <span class="st">&quot;Name&quot;</span>, <span class="at">arr.ind=</span><span class="cn">TRUE</span>)[<span class="dv">1</span>,<span class="dv">1</span>],]) <span class="sc">%&gt;%</span> <span class="fu">clean_names</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list_modify</span>(</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">metabolites =</span> <span class="fu">unique</span>(</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        .<span class="sc">$</span>data<span class="sc">$</span>x[<span class="fu">grep</span>(<span class="st">&quot;Compound&quot;</span>, .<span class="sc">$</span>data<span class="sc">$</span>x)]) <span class="sc">%&gt;%</span> .[<span class="sc">-</span><span class="fu">grep</span>(<span class="st">&quot;Report&quot;</span>, .)] <span class="sc">%&gt;%</span> <span class="fu">sub</span>(<span class="st">&quot;.*:  &quot;</span>, <span class="st">&quot;&quot;</span>, .), </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">filtered_data =</span> <span class="fu">filter</span>(.<span class="sc">$</span>data ,name <span class="sc">!=</span> <span class="st">&quot;&quot;</span> <span class="sc">&amp;</span> name <span class="sc">!=</span> <span class="st">&quot;Name&quot;</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_modify</span>(</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">duplicate_samples =</span> .<span class="sc">$</span>filtered_data[<span class="dv">1</span><span class="sc">:</span>(<span class="fu">length</span>(<span class="fu">unique</span>(.<span class="sc">$</span>filtered_data<span class="sc">$</span>x))),][[<span class="st">&quot;name&quot;</span>]] <span class="sc">%&gt;%</span> <span class="fu">duplicated</span>()</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co">#flag duplicates</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>flippR_list<span class="sc">$</span>filtered_data<span class="sc">$</span>name[flippR_list<span class="sc">$</span>duplicate_samples] <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  flippR_list<span class="sc">$</span>filtered_data<span class="sc">$</span>name[flippR_list<span class="sc">$</span>duplicate_samples],<span class="st">&quot;_DUPLICAED&quot;</span>)</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co">#spread data</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a> flippR_list <span class="ot">&lt;-</span> flippR_list <span class="sc">%&gt;%</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>   <span class="fu">list_modify</span>(</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>      <span class="at">spread_data =</span> <span class="fu">add_column</span>(.<span class="sc">$</span>filtered_data, </span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>                               <span class="at">metabolite =</span> <span class="fu">rep</span>(.<span class="sc">$</span>metabolites, </span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">each =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.<span class="sc">$</span>filtered_data<span class="sc">$</span>name)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>        <span class="fu">select</span>(name, type, metabolite,  <span class="fu">all_of</span>(FUNC_keep_hdr)) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate_at</span>(<span class="at">.vars =</span> <span class="fu">all_of</span>(FUNC_keep_hdr), <span class="at">.funs =</span> as.numeric) <span class="sc">%&gt;%</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>        <span class="fu">spread</span>(<span class="at">key =</span> metabolite, <span class="at">value =</span> <span class="fu">all_of</span>(FUNC_keep_hdr))</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>    flippR_list<span class="sc">$</span>spread_data</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co">#export filename list </span></span>
-<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="co">#create export table for printing</span></span>
-<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>export_table <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a><span class="co">#run function</span></span>
-<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(idx_header <span class="cf">in</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>keep_header){</span>
-<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(idx_file <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]])){</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="do">############## run function</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a><span class="co">#create import filelist</span></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir,</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>                                          mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_data_subdir),</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a><span class="co">#create empty list for data export</span></span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;export&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
 <span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>        <span class="co">#create export filename</span></span>
-<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>    exprt_filename <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="at">x =</span> <span class="fu">tail</span>(<span class="fu">strsplit</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]][idx_file], <span class="st">&quot;/&quot;</span>)[[<span class="dv">1</span>]], <span class="at">n=</span><span class="dv">1</span>), </span>
-<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>                           <span class="at">pattern =</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>data_type, <span class="at">replacement =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>    <span class="co">#extract matched characters for file naming (e.g. drop plate nomenclature)</span></span>
-<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(idx_file<span class="sc">==</span><span class="dv">1</span>){common_filename <span class="ot">=</span> exprt_filename} <span class="cf">else</span>{</span>
-<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>    common_filename <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">seq_along</span>(common_filename), <span class="cf">function</span>(i)</span>
-<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="fu">LCS</span>(<span class="fu">strsplit</span>(common_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]], <span class="fu">strsplit</span>(exprt_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]])<span class="sc">$</span>LCS, <span class="at">collapse =</span> <span class="st">&quot;&quot;</span>))</span>
-<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create an export path name using the common filename</span></span>
-<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>    export_file_path <span class="ot">&lt;-</span> <span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir, common_filename, </span>
-<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;_FLIPPR_&quot;</span>, <span class="fu">toupper</span>(idx_header), <span class="st">&quot;.csv&quot;</span>)</span>
-<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>    <span class="co">#run function</span></span>
-<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>    mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="ot">&lt;-</span> mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bind_rows</span>(<span class="fu">targetlynx_flippR</span>(<span class="at">FUNC_txt_file_path =</span> mstr_lst<span class="sc">$</span>import[idx_file],</span>
-<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">FUNC_keep_hdr =</span> idx_header) <span class="sc">%&gt;%</span></span>
-<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">add_column</span>(<span class="at">plate =</span> exprt_filename, <span class="at">.before =</span> <span class="dv">1</span>))</span>
-<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create summary table for report printing</span></span>
-<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>    export_table <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(export_table,</span>
-<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">bind_cols</span>(<span class="at">project =</span> exprt_filename,</span>
-<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">standards =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>                                                           <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Standard&quot;</span>)),</span>
-<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">qc =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span></span>
-<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>                                                    <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;QC&quot;</span>)),</span>
-<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">samples =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>                                                         <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Analyte&quot;</span>)),</span>
-<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">blanks =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>                                                        <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Blank&quot;</span>)),</span>
-<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">features =</span> <span class="fu">ncol</span>(mstr_lst<span class="sc">$</span>export[[idx_header]])<span class="sc">-</span><span class="dv">1</span>))</span>
-<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>   </span>
-<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>     <span class="co">#concatonate export filename for report printing</span></span>
-<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>    exprt_filename_lst <span class="ot">&lt;-</span> <span class="fu">c</span>(exprt_filename_lst, export_file_path)</span>
-<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>    <span class="co">#export csv</span></span>
-<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_csv</span>(mstr_lst<span class="sc">$</span>export[[idx_header]], export_file_path)</span>
-<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;data imported:&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a><span class="co">#export filename list </span></span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a><span class="co">#create export table for printing</span></span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>export_table <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a><span class="co">#run function</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(idx_header <span class="cf">in</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>keep_header){</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(idx_file <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]])){</span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>        <span class="co">#create export filename</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>    exprt_filename <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="at">x =</span> <span class="fu">tail</span>(<span class="fu">strsplit</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]][idx_file], <span class="st">&quot;/&quot;</span>)[[<span class="dv">1</span>]], <span class="at">n=</span><span class="dv">1</span>), </span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>                           <span class="at">pattern =</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>data_type, <span class="at">replacement =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb2-67"><a href="#cb2-67" aria-hidden="true" tabindex="-1"></a>    <span class="co">#extract matched characters for file naming (e.g. drop plate nomenclature)</span></span>
+<span id="cb2-68"><a href="#cb2-68" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(idx_file<span class="sc">==</span><span class="dv">1</span>){common_filename <span class="ot">=</span> exprt_filename} <span class="cf">else</span>{</span>
+<span id="cb2-69"><a href="#cb2-69" aria-hidden="true" tabindex="-1"></a>    common_filename <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">seq_along</span>(common_filename), <span class="cf">function</span>(i)</span>
+<span id="cb2-70"><a href="#cb2-70" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="fu">LCS</span>(<span class="fu">strsplit</span>(common_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]], <span class="fu">strsplit</span>(exprt_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]])<span class="sc">$</span>LCS, <span class="at">collapse =</span> <span class="st">&quot;&quot;</span>))</span>
+<span id="cb2-71"><a href="#cb2-71" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-72"><a href="#cb2-72" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-73"><a href="#cb2-73" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create an export path name using the common filename</span></span>
+<span id="cb2-74"><a href="#cb2-74" aria-hidden="true" tabindex="-1"></a>    export_file_path <span class="ot">&lt;-</span> <span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir, common_filename, </span>
+<span id="cb2-75"><a href="#cb2-75" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;_FLIPPR_&quot;</span>, <span class="fu">toupper</span>(idx_header), <span class="st">&quot;.csv&quot;</span>)</span>
+<span id="cb2-76"><a href="#cb2-76" aria-hidden="true" tabindex="-1"></a>    <span class="co">#run function</span></span>
+<span id="cb2-77"><a href="#cb2-77" aria-hidden="true" tabindex="-1"></a>    mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="ot">&lt;-</span> mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb2-78"><a href="#cb2-78" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bind_rows</span>(<span class="fu">targetlynx_flippR</span>(<span class="at">FUNC_txt_file_path =</span> mstr_lst<span class="sc">$</span>import[idx_file],</span>
+<span id="cb2-79"><a href="#cb2-79" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">FUNC_keep_hdr =</span> idx_header) <span class="sc">%&gt;%</span></span>
+<span id="cb2-80"><a href="#cb2-80" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">add_column</span>(<span class="at">plate =</span> exprt_filename, <span class="at">.before =</span> <span class="dv">1</span>))</span>
+<span id="cb2-81"><a href="#cb2-81" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-82"><a href="#cb2-82" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-83"><a href="#cb2-83" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-84"><a href="#cb2-84" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create summary table for report printing</span></span>
+<span id="cb2-85"><a href="#cb2-85" aria-hidden="true" tabindex="-1"></a>    export_table <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(export_table,</span>
+<span id="cb2-86"><a href="#cb2-86" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">bind_cols</span>(<span class="at">project =</span> exprt_filename,</span>
+<span id="cb2-87"><a href="#cb2-87" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">standards =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb2-88"><a href="#cb2-88" aria-hidden="true" tabindex="-1"></a>                                                           <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Standard&quot;</span>)),</span>
+<span id="cb2-89"><a href="#cb2-89" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">qc =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span></span>
+<span id="cb2-90"><a href="#cb2-90" aria-hidden="true" tabindex="-1"></a>                                                    <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;QC&quot;</span>)),</span>
+<span id="cb2-91"><a href="#cb2-91" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">samples =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb2-92"><a href="#cb2-92" aria-hidden="true" tabindex="-1"></a>                                                         <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Analyte&quot;</span>)),</span>
+<span id="cb2-93"><a href="#cb2-93" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">blanks =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb2-94"><a href="#cb2-94" aria-hidden="true" tabindex="-1"></a>                                                        <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Blank&quot;</span>)),</span>
+<span id="cb2-95"><a href="#cb2-95" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">features =</span> <span class="fu">ncol</span>(mstr_lst<span class="sc">$</span>export[[idx_header]])<span class="sc">-</span><span class="dv">1</span>))</span>
+<span id="cb2-96"><a href="#cb2-96" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-97"><a href="#cb2-97" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb2-98"><a href="#cb2-98" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-99"><a href="#cb2-99" aria-hidden="true" tabindex="-1"></a>     <span class="co">#concatonate export filename for report printing</span></span>
+<span id="cb2-100"><a href="#cb2-100" aria-hidden="true" tabindex="-1"></a>    exprt_filename_lst <span class="ot">&lt;-</span> <span class="fu">c</span>(exprt_filename_lst, export_file_path)</span>
+<span id="cb2-101"><a href="#cb2-101" aria-hidden="true" tabindex="-1"></a>    <span class="co">#export csv</span></span>
+<span id="cb2-102"><a href="#cb2-102" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_csv</span>(mstr_lst<span class="sc">$</span>export[[idx_header]], export_file_path)</span>
+<span id="cb2-103"><a href="#cb2-103" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb2-104"><a href="#cb2-104" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-105"><a href="#cb2-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-106"><a href="#cb2-106" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;data imported:&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>data imported:</code></pre>
@@ -4033,8 +4043,8 @@ window.onload = function() {
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/data/Adilah_gutCVD_bile_Acids_STDp041_NG_reviewed.txt&quot;
-[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/data/Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed.txt&quot;</code></pre>
+<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/data/covid19_harvardC2_SER_MS-TRY_COVr20_COVp242_NG_reviewed.txt&quot;
+[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/data/covid19_harvardC2_SER_MS-TRY_COVr20_COVp243_NG_reviewed.txt&quot;</code></pre>
 </div>
 <details>
 <summary>Code</summary>
@@ -4048,10 +4058,10 @@ window.onload = function() {
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_CONC.csv&quot;       
-[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_AREA.csv&quot;       
-[3] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_RESPONSE.csv&quot;   
-[4] &quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/Adilah_gutCVD_bile_Acids_STDp04_NG_reviewed_FLIPPR_PERCENT_DEV.csv&quot;</code></pre>
+<pre><code>[1] &quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/covid19_harvardC2_SER_MS-TRY_COVr20_COVp24_NG_reviewed_FLIPPR_CONC.csv&quot;       
+[2] &quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/covid19_harvardC2_SER_MS-TRY_COVr20_COVp24_NG_reviewed_FLIPPR_AREA.csv&quot;       
+[3] &quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/covid19_harvardC2_SER_MS-TRY_COVr20_COVp24_NG_reviewed_FLIPPR_RESPONSE.csv&quot;   
+[4] &quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/covid19_harvardC2_SER_MS-TRY_COVr20_COVp24_NG_reviewed_FLIPPR_PERCENT_DEV.csv&quot;</code></pre>
 </div>
 <details>
 <summary>Code</summary>
@@ -4098,82 +4108,82 @@ features
 <tbody>
 <tr>
 <td style="text-align:center;">
-Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
+covid19_harvardC2_SER_MS-TRY_COVr20_COVp243_NG_reviewed
 </td>
 <td style="text-align:center;">
-10
+8
 </td>
 <td style="text-align:center;">
-3
+8
 </td>
 <td style="text-align:center;">
-81
+73
 </td>
 <td style="text-align:center;">
-2
+28
 </td>
 <td style="text-align:center;">
-34
-</td>
-</tr>
-<tr>
-<td style="text-align:center;">
-Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
-</td>
-<td style="text-align:center;">
-10
-</td>
-<td style="text-align:center;">
-3
-</td>
-<td style="text-align:center;">
-81
-</td>
-<td style="text-align:center;">
-2
-</td>
-<td style="text-align:center;">
-34
+45
 </td>
 </tr>
 <tr>
 <td style="text-align:center;">
-Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
+covid19_harvardC2_SER_MS-TRY_COVr20_COVp243_NG_reviewed
 </td>
 <td style="text-align:center;">
-10
+8
 </td>
 <td style="text-align:center;">
-3
+8
 </td>
 <td style="text-align:center;">
-81
+73
 </td>
 <td style="text-align:center;">
-2
+28
 </td>
 <td style="text-align:center;">
-34
+45
 </td>
 </tr>
 <tr>
 <td style="text-align:center;">
-Adilah_gutCVD_bile_Acids_STDp042_NG_reviewed
+covid19_harvardC2_SER_MS-TRY_COVr20_COVp243_NG_reviewed
 </td>
 <td style="text-align:center;">
-10
+8
 </td>
 <td style="text-align:center;">
-3
+8
 </td>
 <td style="text-align:center;">
-81
+73
 </td>
 <td style="text-align:center;">
-2
+28
 </td>
 <td style="text-align:center;">
-34
+45
+</td>
+</tr>
+<tr>
+<td style="text-align:center;">
+covid19_harvardC2_SER_MS-TRY_COVr20_COVp243_NG_reviewed
+</td>
+<td style="text-align:center;">
+8
+</td>
+<td style="text-align:center;">
+8
+</td>
+<td style="text-align:center;">
+73
+</td>
+<td style="text-align:center;">
+28
+</td>
+<td style="text-align:center;">
+45
 </td>
 </tr>
 </tbody>
@@ -4400,9 +4410,9 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a><span class="co">#USER INPUT REQUIRED BELOW</span></span>
 <span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>mstr_lst <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">proj_optns =</span> <span class="fu">list</span>(</span>
-<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;gutCVD&quot;</span>, <span class="co">#name of project</span></span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_name =</span> <span class="st">&quot;harvardc2&quot;</span>, <span class="co">#name of project</span></span>
 <span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>  <span class="at">username =</span> <span class="st">&quot;LGW&quot;</span>, <span class="co">#user of project</span></span>
-<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/gutCVD/&quot;</span>,</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_dir =</span> <span class="st">&quot;/Users/lukegraywhiley/Downloads/temp_data/harvardC2/&quot;</span>,</span>
 <span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">project_data_subdir =</span> <span class="st">&quot;data&quot;</span>, <span class="co"># sub directory contatining export data from TargetLynx</span></span>
 <span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">data_type =</span> <span class="st">&quot;.txt&quot;</span>, <span class="co"># import flie type [.txt as default]</span></span>
 <span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">keep_header =</span> <span class="fu">c</span>(<span class="st">&quot;conc&quot;</span>, <span class="st">&quot;area&quot;</span>, <span class="st">&quot;response&quot;</span>, <span class="st">&quot;percent_dev&quot;</span>) <span class="co"># header to keep [e.g c(&quot;response&quot;, &quot;conc&quot;, &quot;area&quot;) etc]</span></span>
@@ -4429,102 +4439,112 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a><span class="do">#### source function</span></span>
 <span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>targetlynx_flippR <span class="ot">&lt;-</span> <span class="cf">function</span>(FUNC_txt_file_path,</span>
 <span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>                              FUNC_keep_hdr){</span>
-<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>  <span class="co">#read in data as_tibble, set names, clean names, add metabolites element to list, filter blank space, filter column headers row, spread data</span></span>
-<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">data =</span> <span class="fu">read.delim</span>(<span class="at">file =</span> <span class="fu">paste</span>(FUNC_txt_file_path), </span>
-<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>                         <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,</span>
-<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>                         <span class="at">header=</span><span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>         <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>         <span class="fu">set_names</span>(., .[<span class="fu">which</span>(. <span class="sc">==</span> <span class="st">&quot;Name&quot;</span>, <span class="at">arr.ind=</span><span class="cn">TRUE</span>)[<span class="dv">1</span>,<span class="dv">1</span>],]) <span class="sc">%&gt;%</span></span>
-<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>         <span class="fu">clean_names</span>()) <span class="sc">%&gt;%</span></span>
-<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list_modify</span>(<span class="at">metabolites =</span> (<span class="fu">unique</span>(.<span class="sc">$</span>data<span class="sc">$</span>x[<span class="fu">grep</span>(<span class="st">&quot;Compound&quot;</span>, .<span class="sc">$</span>data<span class="sc">$</span>x)]) <span class="sc">%&gt;%</span></span>
-<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>                                 .[<span class="sc">-</span><span class="fu">grep</span>(<span class="st">&quot;Report&quot;</span>, .)] <span class="sc">%&gt;%</span></span>
-<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>                                 <span class="fu">sub</span>(<span class="st">&quot;.*:  &quot;</span>, <span class="st">&quot;&quot;</span>, .)),</span>
-<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a>                <span class="at">filtered_data =</span> .<span class="sc">$</span>data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(name <span class="sc">!=</span> <span class="st">&quot;&quot;</span> <span class="sc">&amp;</span> name <span class="sc">!=</span> <span class="st">&quot;Name&quot;</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list_modify</span>(<span class="at">spread_data =</span> (<span class="fu">add_column</span>(.<span class="sc">$</span>filtered_data, </span>
-<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a>                                          <span class="at">metabolite =</span> <span class="fu">rep</span>(.<span class="sc">$</span>metabolites, <span class="at">each =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.<span class="sc">$</span>filtered_data<span class="sc">$</span>name))))) <span class="sc">%&gt;%</span> <span class="fu">select</span>(name, type, metabolite, <span class="fu">all_of</span>(FUNC_keep_hdr)) <span class="sc">%&gt;%</span> </span>
-<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">spread</span>(metabolite, <span class="fu">all_of</span>(FUNC_keep_hdr))) <span class="sc">%&gt;%</span></span>
-<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>    .[[<span class="st">&quot;spread_data&quot;</span>]]</span>
-<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a><span class="do">############## run function</span></span>
-<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a><span class="co">#create import filelist</span></span>
-<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir,</span>
-<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>                                          mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_data_subdir),</span>
-<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a><span class="co">#create empty list for data export</span></span>
-<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;export&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>flippR_list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">data =</span> <span class="fu">read.delim</span>(<span class="at">file =</span> <span class="fu">paste</span>(FUNC_txt_file_path), <span class="at">sep =</span> <span class="st">&quot;</span><span class="sc">\t</span><span class="st">&quot;</span>,<span class="at">header=</span><span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>         <span class="fu">set_names</span>(., .[<span class="fu">which</span>(. <span class="sc">==</span> <span class="st">&quot;Name&quot;</span>, <span class="at">arr.ind=</span><span class="cn">TRUE</span>)[<span class="dv">1</span>,<span class="dv">1</span>],]) <span class="sc">%&gt;%</span> <span class="fu">clean_names</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list_modify</span>(</span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>      <span class="at">metabolites =</span> <span class="fu">unique</span>(</span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>        .<span class="sc">$</span>data<span class="sc">$</span>x[<span class="fu">grep</span>(<span class="st">&quot;Compound&quot;</span>, .<span class="sc">$</span>data<span class="sc">$</span>x)]) <span class="sc">%&gt;%</span> .[<span class="sc">-</span><span class="fu">grep</span>(<span class="st">&quot;Report&quot;</span>, .)] <span class="sc">%&gt;%</span> <span class="fu">sub</span>(<span class="st">&quot;.*:  &quot;</span>, <span class="st">&quot;&quot;</span>, .), </span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>      <span class="at">filtered_data =</span> <span class="fu">filter</span>(.<span class="sc">$</span>data ,name <span class="sc">!=</span> <span class="st">&quot;&quot;</span> <span class="sc">&amp;</span> name <span class="sc">!=</span> <span class="st">&quot;Name&quot;</span>)</span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>      ) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_modify</span>(</span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>    <span class="at">duplicate_samples =</span> .<span class="sc">$</span>filtered_data[<span class="dv">1</span><span class="sc">:</span>(<span class="fu">length</span>(<span class="fu">unique</span>(.<span class="sc">$</span>filtered_data<span class="sc">$</span>x))),][[<span class="st">&quot;name&quot;</span>]] <span class="sc">%&gt;%</span> <span class="fu">duplicated</span>()</span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a><span class="co">#flag duplicates</span></span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>flippR_list<span class="sc">$</span>filtered_data<span class="sc">$</span>name[flippR_list<span class="sc">$</span>duplicate_samples] <span class="ot">&lt;-</span> <span class="fu">paste0</span>(</span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a>  flippR_list<span class="sc">$</span>filtered_data<span class="sc">$</span>name[flippR_list<span class="sc">$</span>duplicate_samples],<span class="st">&quot;_DUPLICAED&quot;</span>)</span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a><span class="co">#spread data</span></span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a> flippR_list <span class="ot">&lt;-</span> flippR_list <span class="sc">%&gt;%</span></span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a>   <span class="fu">list_modify</span>(</span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>      <span class="at">spread_data =</span> <span class="fu">add_column</span>(.<span class="sc">$</span>filtered_data, </span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>                               <span class="at">metabolite =</span> <span class="fu">rep</span>(.<span class="sc">$</span>metabolites, </span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>                                                <span class="at">each =</span> <span class="fu">length</span>(<span class="fu">unique</span>(.<span class="sc">$</span>filtered_data<span class="sc">$</span>name)))) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a>        <span class="fu">select</span>(name, type, metabolite,  <span class="fu">all_of</span>(FUNC_keep_hdr)) <span class="sc">%&gt;%</span> </span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate_at</span>(<span class="at">.vars =</span> <span class="fu">all_of</span>(FUNC_keep_hdr), <span class="at">.funs =</span> as.numeric) <span class="sc">%&gt;%</span></span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>        <span class="fu">spread</span>(<span class="at">key =</span> metabolite, <span class="at">value =</span> <span class="fu">all_of</span>(FUNC_keep_hdr))</span>
+<span id="cb13-83"><a href="#cb13-83" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb13-84"><a href="#cb13-84" aria-hidden="true" tabindex="-1"></a>    flippR_list<span class="sc">$</span>spread_data</span>
+<span id="cb13-85"><a href="#cb13-85" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-86"><a href="#cb13-86" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb13-87"><a href="#cb13-87" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a><span class="co">#export filename list </span></span>
-<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a><span class="co">#create export table for printing</span></span>
-<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a>export_table <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
-<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a><span class="co">#run function</span></span>
-<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(idx_header <span class="cf">in</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>keep_header){</span>
-<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(idx_file <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]])){</span>
+<span id="cb13-88"><a href="#cb13-88" aria-hidden="true" tabindex="-1"></a><span class="do">############## run function</span></span>
+<span id="cb13-89"><a href="#cb13-89" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-90"><a href="#cb13-90" aria-hidden="true" tabindex="-1"></a><span class="co">#create import filelist</span></span>
+<span id="cb13-91"><a href="#cb13-91" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir,</span>
+<span id="cb13-92"><a href="#cb13-92" aria-hidden="true" tabindex="-1"></a>                                          mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_data_subdir),</span>
+<span id="cb13-93"><a href="#cb13-93" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">full.names =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb13-94"><a href="#cb13-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-95"><a href="#cb13-95" aria-hidden="true" tabindex="-1"></a><span class="co">#create empty list for data export</span></span>
+<span id="cb13-96"><a href="#cb13-96" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;export&quot;</span>]] <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
 <span id="cb13-97"><a href="#cb13-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-98"><a href="#cb13-98" aria-hidden="true" tabindex="-1"></a>        <span class="co">#create export filename</span></span>
-<span id="cb13-99"><a href="#cb13-99" aria-hidden="true" tabindex="-1"></a>    exprt_filename <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="at">x =</span> <span class="fu">tail</span>(<span class="fu">strsplit</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]][idx_file], <span class="st">&quot;/&quot;</span>)[[<span class="dv">1</span>]], <span class="at">n=</span><span class="dv">1</span>), </span>
-<span id="cb13-100"><a href="#cb13-100" aria-hidden="true" tabindex="-1"></a>                           <span class="at">pattern =</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>data_type, <span class="at">replacement =</span> <span class="st">&quot;&quot;</span>)</span>
-<span id="cb13-101"><a href="#cb13-101" aria-hidden="true" tabindex="-1"></a>    <span class="co">#extract matched characters for file naming (e.g. drop plate nomenclature)</span></span>
-<span id="cb13-102"><a href="#cb13-102" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(idx_file<span class="sc">==</span><span class="dv">1</span>){common_filename <span class="ot">=</span> exprt_filename} <span class="cf">else</span>{</span>
-<span id="cb13-103"><a href="#cb13-103" aria-hidden="true" tabindex="-1"></a>    common_filename <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">seq_along</span>(common_filename), <span class="cf">function</span>(i)</span>
-<span id="cb13-104"><a href="#cb13-104" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="fu">LCS</span>(<span class="fu">strsplit</span>(common_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]], <span class="fu">strsplit</span>(exprt_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]])<span class="sc">$</span>LCS, <span class="at">collapse =</span> <span class="st">&quot;&quot;</span>))</span>
-<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create an export path name using the common filename</span></span>
-<span id="cb13-108"><a href="#cb13-108" aria-hidden="true" tabindex="-1"></a>    export_file_path <span class="ot">&lt;-</span> <span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir, common_filename, </span>
-<span id="cb13-109"><a href="#cb13-109" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;_FLIPPR_&quot;</span>, <span class="fu">toupper</span>(idx_header), <span class="st">&quot;.csv&quot;</span>)</span>
-<span id="cb13-110"><a href="#cb13-110" aria-hidden="true" tabindex="-1"></a>    <span class="co">#run function</span></span>
-<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a>    mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="ot">&lt;-</span> mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bind_rows</span>(<span class="fu">targetlynx_flippR</span>(<span class="at">FUNC_txt_file_path =</span> mstr_lst<span class="sc">$</span>import[idx_file],</span>
-<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">FUNC_keep_hdr =</span> idx_header) <span class="sc">%&gt;%</span></span>
-<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">add_column</span>(<span class="at">plate =</span> exprt_filename, <span class="at">.before =</span> <span class="dv">1</span>))</span>
-<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a>    }</span>
-<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create summary table for report printing</span></span>
-<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a>    export_table <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(export_table,</span>
-<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">bind_cols</span>(<span class="at">project =</span> exprt_filename,</span>
-<span id="cb13-121"><a href="#cb13-121" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">standards =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb13-122"><a href="#cb13-122" aria-hidden="true" tabindex="-1"></a>                                                           <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Standard&quot;</span>)),</span>
-<span id="cb13-123"><a href="#cb13-123" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">qc =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span></span>
-<span id="cb13-124"><a href="#cb13-124" aria-hidden="true" tabindex="-1"></a>                                                    <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;QC&quot;</span>)),</span>
-<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">samples =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a>                                                         <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Analyte&quot;</span>)),</span>
-<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">blanks =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
-<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a>                                                        <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Blank&quot;</span>)),</span>
-<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">features =</span> <span class="fu">ncol</span>(mstr_lst<span class="sc">$</span>export[[idx_header]])<span class="sc">-</span><span class="dv">1</span>))</span>
-<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a>   </span>
-<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>     <span class="co">#concatonate export filename for report printing</span></span>
-<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>    exprt_filename_lst <span class="ot">&lt;-</span> <span class="fu">c</span>(exprt_filename_lst, export_file_path)</span>
-<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a>    <span class="co">#export csv</span></span>
-<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_csv</span>(mstr_lst<span class="sc">$</span>export[[idx_header]], export_file_path)</span>
-<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;data imported:&quot;</span>)</span>
-<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]]</span>
-<span id="cb13-142"><a href="#cb13-142" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;data exported:&quot;</span>)</span>
-<span id="cb13-143"><a href="#cb13-143" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
-<span id="cb13-144"><a href="#cb13-144" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;sample summary:&quot;</span>)</span>
-<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-98"><a href="#cb13-98" aria-hidden="true" tabindex="-1"></a><span class="co">#export filename list </span></span>
+<span id="cb13-99"><a href="#cb13-99" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb13-100"><a href="#cb13-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-101"><a href="#cb13-101" aria-hidden="true" tabindex="-1"></a><span class="co">#create export table for printing</span></span>
+<span id="cb13-102"><a href="#cb13-102" aria-hidden="true" tabindex="-1"></a>export_table <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb13-103"><a href="#cb13-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-104"><a href="#cb13-104" aria-hidden="true" tabindex="-1"></a><span class="co">#run function</span></span>
+<span id="cb13-105"><a href="#cb13-105" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(idx_header <span class="cf">in</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>keep_header){</span>
+<span id="cb13-106"><a href="#cb13-106" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span>(idx_file <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]])){</span>
+<span id="cb13-107"><a href="#cb13-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-108"><a href="#cb13-108" aria-hidden="true" tabindex="-1"></a>        <span class="co">#create export filename</span></span>
+<span id="cb13-109"><a href="#cb13-109" aria-hidden="true" tabindex="-1"></a>    exprt_filename <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="at">x =</span> <span class="fu">tail</span>(<span class="fu">strsplit</span>(mstr_lst[[<span class="st">&quot;import&quot;</span>]][idx_file], <span class="st">&quot;/&quot;</span>)[[<span class="dv">1</span>]], <span class="at">n=</span><span class="dv">1</span>), </span>
+<span id="cb13-110"><a href="#cb13-110" aria-hidden="true" tabindex="-1"></a>                           <span class="at">pattern =</span> mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>data_type, <span class="at">replacement =</span> <span class="st">&quot;&quot;</span>)</span>
+<span id="cb13-111"><a href="#cb13-111" aria-hidden="true" tabindex="-1"></a>    <span class="co">#extract matched characters for file naming (e.g. drop plate nomenclature)</span></span>
+<span id="cb13-112"><a href="#cb13-112" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>(idx_file<span class="sc">==</span><span class="dv">1</span>){common_filename <span class="ot">=</span> exprt_filename} <span class="cf">else</span>{</span>
+<span id="cb13-113"><a href="#cb13-113" aria-hidden="true" tabindex="-1"></a>    common_filename <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">seq_along</span>(common_filename), <span class="cf">function</span>(i)</span>
+<span id="cb13-114"><a href="#cb13-114" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="fu">LCS</span>(<span class="fu">strsplit</span>(common_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]], <span class="fu">strsplit</span>(exprt_filename[i], <span class="st">&#39;&#39;</span>)[[<span class="dv">1</span>]])<span class="sc">$</span>LCS, <span class="at">collapse =</span> <span class="st">&quot;&quot;</span>))</span>
+<span id="cb13-115"><a href="#cb13-115" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb13-116"><a href="#cb13-116" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-117"><a href="#cb13-117" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create an export path name using the common filename</span></span>
+<span id="cb13-118"><a href="#cb13-118" aria-hidden="true" tabindex="-1"></a>    export_file_path <span class="ot">&lt;-</span> <span class="fu">paste0</span>(mstr_lst<span class="sc">$</span>proj_optns<span class="sc">$</span>project_dir, common_filename, </span>
+<span id="cb13-119"><a href="#cb13-119" aria-hidden="true" tabindex="-1"></a>                               <span class="st">&quot;_FLIPPR_&quot;</span>, <span class="fu">toupper</span>(idx_header), <span class="st">&quot;.csv&quot;</span>)</span>
+<span id="cb13-120"><a href="#cb13-120" aria-hidden="true" tabindex="-1"></a>    <span class="co">#run function</span></span>
+<span id="cb13-121"><a href="#cb13-121" aria-hidden="true" tabindex="-1"></a>    mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="ot">&lt;-</span> mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb13-122"><a href="#cb13-122" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bind_rows</span>(<span class="fu">targetlynx_flippR</span>(<span class="at">FUNC_txt_file_path =</span> mstr_lst<span class="sc">$</span>import[idx_file],</span>
+<span id="cb13-123"><a href="#cb13-123" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">FUNC_keep_hdr =</span> idx_header) <span class="sc">%&gt;%</span></span>
+<span id="cb13-124"><a href="#cb13-124" aria-hidden="true" tabindex="-1"></a>                  <span class="fu">add_column</span>(<span class="at">plate =</span> exprt_filename, <span class="at">.before =</span> <span class="dv">1</span>))</span>
+<span id="cb13-125"><a href="#cb13-125" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-126"><a href="#cb13-126" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb13-127"><a href="#cb13-127" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-128"><a href="#cb13-128" aria-hidden="true" tabindex="-1"></a>    <span class="co">#create summary table for report printing</span></span>
+<span id="cb13-129"><a href="#cb13-129" aria-hidden="true" tabindex="-1"></a>    export_table <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(export_table,</span>
+<span id="cb13-130"><a href="#cb13-130" aria-hidden="true" tabindex="-1"></a>                              <span class="fu">bind_cols</span>(<span class="at">project =</span> exprt_filename,</span>
+<span id="cb13-131"><a href="#cb13-131" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">standards =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb13-132"><a href="#cb13-132" aria-hidden="true" tabindex="-1"></a>                                                           <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Standard&quot;</span>)),</span>
+<span id="cb13-133"><a href="#cb13-133" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">qc =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span></span>
+<span id="cb13-134"><a href="#cb13-134" aria-hidden="true" tabindex="-1"></a>                                                    <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;QC&quot;</span>)),</span>
+<span id="cb13-135"><a href="#cb13-135" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">samples =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb13-136"><a href="#cb13-136" aria-hidden="true" tabindex="-1"></a>                                                         <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Analyte&quot;</span>)),</span>
+<span id="cb13-137"><a href="#cb13-137" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">blanks =</span> <span class="fu">nrow</span>(mstr_lst<span class="sc">$</span>export[[idx_header]] <span class="sc">%&gt;%</span> </span>
+<span id="cb13-138"><a href="#cb13-138" aria-hidden="true" tabindex="-1"></a>                                                        <span class="fu">filter</span>(plate <span class="sc">==</span> exprt_filename <span class="sc">&amp;</span> type <span class="sc">==</span> <span class="st">&quot;Blank&quot;</span>)),</span>
+<span id="cb13-139"><a href="#cb13-139" aria-hidden="true" tabindex="-1"></a>                                        <span class="at">features =</span> <span class="fu">ncol</span>(mstr_lst<span class="sc">$</span>export[[idx_header]])<span class="sc">-</span><span class="dv">1</span>))</span>
+<span id="cb13-140"><a href="#cb13-140" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-141"><a href="#cb13-141" aria-hidden="true" tabindex="-1"></a>   </span>
+<span id="cb13-142"><a href="#cb13-142" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-143"><a href="#cb13-143" aria-hidden="true" tabindex="-1"></a>     <span class="co">#concatonate export filename for report printing</span></span>
+<span id="cb13-144"><a href="#cb13-144" aria-hidden="true" tabindex="-1"></a>    exprt_filename_lst <span class="ot">&lt;-</span> <span class="fu">c</span>(exprt_filename_lst, export_file_path)</span>
+<span id="cb13-145"><a href="#cb13-145" aria-hidden="true" tabindex="-1"></a>    <span class="co">#export csv</span></span>
+<span id="cb13-146"><a href="#cb13-146" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_csv</span>(mstr_lst<span class="sc">$</span>export[[idx_header]], export_file_path)</span>
+<span id="cb13-147"><a href="#cb13-147" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb13-148"><a href="#cb13-148" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a><span class="in">```{r kable, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results=&#39;asis&#39;}</span></span>
-<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a>export_table <span class="sc">%&gt;%</span></span>
-<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kbl</span>(<span class="at">align =</span> <span class="st">&quot;c&quot;</span>, <span class="at">booktabs =</span> <span class="cn">TRUE</span>, <span class="at">longtable =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-152"><a href="#cb13-152" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_minimal</span>(<span class="st">&quot;hover&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-153"><a href="#cb13-153" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">font_size =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scroll_box</span>() <span class="sc">%&gt;%</span> <span class="fu">print</span>()</span>
-<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-149"><a href="#cb13-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-150"><a href="#cb13-150" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;data imported:&quot;</span>)</span>
+<span id="cb13-151"><a href="#cb13-151" aria-hidden="true" tabindex="-1"></a>mstr_lst[[<span class="st">&quot;import&quot;</span>]]</span>
+<span id="cb13-152"><a href="#cb13-152" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;data exported:&quot;</span>)</span>
+<span id="cb13-153"><a href="#cb13-153" aria-hidden="true" tabindex="-1"></a>exprt_filename_lst <span class="sc">%&gt;%</span> <span class="fu">unique</span>()</span>
+<span id="cb13-154"><a href="#cb13-154" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;sample summary:&quot;</span>)</span>
+<span id="cb13-155"><a href="#cb13-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-156"><a href="#cb13-156" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-157"><a href="#cb13-157" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb13-158"><a href="#cb13-158" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-159"><a href="#cb13-159" aria-hidden="true" tabindex="-1"></a><span class="in">```{r kable, eval=TRUE, echo=TRUE, paged.print=TRUE, warning=FALSE, results=&#39;asis&#39;}</span></span>
+<span id="cb13-160"><a href="#cb13-160" aria-hidden="true" tabindex="-1"></a>export_table <span class="sc">%&gt;%</span></span>
+<span id="cb13-161"><a href="#cb13-161" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kbl</span>(<span class="at">align =</span> <span class="st">&quot;c&quot;</span>, <span class="at">booktabs =</span> <span class="cn">TRUE</span>, <span class="at">longtable =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-162"><a href="#cb13-162" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_minimal</span>(<span class="st">&quot;hover&quot;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-163"><a href="#cb13-163" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable_styling</span>(<span class="at">font_size =</span> <span class="dv">12</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-164"><a href="#cb13-164" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scroll_box</span>() <span class="sc">%&gt;%</span> <span class="fu">print</span>()</span>
+<span id="cb13-165"><a href="#cb13-165" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 
