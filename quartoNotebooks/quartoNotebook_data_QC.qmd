@@ -309,6 +309,11 @@ calibratR <- function(FUNC_data,
     select(response, conc) %>%
     add_column(type = "study_sample")
 ) %>% as_tibble()
+
+  FUNC_list$plot_data$type <- FUNC_list$plot_data$type %>%
+    factor(levels = c("study_sample", "std_pass", "qc_pass", "std_fail", "qc_fail"), 
+                         ordered = TRUE)
+  
     
   #set common colours
   group_colours <- c("std_pass" = "darkgreen", "std_fail" = "red", "qc_pass" = "darkgreen", "qc_fail" = "red", "study_sample" = "black")
