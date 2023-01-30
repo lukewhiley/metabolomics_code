@@ -208,7 +208,7 @@ Following calibration, metabolites are assigned either:
 
 -   Peak area: metabolite does not have an external calibration dilution series and does not use a stable isotope labelled internal standard.
 
-```{r calibration of data, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
+```{r calibration functions, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
 
 #--------- write calibratR function
 calibratR <- function(FUNC_data,
@@ -308,46 +308,122 @@ calibratR <- function(FUNC_data,
     rename(conc = calc_conc) %>%
     select(response, conc) %>%
     add_column(type = "study_sample")
-) %>% as_tibble()
+) %>% as_tibble() 
 
   FUNC_list$plot_data$type <- FUNC_list$plot_data$type %>%
     factor(levels = c("study_sample", "std_pass", "qc_pass", "std_fail", "qc_fail"), 
                          ordered = TRUE)
-  
-    
-  #set common colours
+
+   FUNC_list
+  }
+
+# FUNCTION to create calibration plot
+calibrate_plotR <- function(FUNC_data){
+  #set common colours, sizes and shapes
   group_colours <- c("std_pass" = "darkgreen", "std_fail" = "red", "qc_pass" = "darkgreen", "qc_fail" = "red", "study_sample" = "black")
 group_sizes <- c("std_pass" = 2.5, "std_fail" = 2.5, "qc_pass" = 2.5, "qc_fail" = 2.5, "study_sample" = 1)
 group_shape <- c("std_pass" = 25, "std_fail" = 25, "qc_pass" = 21, "qc_fail" = 21, "study_sample" = 3)
 
-#create plot  
-FUNC_list$cal_plot <- ggplot(data = FUNC_list$plot_data,
-                             aes(x=conc, y=response, color=type, shape=type, size=type)) +
+#create plot
+ ggplot(data = FUNC_data,
+                  aes(x=conc, y=response, color=type, shape=type, size=type)) +
   geom_point() +
-  stat_smooth(data = filter(FUNC_list$plot_data, type == "std_pass"),
-              geom = "line", alpha = 0.5, size = 1,method = "lm", 
+  stat_smooth(data = filter(FUNC_data, type == "std_pass"),
+              geom = "line", alpha = 0.5, size = 1,method = "lm",
               formula = y ~ x, col = "darkgreen", fullrange = TRUE, se = FALSE,
               mapping = aes(weight = `(weights)`)) +
-   scale_size_manual(values = group_sizes, guide = "none") +
+  scale_size_manual(values = group_sizes, guide = "none") +
   scale_shape_manual(values = group_shape,
-                      labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_sample")) +
+                     labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_sample")) +
   scale_color_manual(values = group_colours,
                      labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_sample")) +
-  labs(title = paste0(FUNC_STRING_title, "\n",
-                      "R2 = ",signif(summary(FUNC_list$lmX)$adj.r.squared, 4),
-                      "; Intercept = ",signif(FUNC_list$lmX$coef[[1]],2),
-                      "; Slope = ",signif(FUNC_list$lmX$coef[[2]], 2))) +
+ 
   theme_bw() +
-  theme(plot.title = element_text(hjust = 0.5, size = 5),
+  theme(plot.title = element_blank(),
         axis.title = element_text(size = 5),
         axis.text = element_text(size = 5),
         legend.text = element_text(size = 5),
-        legend.title = element_text(size = 5))
+        legend.title = element_text(size = 5)) +
+  facet_wrap(~plate_id,
+             ncol = 3)
+}
 
-    FUNC_list
-  }
+
+
+#------------- FUNCTION to create control chart
+
+control_plotR <- function(FUNC_data,
+                          FUNC_plot_header,
+                          FUNC_y_title){
+
   
-  #--------- Run loop to perform calibration for each target analyte
+  ####### HERE
+  
+  FUNC_data <- FUNC_data %>%
+  #crop plate order
+  add_column(
+    plate_id = (lapply(str_split(FUNC_data$name, "_"), function(x) head(x, n=6))) %>% 
+      lapply(., function(x) tail(x, n=1)) %>% unlist(),
+    run_order = lapply(str_split(FUNC_data$name, "_"), function(x) tail(x, n=1)) %>% unlist() %>% as.numeric()
+  ) %>%
+  arrange(plate_id, run_order) %>% 
+  add_column(sample_idx = factor(1:nrow(.), ordered = TRUE)) %>%
+  rename_at(FUNC_plot_header, list(~paste0("y_data")))
+  
+  
+  #### HERE
+  
+#find LTRs
+FUNC_data$type[grep("LTR", FUNC_data$name)] <- "LTR"
+
+#find plate IDX for plate vlines
+plate_idx <- NULL
+for(idx_plate in unique(FUNC_data$plate)){
+plate_idx <- c(plate_idx,
+               max(which(FUNC_data$plate == idx_plate)))
+}
+plate_idx <- (plate_idx[1:length(plate_idx)-1])+0.5
+
+#find values for hlines
+#median LTR conc
+LTR_median = (FUNC_data %>% filter(type == "LTR"))[["calc_conc"]] %>% median()
+#LTR std.dev 
+LTR_sd = (FUNC_data %>% filter(type == "LTR"))[["calc_conc"]] %>% sd()
+#calcluate 1x and 2x sd range
+LTR_1sd_range = c((LTR_median - LTR_sd), (LTR_median + LTR_sd))
+LTR_2sd_range = c((LTR_median - LTR_sd*2), (LTR_median + LTR_sd*2))
+
+#create plot
+FUNC_plot <- ggplot(data = FUNC_data,
+       aes(x=sample_idx, y=log(calc_conc+1), fill = type, shape=type, size=type)) +
+  geom_point(color = "black") +
+  geom_vline(xintercept = plate_idx) +
+  geom_hline(yintercept = log(LTR_median+1), color = "orange") +
+  geom_hline(yintercept = log(LTR_1sd_range+1), color = "orange", linetype = "dashed") +
+  geom_hline(yintercept = log(LTR_2sd_range+1), color = "orange", linetype = "dotted") +
+  theme_classic() +
+  labs(y = paste0("log(", FUNC_y_title, ")"))+
+  theme(plot.title = element_blank(),
+        axis.title = element_text(size = 5),
+        axis.text = element_text(size = 5),
+        legend.text = element_text(size = 5),
+        legend.title = element_text(size = 5),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()) +
+  scale_x_discrete(expand = c(0.02,0.02)) +
+  scale_fill_manual(values=c("black", "orange")) +
+  scale_shape_manual(values = c(3, 21)) +
+  scale_size_manual(values = c(1,2.5))
+
+ggplotly(FUNC_plot)  
+}
+
+
+```
+
+```{r apply calibration functions to data, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
+
+#--------- Run loop to perform calibration for each target analyte
 
 #set tibble for calibration data out
 mstr_lst$data$calib <- mstr_lst$data$area %>%
@@ -355,13 +431,14 @@ mstr_lst$data$calib <- mstr_lst$data$area %>%
   filter(type == "Analyte")
 
 for(idx_metabolite in mstr_lst$data$SIL_template$standard){
-
   #create calibration output list()
   temp_lst <- lst(
   #find SIL used from tempalte
   SIL_used = mstr_lst$data$SIL_template$SIL_standard[which(mstr_lst$data$SIL_template$standard == idx_metabolite)],
   all_plates = lst(
-    plots = lst(),
+    plot = lst(data = NULL,
+               calib = NULL,
+               control_chart = NULL),
     summary = NULL,
     lmX_pred_data = NULL
   ))
@@ -397,7 +474,20 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
    temp_lst$all_plates$lmX_pred_data <-
      temp_lst$all_plates$lmX_pred_data %>%
      bind_rows(temp_lst[[paste0("plate_", idx_plate)]]$lmX_pred_data)
-   }
+   
+   #create combined data for plotting with facet wrap
+   temp_lst$all_plates$plot$data <- bind_rows(
+     temp_lst$all_plates$plot$data,
+     temp_lst[[paste0("plate_", idx_plate)]]$plot_data %>%
+       add_column(plate_id = paste0("plate", idx_plate, "\n",
+                                    "r2=", temp_lst$all_plates$summary$r2[idx_plate],
+                                    "; slope=", temp_lst$all_plates$summary$slope[idx_plate],
+                                    "; int=", temp_lst$all_plates$summary$intercept[idx_plate]))
+   )}
+   
+   # produce calibration plot
+   temp_lst$all_plates$plot$calib <- calibrate_plotR(FUNC_data = temp_lst$all_plates$plot$data) %>% ggplotly()
+   
    
    #if passes QC append concentration data to CONC
    if(min(temp_lst$all_plates$summary$r2) > 0.99){
@@ -411,8 +501,14 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
      bind_rows(
        tibble(metabolite = idx_metabolite, data_type = "conc", reason = "pass calibration"))
    
+   #create control chart
+   temp_lst$all_plates$plot$control_chart <- control_plotR(FUNC_data = temp_lst$all_plates$lmX_pred_data %>% 
+                                                             filter(type == "Analyte"),
+                                                           FUNC_y_title = "concentration")
+   
    #append temp_list to mstr_lst$calib$conc
    mstr_lst$calib$conc[[idx_metabolite]] <- temp_lst
+   
     
      
    } else {
@@ -427,9 +523,17 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
      bind_rows(
        tibble(metabolite = idx_metabolite, data_type = "area", reason = "failed calibration"))
        
+         #create control chart
+   temp_lst$all_plates$plot$control_chart <- control_plotR(
+     FUNC_data = temp_lst$all_plates$lmX_pred_data %>%
+       filter(type == "Analyte"),
+     FUNC_y_title = "response",
+     FUNC_plot_header = "response")
+   
     #append temp_list to mstr_lst$calib$conc
    mstr_lst$calib$response[[idx_metabolite]] <- temp_lst
-   }
+  
+   } #end of response if
    
   }else{
      
@@ -442,9 +546,14 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
    mstr_lst$tbls$calib_summary <- mstr_lst$tbls$calib_summary %>% 
      bind_rows(
        tibble(metabolite = idx_metabolite, data_type = "area", reason = "no IS in template"))
-    
-   #append temp_list to mstr_lst$calib$conc
-   mstr_lst$calib$area[[idx_metabolite]] <- temp_lst
+   
+      #create control chart
+   temp_lst$all_plates$plot$control_chart <- control_plotR(
+     FUNC_data = mstr_lst$data$calib %>% 
+       select(plate, name, type, all_of(paste0(idx_metabolite, "_AREA"))) %>%
+       rename_at(paste0(idx_metabolite, "_AREA"), list(~paste0("calc_conc"))) %>% 
+       filter(type == "Analyte"),
+     FUNC_y_title = "area")
    }
 }
 
@@ -453,93 +562,139 @@ mstr_lst$tbls$calib_summary %>%
         kable_minimal("hover") %>%
         kable_styling(font_size = 10) %>%
         scroll_box(height = "500px")
-
 ```
 
 ## Concentration
 
-```{r report, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
+```{r report - cal, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
 
-#mstr_lst$calib$conc$tryptophan$all_plates$plots
-
+# -------------- create combined widget of cal plots and summary table and knit to report
+  #make empty list in master list
 mstr_lst$report <- list(
-  conc = list()
+  conc = list(),
+  response = list(),
+  test = list()
 )
 
+#create empty rmd list for knit_child workaround
+temp_rmd_list <- list()
+
+#run loop for each metabolite that passes QC
 for(idx_metabolite in names(mstr_lst$calib$conc)){
-  plot_freq <- length(mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plots)
-  plot_height <- (plot_freq+1) * 200
+  plot_row_freq <- ceiling(length(unique(mstr_lst$calib$conc[[idx_metabolite]]$all_plates$summary$plate))/3)
   mstr_lst$report$conc[[idx_metabolite]] <- combineWidgets(
-    #combineWidgets for plots
-    # combineWidgets(
-    #   list=mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plots,
-    #   ncol = 3)
-    mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plots %>% 
-      subplot(
-        #nrows = 2
-          ),
+   mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plot$calib, # calib plots
+  mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plot$control_chart, #control chart plots
   #combine with kable of summary table
 mstr_lst$calib$conc[[idx_metabolite]]$all_plates$summary %>%
   kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
   kable_minimal("hover") %>%
   kable_styling(font_size = 10) %>%
-  scroll_box(),
+  scroll_box(width = "750px"),
 #CombineWidegets properties
-height = plot_height,
+height = (plot_row_freq+2) * 400,
 width = 800,
-title = idx_metabolite,
-titleCSS = "height: 20px; width: 100%; background-color: powderblue; font-size: 15px;",
-rowsize = c(3,1)
+rowsize = c(plot_row_freq,1,1),
+ncol = 1
 )
   
-  # mstr_lst$report$conc[[idx_metabolite]] <-
-  #   mstr_lst$calib$conc$`3-hydroxyanthranilic acid`$all_plates$plots %>% subplot()
-  # 
-}
-
-```
-
-```{r create temp folders, warning=FALSE}
-
-temp_rmd_list <- list()
-
-for (idx_metabolite in names(mstr_lst$report$conc)) {
-
-  temp_rmd_path <- paste0("/Users/lukegraywhiley/Downloads/temp_data/test_qc/rmd/", idx_metabolite, ".rmd")
+# ----------- Create temp rmd file as a work around for rendering dynamic html widgets from a loop
+  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
   temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
-
-
   sink(file = temp_rmd_path)
-  cat("  \n",
-        "### ", idx_metabolite, "  \n",
-        "```{r, echo=FALSE, warning=FALSE}", "  \n",
-        'mstr_lst$report$conc[[idx_metabolite]]',
-        "  \n",
-        "```",
-      "  \n",
-      sep = "")
+  cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
+      'mstr_lst$report$conc[[idx_metabolite]]', "  \n", "```", "  \n", sep = "")
   sink()
-}
 
-```
-
-```{r knit, results='asis', warning=FALSE}
-
-for (idx_metabolite in names(mstr_lst$report$conc)) {
-
+# ---------- knit using knit_child function
   # Knit the temporary RMD file
   cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
                         quiet = TRUE))
 
-  # Delete the temporary RMD file
-  #file.remove(temp_rmd_list[[table_name]])
+  # Delete the temporary RMD files
+  file.remove(temp_rmd_list[[idx_metabolite]])
 }
 ```
 
-```{r}
+## Response
 
-htmltools::tagList(mstr_lst$report$conc$dopamine)
-htmltools::tagList(mstr_lst$report$conc$kynurenine)
+```{r report - response, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
+
+# -------------- create combined widget of cal plots and summary table and knit to report
+
+#create empty rmd list for knit_child workaround
+temp_rmd_list <- list()
+
+#run loop for each metabolite that passes QC
+for(idx_metabolite in names(mstr_lst$calib$response)){
+  plot_row_freq <- ceiling(length(unique(mstr_lst$calib$response[[idx_metabolite]]$all_plates$summary$plate))/3)
+  mstr_lst$report$response[[idx_metabolite]] <- combineWidgets(
+   mstr_lst$calib$response[[idx_metabolite]]$all_plates$plot$calib,
+   mstr_lst$calib$response[[idx_metabolite]]$all_plates$plot$control_chart,
+#CombineWidegets properties
+height = (plot_row_freq+1) * 400,
+width = 800,
+rowsize = c(plot_row_freq,1),
+ncol = 1
+)
+  
+# ----------- Create temp rmd file as a work around for rendering dynamic html widgets from a loop
+  
+  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
+  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
+  sink(file = temp_rmd_path)
+  cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
+      'mstr_lst$report$response[[idx_metabolite]]', "  \n", "```", "  \n", sep = "")
+  sink()
+
+# ---------- knit using knit_child function
+  # Knit the temporary RMD file
+  cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
+                        quiet = TRUE))
+
+  # Delete the temporary RMD files
+  file.remove(temp_rmd_list[[idx_metabolite]])
+}
+```
+
+## Area
+
+```{r report - area, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
+
+# -------------- create combined widget of cal plots and summary table and knit to report
+#create empty rmd list for knit_child workaround
+temp_rmd_list <- list()
+
+#run loop for each metabolite that passes QC
+for(idx_metabolite in names(mstr_lst$calib$area)){
+  plot_row_freq <- ceiling(length(unique(mstr_lst$calib$area[[idx_metabolite]]$all_plates$summary$plate))/3)
+  mstr_lst$report$area[[idx_metabolite]] <- combineWidgets(
+   mstr_lst$calib$area[[idx_metabolite]]$all_plates$plot$control_chart,
+  #combine with kable of summary table
+#CombineWidegets properties
+height = 400,
+width = 800,
+rowsize = c(1),
+ncol = 1
+)
+  
+# ----------- Create temp rmd file as a work around for rendering dynamic html widgets from a loop
+  
+  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
+  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
+  sink(file = temp_rmd_path)
+  cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
+      'mstr_lst$report$response[[idx_metabolite]]', "  \n", "```", "  \n", sep = "")
+  sink()
+
+# ---------- knit using knit_child function
+  # Knit the temporary RMD file
+  cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
+                        quiet = TRUE))
+
+  # Delete the temporary RMD files
+  file.remove(temp_rmd_list[[idx_metabolite]])
+}
 ```
 
 # SPACE - NOT COMPLETE BELOW THIS LINE
