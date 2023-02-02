@@ -758,7 +758,7 @@ for(idx_metabolite in names(mstr_lst$calib$response)){
 
 ### Control chart of LTR performance
 
-```{r LTR_control_plotR function to control chart LTR analysis, eval = TRUE}
+```{r LTR_control_plotR function to control chart LTR analysis, eval = TRUE, results='asis'}
 
 #------------- write FUNCTION to create LTR control chart
 LTR_control_plotR <- function(FUNC_data,
@@ -950,7 +950,7 @@ mstr_lst$ltr$rsd$data %>%
 
 -   metabolites with \>50% of missing values are removed from analysis
 
-```{r missing value overview and impute, eval = TRUE, echo = TRUE}
+```{r missing value overview, eval = TRUE, echo = TRUE, results='asis'}
 
 mstr_lst$tbls$missing_val <- NULL
 
@@ -979,7 +979,7 @@ mstr_lst$tbls$missing_val %>%
   kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
   kable_minimal("hover") %>%
   kable_styling(font_size = 12) %>%
-  scroll_box() %>% print()
+  scroll_box(height="250px") %>% print()
 ```
 
 ## Principal Component Analysis (PCA) of data
@@ -988,7 +988,7 @@ mstr_lst$tbls$missing_val %>%
 
 -   Patterns in the data between samples can also be observed - this may be as a result of either biological or analytical differences - e.g. differences in sample collection, handling or storage
 
-```{r PCA function, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, error=TRUE}
+```{r PCA function, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, error=TRUE, results='asis'}
 
 # -------------------------
 # write PCA function
@@ -1030,12 +1030,15 @@ lgw_rPCA <- function(FUNC_data,
   pca_output$plot_scores <- ggplot(data = plotly_scores_data,
                       aes(x=p1, y=p2, fill = type, color=type, shape= type, size = type)) +
     geom_point() +
+    labs(title=paste0(
+      "samples: ", pca_output$pca_model@descriptionMC[,1][["samples"]],
+      ", metabolites: ", pca_output$pca_model@descriptionMC[,1][["X_variables"]])) +
     theme_bw() +
-    theme(plot.title = element_blank(),
-          axis.title = element_text(size = 5),
-          axis.text = element_text(size = 5),
-          legend.text = element_text(size = 5),
-          legend.title = element_text(size = 5),
+    theme(plot.title = element_text(size=10),
+          axis.title = element_text(size = 10),
+          axis.text = element_text(size = 10),
+          legend.text = element_text(size = 10),
+          legend.title = element_text(size = 10),
           axis.text.x = element_blank(),
           axis.ticks.x = element_blank()) +
     scale_fill_manual(values=c("orange", "black")) +
@@ -1045,8 +1048,6 @@ lgw_rPCA <- function(FUNC_data,
   
   ggplotly(pca_output$plot_scores)
 }
-
-
 
 #---------- apply PCA scores function
 
