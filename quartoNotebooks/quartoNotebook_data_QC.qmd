@@ -27,7 +27,7 @@ theme: cosmo
         #>  ~parent_directory/SIL_template
   #> default data type: import = .txt; export = .csv
 
-# required packages: 'tidyverse', 'janitor', 'qualV', 'kableExtra', 'plotly', 'manipulateWidget', 'RColorBrewer'
+# required packages: 'tidyverse', 'janitor', 'qualV', 'kableExtra', 'plotly', 'manipulateWidget', 'RColorBrewer', 'ropls'
 
 ```
 
@@ -42,7 +42,7 @@ parent_directory_path = "/Users/lukegraywhiley/Downloads/temp_data/test_qc/"
 
 #----------------------------- NO USER INPUTE REQUIRED BELOW THIS LINE
 #----------------------------- set project structure
-package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra', 'plotly', 'manipulateWidget', 'RColorBrewer')
+package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra', 'plotly', 'manipulateWidget', 'RColorBrewer', 'ropls')
 
 for(idx_package in package_list){
   if(length(which(row.names(installed.packages()) == idx_package)) > 0){
@@ -99,14 +99,19 @@ mstr_lst <- list(
 targetlynx_flippR <- function(FUNC_txt_file_path,
                               FUNC_keep_hdr){
 flippR_list <- list(
+  #read.txt and convert to tibble
   data = read.delim(file = paste(FUNC_txt_file_path), sep = "\t",header=FALSE) %>% as_tibble() %>%
+    #find row with column names
          set_names(., .[which(. == "Name", arr.ind=TRUE)[1,1],]) %>% clean_names()) %>%
+  #append list of metabolites to flippR list
     list_modify(
       metabolites = unique(
         .$data$x[grep("Compound", .$data$x)]) %>% .[-grep("Report", .)] %>% sub(".*:  ", "", .), 
+      #remove rows with empty space
       filtered_data = filter(.$data ,name != "" & name != "Name")
       ) %>% 
   list_modify(
+    #flag duplicated samples
     duplicate_samples = .$filtered_data[1:(length(unique(.$filtered_data$x))),][["name"]] %>% duplicated()
   ) 
 #flag duplicates
@@ -130,23 +135,27 @@ flippR_list$filtered_data$name[flippR_list$duplicate_samples] <- paste0(
 for(idx_file in 1:length(mstr_lst$data$imprt_lst)){
   mstr_lst$data[["std_conc"]] <- mstr_lst$data[["std_conc"]] %>%
     bind_rows(targetlynx_flippR(FUNC_txt_file_path = mstr_lst$data$imprt_lst[idx_file], FUNC_keep_hdr = "std_conc") %>%
-                add_column(plate = rep(mstr_lst$data$plate_lst[idx_file], nrow(.)), .before = 1))
+                add_column(plate = rep(unlist(str_split(mstr_lst$data$plate_lst[idx_file], "_"))[6], nrow(.)), .before = 1))
  mstr_lst$data[["area"]] <- mstr_lst$data[["area"]] %>%
     bind_rows(targetlynx_flippR(FUNC_txt_file_path = mstr_lst$data$imprt_lst[idx_file], FUNC_keep_hdr = "area") %>%
-                add_column(plate = rep(mstr_lst$data$plate_lst[idx_file], nrow(.)), .before = 1))
+                add_column(plate = rep(unlist(str_split(mstr_lst$data$plate_lst[idx_file], "_"))[6], nrow(.)), .before = 1))
 
  #create summary table for report printing
 mstr_lst$tbls[["imprt_tbl"]] <- bind_rows(
   mstr_lst$tbls[["imprt_tbl"]],
-  bind_cols(plate = mstr_lst$data$plate_lst[idx_file],
+  bind_cols(plate = unlist(str_split(mstr_lst$data$plate_lst[idx_file], "_"))[6],
             standards = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "Standard")),
+              mstr_lst$data$std_conc %>% 
+                filter(plate == unlist(str_split(mstr_lst$data$plate_lst[idx_file], "_"))[6] & type == "Standard")),
             qc = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "QC")),
+              mstr_lst$data$std_conc %>% 
+                filter(plate == unlist(str_split(mstr_lst$data$plate_lst[idx_file], "_"))[6] & type == "QC")),
             samples = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "Analyte")),
+              mstr_lst$data$std_conc %>% 
+                filter(plate == unlist(str_split(mstr_lst$data$plate_lst[idx_file], "_"))[6] & type == "Analyte")),
             blanks = nrow(
-              mstr_lst$data$std_conc %>% filter(plate == mstr_lst$data$plate_lst[idx_file] & type == "Blank")),
+              mstr_lst$data$std_conc %>% 
+                filter(plate == unlist(str_split(mstr_lst$data$plate_lst[idx_file], "_"))[6] & type == "Blank")),
             features = ncol(mstr_lst$data$std_conc)-2
             ))
 }
@@ -169,15 +178,7 @@ mstr_lst$tbls$imprt_tbl %>%
 
 ## Control charts - Calibration and QC samples
 
-Control charts produced for each metabolite for each of the calibration and QC injections:
-
--   Peak area of target
-
--   peak area of SIL internal standard
-
--   response ratio
-
-```{r Cal and QC control charts, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
+```{r Cal and QC control charts FUNCTION, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
 #--------------------------------------------------------------------------------------------------------------------------- 
 #FUNCTION Cal and QC control_plotR
 #--------------------------------------------------------------------------------------------------------------------------- 
@@ -196,7 +197,8 @@ CalQC_controlPlotR <- function(FUNC_data){
     gather(key = "datatype", value = "value", -plate, - name, -type, - std_conc, - level_factor)
   #set type as factor to control facetwrap
   FUNC_data$type <- factor(paste0(FUNC_data$type, "_", FUNC_data$datatype),
-                           levels = sort(unique(paste0(FUNC_data$type, "_", FUNC_data$datatype))),
+                           #levels = sort(unique(paste0(FUNC_data$type, "_", FUNC_data$datatype))),
+                           levels = c("Calibration_area", "QC_area", "Calibration_area_SIL", "QC_area_SIL", "Calibration_response", "QC_response"),
                            ordered = TRUE)
   #set plot colors and group to control plotly legend
   plot_colours <- c(brewer.pal(n = length(unique(FUNC_data$level_factor)), name = "Set3")) %>% 
@@ -229,16 +231,35 @@ CalQC_controlPlotR <- function(FUNC_data){
                       labels = names(plot_fill)) +
     scale_shape_manual(values = plot_shape,
                        labels = names(plot_shape)) +
-    facet_wrap(~type, ncol = 2, scales = "free", dir = "v")
-#export as plotly
-  FUNC_plot
+    facet_wrap(~type, ncol = 2, scales = "free", dir = "h")
+  
+  #export as plotly
+ ggplotly(FUNC_plot)
 }
 
+
+```
+
+Control charts produced for each metabolite for each of the calibration and QC injections:
+
+-   Peak area of target
+
+-   peak area of SIL internal standard
+
+-   response ratio
+
+### Metabolite targets with internal standard
+
+```{r Cal and QC control charts (metabolites with SIL), eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
+
 #--------------------------------------------------------------------------------------------------------------------------- 
-# application of function to data
+# application of function to data that does have a matched SIL in the data
 #--------------------------------------------------------------------------------------------------------------------------- 
 #re-order sil_template to put NA at bottom
 mstr_lst$data$SIL_template <- mstr_lst$data$SIL_template[order(is.na(mstr_lst$data$SIL_template$SIL_standard)),]
+#create empty rmd list for knit_child workaround
+temp_rmd_list <- list()
+
 # for those metabolites that have a linked SIL internal standard create a response ratio
 for(idx_metabolite in mstr_lst$data$SIL_template$standard){
   SIL_used = mstr_lst$data$SIL_template$SIL_standard[mstr_lst$data$SIL_template$standard==idx_metabolite]
@@ -258,15 +279,47 @@ if(!is.na(SIL_used)){
        filter(type == "Standard" | type == "QC")
      )
   
-  #print metabolite header report
-  cat("###", " ", paste0(idx_metabolite, "\n"))
-  #print SIL IS used
-  cat("#####", " Internal standard used:", paste0(SIL_used, "\n"))
-  #print control chart plot in report
-  print(mstr_lst$control_charts[[idx_metabolite]])
-} 
+#knitchild workaround to dynamically print hmtl widgets
+  temp_plot <- combineWidgets(
+    mstr_lst$control_charts[[idx_metabolite]],
+    height = 750)
   
-  if(is.na(SIL_used)){
+  #create temp rmd file using sink
+  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
+  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
+  sink(file = temp_rmd_path)
+  cat("  \n", "### ", idx_metabolite, "  \n", 
+      "  \n", "##### ", " Internal standard used: ", paste0(SIL_used), "  \n",
+      "```{r, echo=FALSE, warning=FALSE}", "  \n", 'temp_plot', "  \n", "```", "  \n", 
+      sep = "")
+  sink()
+
+# ---------- knit using knit_child function
+  # Knit the temporary RMD file
+ cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
+  quiet = TRUE))
+
+  # Delete the temporary RMD files
+  file.remove(temp_rmd_list[[idx_metabolite]])
+  }
+  }
+
+```
+
+### Metabolite targets without internal standard
+
+::: callout-note
+## Note: the below metabolites do not have an internal standard selected in the template
+:::
+
+```{r Cal and QC control charts (metabolites without SIL), eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
+#--------------------------------------------------------------------------------------------------------------------------- 
+# application of function to data that does not have a matched SIL in the data
+#--------------------------------------------------------------------------------------------------------------------------- 
+
+for(idx_metabolite in mstr_lst$data$SIL_template$standard){
+  SIL_used = mstr_lst$data$SIL_template$SIL_standard[mstr_lst$data$SIL_template$standard==idx_metabolite]
+if(is.na(SIL_used)){
     #produce control chart
   mstr_lst$control_charts[[idx_metabolite]] <- CalQC_controlPlotR(
      FUNC_data = left_join(by="name",
@@ -279,25 +332,37 @@ if(!is.na(SIL_used)){
        filter(type == "Standard" | type == "QC")
      )
   
-    #print metabolite header report
-  cat("###", " ", paste0(idx_metabolite, "\n"))
-  #print SIL IS used
-  cat("#####", " No internal standard selected", "\n")
-  #print control chart plot in report
-  print(mstr_lst$control_charts[[idx_metabolite]])
-  cat("\n")
- }
-}
+ #knitchild workaround to dynamically print hmtl widgets
+  temp_plot <- combineWidgets(
+    mstr_lst$control_charts[[idx_metabolite]],
+    height = 250)
+  
+  #create temp rmd file using sink
+  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
+  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
+  sink(file = temp_rmd_path)
+  cat("  \n", "### ", idx_metabolite, "  \n", 
+      "  \n", "##### ", "No internal standard used", "  \n",
+      "```{r, echo=FALSE, warning=FALSE}", "  \n", 'temp_plot', "  \n", "```", "  \n", 
+      sep = "")
+  sink()
 
+# ---------- knit using knit_child function
+  # Knit the temporary RMD file
+  cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
+                        quiet = TRUE))
 
+  # Delete the temporary RMD files
+  file.remove(temp_rmd_list[[idx_metabolite]])
+}}
 ```
 
-<!--# coding of calibration, linear model plot and control chart plot visualisation functions -->
+## Calibration
 
-```{r calibration functions, eval=FALSE, echo=TRUE, paged.print=FALSE, warning=FALSE}
-
+```{r calibration functions, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, error=TRUE}
+# Calibration functions: calibratR; calibrate_PlotR
 #--------------------------------------------------------------------------------------------------------------------------- 
-# FUNCTION calibratR 
+# calibratR
 #--------------------------------------------------------------------------------------------------------------------------- 
 calibratR <- function(FUNC_data,
                       FUNC_HEADER_cal,
@@ -406,47 +471,63 @@ calibratR <- function(FUNC_data,
   }
 
 #--------------------------------------------------------------------------------------------------------------------------- 
-# FUNCTION to create calibration plot
+# calibrate_plotR function
 #--------------------------------------------------------------------------------------------------------------------------- 
-calibrate_plotR <- function(FUNC_data){
+calibrate_plotR <- function(FUNC_data,
+                            FUNC_lm_color){
   #set common colours, sizes and shapes
   group_colours <- c("std_pass" = "darkgreen", "std_fail" = "red", "qc_pass" = "darkgreen", "qc_fail" = "red", "study_sample" = "black")
 group_sizes <- c("std_pass" = 2.5, "std_fail" = 2.5, "qc_pass" = 2.5, "qc_fail" = 2.5, "study_sample" = 1)
 group_shape <- c("std_pass" = 25, "std_fail" = 25, "qc_pass" = 21, "qc_fail" = 21, "study_sample" = 3)
+lm_color <-
+
 
 #create plot
  FUNC_plot <- ggplot(data = FUNC_data,
-                  aes(x=conc, y=response, color=type, shape=type, size=type)) +
-  geom_point() +
-  stat_smooth(data = filter(FUNC_data, type == "std_pass"),
-              geom = "line", alpha = 0.5, size = 1,method = "lm",
-              formula = y ~ x, col = "darkgreen", fullrange = TRUE, se = FALSE,
-              mapping = aes(weight = `(weights)`)) +
+                  aes(x=conc, y=response)) +
+  geom_point(aes(color=type, shape=type, size=type)) +
   scale_size_manual(values = group_sizes, guide = "none") +
   scale_shape_manual(values = group_shape,
                      labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_sample")) +
   scale_color_manual(values = group_colours,
                      labels = c("qc_fail", "qc_pass", "std_fail", "std_pass", "study_sample")) +
- 
   theme_bw() +
   theme(plot.title = element_blank(),
         axis.title = element_text(size = 5),
         axis.text = element_text(size = 5),
         legend.text = element_text(size = 5),
         legend.title = element_text(size = 5)) +
-  facet_wrap(~plate_id,
-             ncol = 3)
+  facet_wrap(~plate_id, ncol = 3, labeller = labeller(plate_id = label_wrap_gen(width = 30, multi_line = TRUE))) +
+  theme(strip.placement = "outside",
+        strip.background = element_blank(),
+        panel.spacing.y = unit(2, "lines")) +
+  stat_smooth(data = ~filter(.x, type == "std_pass"),
+              geom = "line", alpha = 0.5, size = 1,method = "lm",
+              formula = y ~ x, fullrange = TRUE, se = FALSE, color = FUNC_lm_color,
+              mapping = aes(weight = `(weights)`)
+              ) 
  #convert to plotly object
  ggplotly(FUNC_plot)
 }
 
-
 ```
 
-<!--# application of calibration functions to data -->
+Following calibration, metabolites are assigned either:
 
-```{r apply calibration functions to data, eval=FALSE, echo=TRUE, paged.print=FALSE, warning=FALSE}
+-   Concentration values: metabolite has an external calibration dilution series using response values created by calculating a ratio with the peak area of a matched (or surrogate) stable isotope labelled internal standard. Metabolites have passed quality control assessment consisting of:
 
+    -   r2 value \> 0.99
+
+    -   minimum of 6 calibration points with a residual deviation \<25% from expected concentration
+
+    -   minimum of 2 analytical QC with a residual deviation \<25% from expected concentration
+
+-   Response values: metabolite has an external calibration dilution series using response values created by calculating a ratio with the peak area of a matched (or surrogate) stable isotope labelled internal standard. Metabolites have failed quality control assessment described above.
+
+-   Peak area: metabolite does not have an external calibration dilution series and does not use a stable isotope labelled internal standard.
+
+```{r apply calibration functions to data, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE}
+# application of calibration functions to data
 #--------------------------------------------------------------------------------------------------------------------------- 
 #Run loop to perform calibration for each target analyte
 #--------------------------------------------------------------------------------------------------------------------------- 
@@ -482,12 +563,12 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
    #run calibratR function
   temp_lst[[paste0("plate_", idx_plate)]] <- calibratR(
     FUNC_data = mstr_lst$data$response[[idx_metabolite]] %>%
-      filter(plate == mstr_lst$data$plate_lst[idx_plate]),
+      filter(plate == unique(mstr_lst$data$response[[idx_metabolite]]$plate)[idx_plate]),
     FUNC_HEADER_cal = "response",
     FUNC_STRING_std = "Standard",
     FUNC_STRING_qc = "QC",
     FUNC_STRING_sample = "Analyte",
-    FUNC_STRING_title = paste0(mstr_lst$data$plate_lst[idx_plate])
+    FUNC_STRING_title = mstr_lst$data$response[[idx_metabolite]]$plate[idx_plate]
     )
   
   #append to all_plates
@@ -506,22 +587,23 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
      bind_rows(temp_lst[[paste0("plate_", idx_plate)]]$lmX_pred_data)
    
    #create combined data for plotting with facet wrap
-   temp_lst$all_plates$plot$data <- bind_rows(
-     temp_lst$all_plates$plot$data,
-     temp_lst[[paste0("plate_", idx_plate)]]$plot_data %>%
-       add_column(plate_id = paste0("plate", idx_plate, "\n",
-                                    "r2=", temp_lst$all_plates$summary$r2[idx_plate],
-                                    "; slope=", temp_lst$all_plates$summary$slope[idx_plate],
-                                    "; int=", temp_lst$all_plates$summary$intercept[idx_plate]))
-   )}
+    temp_lst$all_plates$plot$data <- bind_rows(
+      temp_lst$all_plates$plot$data,
+      temp_lst[[paste0("plate_", idx_plate)]]$plot_data %>%
+        add_column(plate_id = paste0(mstr_lst$data$response[[idx_metabolite]]$plate[idx_plate], "; ",
+                                     "r2=", temp_lst$all_plates$summary$r2[idx_plate],"; ",
+                                     "slope=", temp_lst$all_plates$summary$slope[idx_plate],
+                                     "; int=", temp_lst$all_plates$summary$intercept[idx_plate]))
+    )}
    
-   # produce calibration plot
-   temp_lst$all_plates$plot$calib <- calibrate_plotR(FUNC_data = temp_lst$all_plates$plot$data) %>% ggplotly()
-   
-   
-   
+
    #if passes QC append concentration data to CONC
    if(min(temp_lst$all_plates$summary$r2) > 0.99){
+     # produce calibration plot with green lm line
+   temp_lst$all_plates$plot$calib <- calibrate_plotR(FUNC_data = temp_lst$all_plates$plot$data,
+                                                     FUNC_lm_color = "darkgreen")
+     
+   #append to masterlist with _CONC tag
    mstr_lst$data$calib <- mstr_lst$data$calib %>%
      left_join(., select(temp_lst$all_plates$lmX_pred_data, name, all_of(idx_metabolite)), 
                by="name") %>%
@@ -537,6 +619,12 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
      
    } else {
      #if metabolite fails quantification QC, keep and append response values to mstr_lst
+     
+        # produce calibration plot with green lm line
+   temp_lst$all_plates$plot$calib <- calibrate_plotR(FUNC_data = temp_lst$all_plates$plot$data,
+                                                     FUNC_lm_color = "darkred")
+     
+   #append to masterlist with _RESPONSE tag
        mstr_lst$data$calib <- mstr_lst$data$calib %>%
      left_join(., select(mstr_lst$data$response[[idx_metabolite]], name, response),
                by = "name") %>%
@@ -566,64 +654,16 @@ for(idx_metabolite in mstr_lst$data$SIL_template$standard){
       }
 }
 
-# mstr_lst$tbls$calib_summary %>%
-#         kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
-#         kable_minimal("hover") %>%
-#         kable_styling(font_size = 10) %>%
-#         scroll_box(height = "500px")
+mstr_lst$tbls$calib_summary %>%
+        kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+        kable_minimal("hover") %>%
+        kable_styling(font_size = 10) %>%
+        scroll_box(height = "500px")
 ```
-
-## 
-
-```{r control charts, eval=FALSE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
-#create empty rmd list for knit_child workaround
-temp_rmd_list <- list()
-
-
-#run loop for each metabolite that passes QC
-for(idx_metabolite in names(mstr_lst$calib$conc)){
-  temp_plot <- combineWidgets(
-    mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plot$control_chart,
-    height = 800
-    )
-  #create temp rmd file using sink
-  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
-  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
-  sink(file = temp_rmd_path)
-  cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
-      'temp_plot', "  \n", "```", "  \n", sep = "")
-  sink()
-
-# ---------- knit using knit_child function
-  # Knit the temporary RMD file
-  cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
-                        quiet = TRUE))
-
-  # Delete the temporary RMD files
-  file.remove(temp_rmd_list[[idx_metabolite]])
-}
-
-```
-
-## Perform calibration
-
-Following calibration, metabolites are assigned either:
-
--   Concentration values: metabolite has an external calibration dilution series using response values created by calculating a ratio with the peak area of a matched (or surrogate) stable isotope labelled internal standard. Metabolites have passed quality control assessment consisting of:
-
-    -   r2 value \> 0.99
-
-    -   minimum of 6 calibration points with a residual deviation \<25% from expected concentration
-
-    -   minimum of 2 analytical QC with a residual deviation \<25% from expected concentration
-
--   Response values: metabolite has an external calibration dilution series using response values created by calculating a ratio with the peak area of a matched (or surrogate) stable isotope labelled internal standard. Metabolites have failed quality control assessment described above.
-
--   Peak area: metabolite does not have an external calibration dilution series and does not use a stable isotope labelled internal standard.
 
 ### Concentration
 
-```{r report - cal, eval=FALSE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
+```{r calibration reporting, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
 
 # -------------- create combined widget of cal plots and summary table and knit to report
   #make empty list in master list
@@ -639,28 +679,26 @@ temp_rmd_list <- list()
 #run loop for each metabolite that passes QC
 for(idx_metabolite in names(mstr_lst$calib$conc)){
   plot_row_freq <- ceiling(length(unique(mstr_lst$calib$conc[[idx_metabolite]]$all_plates$summary$plate))/3)
-  mstr_lst$report$conc[[idx_metabolite]] <- combineWidgets(
-   mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plot$calib, # calib plots
-  #mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plot$control_chart, #control chart plots
-  #combine with kable of summary table
-mstr_lst$calib$conc[[idx_metabolite]]$all_plates$summary %>%
-  kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
-  kable_minimal("hover") %>%
-  kable_styling(font_size = 10) %>%
-  scroll_box(width = "750px"),
-#CombineWidegets properties
-height = (plot_row_freq+1) * 400,
-width = 800,
-rowsize = c(plot_row_freq,1),
-ncol = 1
-)
+  mstr_lst$report$conc[[idx_metabolite]] <- list(
+  plot = combineWidgets(
+    mstr_lst$calib$conc[[idx_metabolite]]$all_plates$plot$calib, # calib plots
+    height = plot_row_freq * 400, width = 800, rowsize = 1, ncol = 1),
+  tble = combineWidgets(
+    mstr_lst$calib$conc[[idx_metabolite]]$all_plates$summary %>%
+      kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+      kable_minimal("hover") %>%
+      kable_styling(font_size = 10) %>%
+      scroll_box(width = "750px"),
+    height = (plot_row_freq+1) * 115, width = 800, rowsize = 1, ncol = 1))
   
 # ----------- Create temp rmd file as a work around for rendering dynamic html widgets from a loop
   temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
   temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
   sink(file = temp_rmd_path)
   cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
-      'mstr_lst$report$conc[[idx_metabolite]]', "  \n", "```", "  \n", sep = "")
+      'mstr_lst$report$conc[[idx_metabolite]]$plot', "  \n", 
+      'mstr_lst$report$conc[[idx_metabolite]]$tble', "  \n", 
+      "```", "  \n", sep = "")
   sink()
 
 # ---------- knit using knit_child function
@@ -675,7 +713,7 @@ ncol = 1
 
 ### Response
 
-```{r report - response, eval=FALSE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
+```{r response reporting, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
 
 # -------------- create combined widget of cal plots and summary table and knit to report
 
@@ -685,15 +723,17 @@ temp_rmd_list <- list()
 #run loop for each metabolite that passes QC
 for(idx_metabolite in names(mstr_lst$calib$response)){
   plot_row_freq <- ceiling(length(unique(mstr_lst$calib$response[[idx_metabolite]]$all_plates$summary$plate))/3)
-  mstr_lst$report$response[[idx_metabolite]] <- combineWidgets(
-   mstr_lst$calib$response[[idx_metabolite]]$all_plates$plot$calib,
-   #mstr_lst$calib$response[[idx_metabolite]]$all_plates$plot$control_chart,
-#CombineWidegets properties
-height = (plot_row_freq+1) * 400,
-width = 800,
-rowsize = c(plot_row_freq,1),
-ncol = 1
-)
+  mstr_lst$report$response[[idx_metabolite]] <- list(
+  plot = combineWidgets(
+    mstr_lst$calib$response[[idx_metabolite]]$all_plates$plot$calib, # calib plots
+    height = plot_row_freq * 400, width = 800, rowsize = 1, ncol = 1),
+  tble = combineWidgets(
+    mstr_lst$calib$response[[idx_metabolite]]$all_plates$summary %>%
+      kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+      kable_minimal("hover") %>%
+      kable_styling(font_size = 10) %>%
+      scroll_box(width = "750px"),
+    height = (plot_row_freq+1) * 115, width = 800, rowsize = 1, ncol = 1))
   
 # ----------- Create temp rmd file as a work around for rendering dynamic html widgets from a loop
   
@@ -701,7 +741,9 @@ ncol = 1
   temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
   sink(file = temp_rmd_path)
   cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
-      'mstr_lst$report$response[[idx_metabolite]]', "  \n", "```", "  \n", sep = "")
+      'mstr_lst$report$response[[idx_metabolite]]$plot', "  \n", 
+      'mstr_lst$report$response[[idx_metabolite]]$tble', "  \n", 
+      "```", "  \n", sep = "")
   sink()
 
 # ---------- knit using knit_child function
@@ -714,62 +756,21 @@ ncol = 1
 }
 ```
 
-### Area
+### Control chart of LTR performance
 
-```{r report - area, eval=FALSE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
+```{r LTR_control_plotR function to control chart LTR analysis, eval = TRUE}
 
-# -------------- create combined widget of cal plots and summary table and knit to report
-#create empty rmd list for knit_child workaround
-temp_rmd_list <- list()
-
-#run loop for each metabolite that passes QC
-for(idx_metabolite in names(mstr_lst$calib$area)){
-  plot_row_freq <- ceiling(length(unique(mstr_lst$calib$area[[idx_metabolite]]$all_plates$summary$plate))/3)
-  mstr_lst$report$area[[idx_metabolite]] <- combineWidgets(
-   #mstr_lst$calib$area[[idx_metabolite]]$all_plates$plot$control_chart,
-  #combine with kable of summary table
-#CombineWidegets properties
-height = 400,
-width = 800,
-rowsize = c(1),
-ncol = 1
-)
-  
-# ----------- Create temp rmd file as a work around for rendering dynamic html widgets from a loop
-  
-  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
-  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
-  sink(file = temp_rmd_path)
-  cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
-      'mstr_lst$report$response[[idx_metabolite]]', "  \n", "```", "  \n", sep = "")
-  sink()
-
-# ---------- knit using knit_child function
-  # Knit the temporary RMD file
-  cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
-                        quiet = TRUE))
-
-  # Delete the temporary RMD files
-  file.remove(temp_rmd_list[[idx_metabolite]])
-}
-```
-
-```{r LTR analysis, eval = FALSE}
-
-#------------- FUNCTION to create LTR control chart
-
-control_plotR <- function(FUNC_data,
+#------------- write FUNCTION to create LTR control chart
+LTR_control_plotR <- function(FUNC_data,
                           FUNC_plot_header,
                           FUNC_y_title){
   
 FUNC_data <- FUNC_data %>%
     #crop plate order
     add_column(
-      plate_id = (lapply(str_split(FUNC_data$name, "_"), function(x) head(x, n=6))) %>% 
-        lapply(., function(x) tail(x, n=1)) %>% unlist(),
       run_order = lapply(str_split(FUNC_data$name, "_"), function(x) tail(x, n=1)) %>% unlist() %>% as.numeric()
     ) %>%
-    arrange(plate_id, run_order) %>% 
+    arrange(plate, run_order) %>% 
     add_column(sample_idx = factor(1:nrow(.), ordered = TRUE)) %>%
     rename_at(FUNC_plot_header, list(~paste0("y_data")))
   
@@ -819,468 +820,249 @@ FUNC_data <- FUNC_data %>%
  
 }
 
-# ---------------- #plots
 
+#------------- apply FUNCTION to data create LTR control chart for each metabolite
+
+mstr_lst$ltr <- list(
+  control_charts = list()
+)
+  
+for(idx_metabolite in mstr_lst$tbls$calib_summary$metabolite){
+  if(mstr_lst$tbls$calib_summary$data_type[which(mstr_lst$tbls$calib_summary$metabolite == idx_metabolite)] == "conc"){
 #create control chart - conc
-   temp_lst$all_plates$plot$control_chart <- control_plotR(FUNC_data = temp_lst$all_plates$lmX_pred_data %>% 
-                                                             filter(type == "Analyte"),
-                                                           FUNC_plot_header = "calc_conc",
-                                                           FUNC_y_title = "concentration")
-
-
-         #create control chart response
-   temp_lst$all_plates$plot$control_chart <- control_plotR(
-     FUNC_data = temp_lst$all_plates$lmX_pred_data %>%
-       filter(type == "Analyte"),
-     FUNC_y_title = "response",
-     FUNC_plot_header = "response")
-
-      #create control chart area
-   temp_lst$all_plates$plot$control_chart <- control_plotR(
-     FUNC_data = mstr_lst$data$calib %>% 
-       select(plate, name, type, all_of(paste0(idx_metabolite, "_AREA"))) %>%
-       rename_at(paste0(idx_metabolite, "_AREA"), list(~paste0("calc_conc"))) %>% 
+   mstr_lst$ltr$control_charts[[idx_metabolite]] <- LTR_control_plotR(
+     FUNC_data = mstr_lst$calib$conc[[idx_metabolite]]$all_plates$lmX_pred_data %>% 
        filter(type == "Analyte"),
      FUNC_plot_header = "calc_conc",
+     FUNC_y_title = "concentration")
+  }
+  
+  if(mstr_lst$tbls$calib_summary$data_type[which(mstr_lst$tbls$calib_summary$metabolite == idx_metabolite)] == "response"){
+#create control chart - response
+   mstr_lst$ltr$control_charts[[idx_metabolite]] <- LTR_control_plotR(
+     FUNC_data = mstr_lst$calib$response[[idx_metabolite]]$all_plates$lmX_pred_data %>% 
+       filter(type == "Analyte"),
+     FUNC_plot_header = "response",
+     FUNC_y_title = "response")
+  }
+  
+    if(mstr_lst$tbls$calib_summary$data_type[which(mstr_lst$tbls$calib_summary$metabolite == idx_metabolite)] == "area"){
+#create control chart - response
+   mstr_lst$ltr$control_charts[[idx_metabolite]] <- LTR_control_plotR(
+     FUNC_data = mstr_lst$data$area %>%
+       filter(type == "Analyte") %>%
+       rename_at(idx_metabolite, ~paste0("area")),
+     FUNC_plot_header = "area",
      FUNC_y_title = "area")
-
-```
-
-# SPACE - NOT COMPLETE BELOW THIS LINE
-
-<!--# comment: IGNORE BELOW THIS LINE FOR NOW -->
-
-```{r load packages and set up project structure, eval=FALSE, echo=TRUE, paged.print=TRUE, warning=FALSE, results = 'asis'}
-
-#### load packages
-package_list <- c('tidyverse', 'janitor', 'qualV', 'kableExtra', '')
-
-for(idx_package in package_list){
-  if(length(which(row.names(installed.packages()) == idx_package)) > 0){
-  suppressMessages(require(package = idx_package,
-                                         character.only = TRUE))
-  } else {
-    paste0(idx_package, " is not installed. Please install ", idx_package, " before continuing.") %>% print()
-  }
-}
-
-#string for function directory
-func_dir = "/Users/lukegraywhiley/Documents/GitHub/metabolomics_code/functions/"
-
-#filelist of datafiles from project path to undergo analysis. Data must be stored in appropiate subfolder.
-data_filelist <- list.files(path = paste0(mstr_lst$proj_optns$proj_dir,
-                                          mstr_lst$proj_optns$proj_data_subdir),
-                            pattern = ".txt",
-                            full.names = TRUE)
-
-#set up project list structure and append colours (autogenerated using brewer.pal)
-mstr_lst <- lst(proj_details = mstr_lst$proj_optns %>%
-                     list_modify(., 
-                                 proj_colours = brewer.pal(n= length(.[["proj_classes"]]), name = "Accent"),
-                                 sub_projects = array(dim = length(data_filelist))),
-                   functions = lst(
-                     LGW_FUNC_dataRead = source(paste0(func_dir ,"LGW_FUNC_dataRead.R")),
-                     LGW_FUNC_impute = source(paste0(func_dir, "LGW_FUNC_impute_halfmin.R")),
-                     LGW_FUNC_pca = source(paste0(func_dir, "Quarto_LGW_FUNC_rPCA.R")),
-                     LGW_FUNC_rOPLS = source(paste0(func_dir, "Quarto_LGW_FUNC_rOPLS.R")),
-                     LGW_FUNC_univariate = source(paste0(func_dir, "2021_LGW_FUNC_compare_means_ggplot_boxplots.R"))
-                     ),
-                   tables = lst(proj_overview = lst()))
-
-# read in data
-
-
-#execute function
-for(idx_filepath in 1:length(data_filelist)){
-  mstr_lst$proj_details$sub_projects[idx_filepath] <- gsub(x = strsplit(data_filelist[idx_filepath], paste0(mstr_lst$proj_details$proj_data_subdir, "/"))[[1]][2], pattern = ".csv", replacement = "")
- 
-  mstr_lst[[mstr_lst$proj_details$sub_projects[idx_filepath]]] <- lst(
-    data = lst(
-      master_data = mstr_lst$functions$LGW_FUNC_dataRead$value(
-        FUNC_datapath = data_filelist[idx_filepath],
-        FUNC_annotation_tag = "sample"),
-      sample_filtered = lst(),
-      feature_filtered = lst(),
-      imputed_data = lst()
-  ))
-  
-  idx_data <- mstr_lst$proj_details$sub_projects[idx_filepath]
-  
-#add factor columns for control of colours for plotting
-  mstr_lst[[idx_data]]$data$master_data$annotation <- mstr_lst[[idx_data]]$data$master_data$annotation %>%
-    #sample_class
-    mutate(across(.cols = all_of(mstr_lst$proj_details$proj_class_column_header),
-                  .fns = ~factor(.x, levels = c(mstr_lst$proj_details$proj_classes), ordered = TRUE),
-                  .names = "sample_class_factor")) %>%
-    #sample type
-    mutate(across(.cols = sample_type,
-                  .fns = ~factor(.x, levels = c("qc", "sample"), ordered = TRUE),
-                  .names = "sample_type_factor")) %>%
-    #sample_batch
-    mutate(across(.cols = sample_batch,
-                  .fns = ~factor(.x, levels = unique(.), ordered = TRUE),
-                  .names = "sample_batch_factor"))
-             
-  #filter to only include sample classes desired by user
-        #find idx of rows containg sample_class defined by user as proj_classes in chunk 1.
-  keep_idx_class <- which(
-    mstr_lst[[idx_data]]$data$master_data$annotation[[mstr_lst$proj_details$proj_class_column_header]] %in% mstr_lst$proj_details$proj_classes)
-
-    #run apply to remove sample classes not desired by user
-  mstr_lst[[idx_data]]$data$master_data[1:2] <- lapply(
-    X = mstr_lst[[idx_data]]$data$master_data[1:2], 
-    FUN = function(x) x[keep_idx_class,])
-  
-  #create summary tibble for printing
-  mstr_lst$tables$proj_overview <- mstr_lst$tables$proj_overview %>%
-    bind_rows(., tibble(
-      project = idx_data,
-      features = ncol(mstr_lst[[idx_data]]$data$master_data$data),
-      total_samples = nrow(mstr_lst[[idx_data]]$data$master_data$annotation),
-      qc_samples = nrow(mstr_lst[[idx_data]]$data$master_data$annotation %>% 
-                          filter(sample_type =="qc")),
-      study_samples = nrow(mstr_lst[[idx_data]]$data$master_data$annotation %>% 
-                             filter(sample_type =="sample"))
-      ) %>% bind_cols(.,
-      mstr_lst[[idx_data]]$data$master_data$annotation[[mstr_lst$proj_details$proj_class_column_header]] %>%
-        table() %>% as.matrix %>% t %>% as_tibble())
-    )
-  
-  #set result lst for exporting results
-  mstr_lst[[idx_data]]$results <- lst()
   }
 
+# ----------- Create temp rmd file as a work around for rendering dynamic html widgets from a loop
+  temp_rmd_path <- paste0(mstr_lst$proj_optns$proj_dir, idx_metabolite, ".rmd")
+  temp_rmd_list[[idx_metabolite]] <- temp_rmd_path
+  sink(file = temp_rmd_path)
+  cat("  \n", "### ", idx_metabolite, "  \n", "```{r, echo=FALSE, warning=FALSE}", "  \n",
+      'mstr_lst$ltr$control_charts[[idx_metabolite]]', "  \n", 
+      "```", "  \n", sep = "")
+  sink()
 
-#print table for report
-mstr_lst$tables$proj_overview %>% 
-  kbl(align = "c") %>% 
-  kable_minimal("hover", full_width = T)
-```
+# ---------- knit using knit_child function
+  # Knit the temporary RMD file
+  cat(knitr::knit_child(temp_rmd_list[[idx_metabolite]],
+                        quiet = TRUE))
 
-## Sample outlier removal
-
-```{r sample outlier removal, eval = FALSE, echo = TRUE, warning=FALSE}
-
-# this chunk is to subset data, removing outliers
-# if no outliers - set as NA
-
-#set empty list
-mstr_lst$tables$proj_overview_filtered <- lst()
-
-for(idx_data in mstr_lst$proj_details$sub_projects){
+  # Delete the temporary RMD files
+  file.remove(temp_rmd_list[[idx_metabolite]])
   
-  if(is.na(mstr_lst$proj_details$proj_outliers)){
-  mstr_lst[[idx_data]]$data$sample_filtered <- mstr_lst[[idx_data]]$data$master_data
-  mstr_lst$tables$proj_overview_filtered <- mstr_lst$tables$proj_overview
-  #cat("No outliers removed")
-  } else {
-  
-  #find idx of rows containg sample_class defined by user as proj_classes in chunk 1.
-  keep_idx_class <- which(mstr_lst[[idx_data]]$data$master_data$annotation[[mstr_lst$proj_details$proj_class_column_header]] %in% mstr_lst$proj_details$sample_class)  
-  #find idx of rows that are not outliers defined by user as proj_outliers in chunk 1.
-  keep_idx_outlier <- which(!mstr_lst[[idx_data]]$data$master_data$annotation$sample_name %in% mstr_lst$proj_details$proj_outliers)
-
-  #run apply to remove outliers
-  mstr_lst[[idx_data]]$data$sample_filtered[1:2] <- lapply(X = mstr_lst[[idx_data]]$data$master_data[1:2], 
-                                                            FUN = function(x) x[keep_idx_outlier,])
-  
-  #add feature list to filtered data
-   mstr_lst[[idx_data]]$data$sample_filtered[3] <-  mstr_lst[[idx_data]]$data$master_data[3]
-  
-     mstr_lst$tables$proj_overview_filtered <- mstr_lst$tables$proj_overview_filtered %>%
-    bind_rows(.,
-              tibble(project = (mstr_lst[[idx_data]]$data$sample_filtered %>% names()),
-                     features = ncol(mstr_lst[[idx_data]]$data$sample_filtered$data),
-                     total_samples = nrow(mstr_lst[[idx_data]]$data$sample_filtered$annotation),
-                     qc_samples = nrow(mstr_lst$data$master_data[[idx_filepath]]$annotation %>% filter(sample_type =="qc")),
-                     study_samples = nrow(mstr_lst[[idx_data]]$data$sample_filtered$annotation %>% filter(sample_type =="sample"))
-                     ) %>%
-                bind_cols(. ,
-                          mstr_lst[[idx_data]]$data$sample_filtered$annotation[[mstr_lst$proj_details$proj_class_column_header]] %>% table() %>% as.matrix %>% t %>% as_tibble())
-              )
-  }
-}
-
-#clean environment
-rm(list = c(ls()[which(ls() != "mstr_lst")]))
-
-if(is.na(mstr_lst$proj_details$proj_outliers)){cat("No outliers removed")} else {
-  cat("Updated sample table:")
-  mstr_lst$tables$proj_overview_filtered %>% 
-  kbl(align = "c") %>% 
-  kable_minimal("hover", full_width = T)
 }
 ```
 
-## Feature outlier removal
+### LTR Relative Standard Deviation performance
 
--   Features are removed that have \> 50% missing values
+Metabolites were filtered if the %RSD was \> 30% across the project
 
--   Removed features:
+```{r evaluate LTR performance, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, results='asis'}
 
-```{r feature outlier removal, eval = FALSE, echo = TRUE, warning=FALSE}
+mstr_lst$ltr$rsd <- list(data = NULL,
+                         plot = NULL)
 
-#remove features that have > x missing values
-
-for(idx_data in mstr_lst$proj_details$sub_projects){
-  #set data
-  mstr_lst[[idx_data]]$data[["feature_filtered"]] <- mstr_lst[[idx_data]]$data$sample_filtered
+for(idx_metabolite in names(select(mstr_lst$data$calib, - plate, -name, -type))){
+  temp_ltr_data <- (mstr_lst$data$calib %>%
+    filter(grepl("LTR", mstr_lst$data$calib$name)))[[idx_metabolite]]
+  ltr_missing_values <- which(is.na(temp_ltr_data))
+  ltr_perc_missing_values <- (length(ltr_missing_values)/length(temp_ltr_data))*100
+  ltr_mean <- mean(temp_ltr_data)
+  ltr_sd <- sd(temp_ltr_data)
+  ltr_rsd <- (ltr_sd*100)/ltr_mean
   
-  #get names of metabolites with >50% missing values
-mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]] <- which(
-  (colSums(is.na(mstr_lst[[idx_data]]$data$sample_filtered$data))/
-     nrow(mstr_lst[[idx_data]]$data$sample_filtered$data))*100 > 50) %>% names()
- 
-mstr_lst[[idx_data]]$data[["feature_filtered"]]$data <-  mstr_lst[[idx_data]]$data[["feature_filtered"]]$data %>%
-  select(-all_of(mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]]))
+  mstr_lst$ltr$rsd$data <- mstr_lst$ltr$rsd$data %>%
+    bind_rows(
+      tibble("metabolite" = idx_metabolite,
+             "rsd" = ltr_rsd)
+    )}
 
-mstr_lst[[idx_data]]$data[["feature_filtered"]]$features <- mstr_lst[[idx_data]]$data[["feature_filtered"]]$data %>%
-  names()
-}
+mstr_lst$ltr$rsd$data <- mstr_lst$ltr$rsd$data %>%
+  arrange(rsd) %>%
+  add_column(
+    metabolite_factor = factor(.$metabolite, levels = c(.$metabolite), ordered= TRUE)
+  )
 
-mstr_lst[[idx_data]]$data$feature_filtered[["failed_features"]]
+#create plot
+  mstr_lst$ltr$rsd$plot <- ggplot(data = mstr_lst$ltr$rsd$data,
+                      aes(x=metabolite_factor, y=rsd)) +
+    geom_point(color = "black") +
+    geom_hline(yintercept = 20, color = "orange") +
+    geom_hline(yintercept = 30, color = "orange", linetype = "dashed") +
+    theme_bw() +
+    labs(y = paste0("%RSD"))+
+    theme(plot.title = element_blank(),
+          axis.title = element_text(size = 5),
+          axis.text = element_text(size = 5),
+          legend.text = element_text(size = 5),
+          legend.title = element_text(size = 5),
+          axis.text.x = element_text(angle = 90),
+          axis.ticks.x = element_blank()) +
+    scale_x_discrete(expand = c(0.02,0.02)) 
+
+  combineWidgets(ggplotly(mstr_lst$ltr$rsd$plot),
+              height = 500, width = 600, rowsize = 1, ncol = 1)
+  
+  #filter data to exclude data that failed RSD filter
+  mstr_lst$data$calib_ltr_filtered <- mstr_lst$data$calib %>%
+    select(plate, name, type, 
+           all_of(c(mstr_lst$ltr$rsd$data$metabolite[which(mstr_lst$ltr$rsd$data$rsd < 30)])))
+  
+  mstr_lst$ltr$rsd$data$excluded <- FALSE
+  mstr_lst$ltr$rsd$data$excluded[which(mstr_lst$ltr$rsd$data$rsd >30)] <- TRUE
+  
+#print table in report
+mstr_lst$ltr$rsd$data %>%
+  select(-metabolite_factor) %>%
+  kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+  kable_minimal("hover") %>%
+  kable_styling(font_size = 12) %>%
+  scroll_box(height = "250px") %>% print()
+  
 ```
 
-## Missing value and imputation overview
+## Missing value overview
 
--   Missing values also include NA, NaN and zeros
+-   metabolites are assessed for % missing values (0 or NA)
 
--   Missing values are treated as \< lower limit of detection (LLOD)
+-   metabolites with \>50% of missing values are removed from analysis
 
--   Imputation is computed individually for each metabolite.
+```{r missing value overview and impute, eval = TRUE, echo = TRUE}
 
--   Missing values are filled using the half minimum concentration value for each metabolite.
+mstr_lst$tbls$missing_val <- NULL
 
-```{r missing value overview and impute, eval = FALSE, echo = TRUE}
-
-mstr_lst$functions$LGW_FUNC_impute <- source('/Users/lukegraywhiley/Documents/GitHub/metabolomics_code/functions/LGW_FUNC_impute_halfmin.R')
-
-#set empty table for output
-mstr_lst$tables$missing_values_table <- lst()
-
-#run impution loop for each dataset
-for(idx_data in mstr_lst$proj_details$sub_projects){
-      mstr_lst[[idx_data]]$data$imputed_data <- list(
-        annotation = mstr_lst[[idx_data]]$data$feature_filtered$annotation,
-        data = mstr_lst$functions$LGW_FUNC_impute$value(x = mstr_lst[[idx_data]]$data$feature_filtered$data),
-        features = mstr_lst[[idx_data]]$data$feature_filtered$features
-      )
-  
-      #create table for report
-      
-      #1. data to shorthand object
-      pre_data <- mstr_lst[[idx_data]]$data$feature_filtered$data
-      pre_data_missing <- length(which(pre_data==0)) + length(which(is.na(pre_data)))
-      post_data <- mstr_lst[[idx_data]]$data$imputed_data$data
-      post_data_missing <- length(which(post_data==0)) + length(which(is.na(post_data)))
-      
-    
-      #. calculate output table
-    mstr_lst$tables$missing_values_table <- mstr_lst$tables$missing_values_table %>%
-      bind_rows(., bind_cols(
-        "project" = idx_data,
-        "pre-impute: missing values (%)" = paste0(pre_data_missing, " (", round((100/prod(dim(pre_data)))*pre_data_missing,2),")"),
-        "post-impute: missing values (%)" = paste0(post_data_missing, " (", round((100/prod(dim(post_data)))*post_data_missing,2),")")
-        ))
+#run missing value search for each dataset
+for(idx_metabolite in names(select(mstr_lst$data$calib_ltr_filtered, - plate, -name, -type))){
+  mstr_lst$tbls$missing_val <- mstr_lst$tbls$missing_val %>%
+    bind_rows(
+      tibble(metabolite = idx_metabolite,
+             percent_missing_values = 
+               (length(which(mstr_lst$data$calib_ltr_filtered[[idx_metabolite]]==0)) + 
+                  length(which(is.na(mstr_lst$data$calib_ltr_filtered[[idx_metabolite]])))/
+                  length(mstr_lst$data$calib_ltr_filtered[[idx_metabolite]]))*100))
 }
 
-
-#clean environment
-rm(list = c(ls()[which(ls() != "mstr_lst")]))
-
-#print table for report
-mstr_lst$tables$missing_values_table %>% 
-  kbl(align = "c") %>% 
-  kable_minimal("hover", full_width = T)
-
+#remove metabolite with >50% missing values
+#filter data to exclude data that failed RSD filter
+  mstr_lst$data$calib_ltr_mv_filtered <- mstr_lst$data$calib_ltr_filtered %>%
+    select(plate, name, type, 
+           all_of(c(mstr_lst$tbls$missing_val$metabolite[which(mstr_lst$tbls$missing_val$percent_missing_values < 50)])))
+  
+  mstr_lst$tbls$missing_val$excluded <- FALSE
+  mstr_lst$tbls$missing_val$excluded[which(mstr_lst$tbls$missing_val$percent_missing_values >50)] <- TRUE
+  
+#print table in report
+mstr_lst$tbls$missing_val %>%
+  kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
+  kable_minimal("hover") %>%
+  kable_styling(font_size = 12) %>%
+  scroll_box() %>% print()
 ```
 
-<br />
-
-## Results
-
-### Multivariate data analysis
-
-#### Principal Component Analysis (PCA)
+## Principal Component Analysis (PCA) of data
 
 -   Principal Component Analysis (PCA) was conducted to check the quality of the data. PCA is an unsupervised model (i.e. no prior group information is supplied to the model, labelling and colours applied after the model construction). This allows for observations on the quality of the dataset
 
 -   Patterns in the data between samples can also be observed - this may be as a result of either biological or analytical differences - e.g. differences in sample collection, handling or storage
 
-##### Pre-processed data - no batch or signal drift correction
+```{r PCA function, eval=TRUE, echo=TRUE, paged.print=FALSE, warning=FALSE, error=TRUE}
 
-```{r PCA, eval = FALSE, echo = TRUE, warning = FALSE}
+# -------------------------
+# write PCA function
+# -------------------------
 
-#create a html taglist (work around for rendering plotly html in a loop in .RMD documents) and set up iterative idx (i)
-print_lst <- htmltools::tagList(); i <- 1
-
-#run loop
-for(idx_data in mstr_lst$proj_details$sub_projects){
-  #pca_lst to store PCA settings for loop
-  pca_lst <- lst(
-    "sample type" = lst(header = "sample_type_factor", include_qc = TRUE, include_sample = TRUE,
-                        plot_colours = c("steelblue1", "white")),
-    "batch [all samples]" = lst(header = "sample_batch_factor", include_qc = TRUE, include_sample = TRUE,
-                                plot_colours = c(brewer.pal(n = length(unique(
-                                  mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_batch_factor)), name = "Accent"))),
-    "batch [qc samples only]" = lst(header = "sample_batch_factor", include_qc = TRUE, include_sample = FALSE,
-                                    c(brewer.pal(n = length(unique(
-mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_batch_factor)), name = "Accent"))),
-    "sample class" = lst(header = "sample_class_factor", include_qc = TRUE, include_sample = TRUE,
-                         plot_colours = mstr_lst$proj_details$proj_colours[which(
-                           levels(mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_class_factor) %in%
-                             unique( mstr_lst[[idx_data]]$data$imputed_data$annotation[[mstr_lst$proj_details$proj_class_column_header]]))]),
-  )
-
-  # complete PCA analysis
-  for(idx_pca in names(pca_lst)){
-    mstr_lst[[idx_data]]$results$pca[[idx_pca]] <- mstr_lst$functions$LGW_FUNC_pca$value(
-                    FUNC_data = bind_cols(mstr_lst[[idx_data]]$data$imputed_data$annotation, 
-                                          mstr_lst[[idx_data]]$data$imputed_data$data),
-                    FUNC_metabolite_list = mstr_lst[[idx_data]]$data$imputed_data$features,
-                    FUNC_STRING_title = paste0("PCA (coloured by ",idx_pca,"); ", idx_data),
-                    FUNC_STRING_legend_title = idx_pca,
-                    FUNC_HEADER_colour_by = pca_lst[[idx_pca]]$header,
-                    FUNC_HEADER_plot_label = "sample_id",
-                    FUNC_OPTION_scaling = "standard",
-                    FUNC_OPTION_log_data = TRUE,
-                    FUNC_OPTION_plot_colours = pca_lst[[idx_pca]]$plot_colours,
-                    FUNC_OPTION_invert_x = FALSE,
-                    FUNC_OPTION_invert_y = FALSE,
-                    FUNC_OPTION_include_qc = pca_lst[[idx_pca]]$include_qc,
-                    FUNC_OPTION_include_sample = pca_lst[[idx_pca]]$include_sample
-    )
-        print_lst[[i]] <- mstr_lst[[idx_data]]$results$pca[[idx_pca]]$plot_combined; i <- i+1
-      }}
+lgw_rPCA <- function(FUNC_data, 
+                    FUNC_metabolite_list, 
+                    FUNC_HEADER_colour_by, 
+                    FUNC_HEADER_plot_label, 
+                    FUNC_OPTION_scaling,
+                    FUNC_OPTION_log_data,
+                    FUNC_OPTION_plot_colours){
   
-print_lst
-
-```
-
-#### Orthogonal Projections to Latent Structures Discriminant Analysis (OPLS-DA)
-
--   Orthogonal Projections to Latent Structures Discriminant Analysis (OPLS-DA) was conducted to identify separation between the groups
-
--   OPLS-DA is a supervised model, where groups are pre-defined before modelling. It can be used as a classifier to see observe differences in the metabolite data that exist between the two classes e.g. (control vs case).
-
-```{r OPLS-DA, eval = FALSE, echo = TRUE,  warning=FALSE, results='asis'}
-
-#create a html taglist (work around for rendering plotly html in a loop in .RMD documents) and start iterative idx for printing
-print_list <- htmltools::tagList(); i <- 1
-
-for(idx_data in mstr_lst$proj_details$sub_projects){ 
-  mstr_lst[[idx_data]]$results$opls <- lst()
-  #create OPLS-DA
-  mstr_lst[[idx_data]]$results$opls <- mstr_lst$functions$LGW_FUNC_rOPLS$value(
-    FUNC_data = bind_cols(mstr_lst[[idx_data]]$data$imputed_data$annotation,
-                          mstr_lst[[idx_data]]$data$imputed_data$data), 
-    FUNC_metabolite_list = mstr_lst[[idx_data]]$data$imputed_data$features,
-    FUNC_OPLS_comparison_control = mstr_lst$proj_details$opls$control,
-    FUNC_OPLS_comparison_test = mstr_lst$proj_details$opls$case,
-    FUNC_HEADER_class = "sample_class_factor",
-    FUNC_OPTION_colour_by = "sample_class_factor",
-    FUNC_OPTION_plot_label = "sample_id",
-    FUNC_OPTION_scaling = "pareto",
-    FUNC_OPTION_log_data = TRUE,
-    FUNC_OPTION_title = "",
-    FUNC_OPTION_proj_colours = mstr_lst$proj_details$proj_colours,
-    FUNC_OPTION_max_orth = 1,
-    FUNC_OPTION_invert_x = FALSE,
-    FUNC_OPTION_invert_y = FALSE
-  )
- 
-  #add to print list for rendering in report, add iterative idx
-  for(idx_case in names(mstr_lst[[idx_data]]$results$opls)){
-  print_list[[i]] <- mstr_lst[[idx_data]]$results$opls[[idx_case]]$plot_combined; i <- i+1
-  print_list[[i]] <- mstr_lst[[idx_data]]$results$opls[[idx_case]]$loading_bar; i <- i+1
-}
-}
-print_list
-
-```
-
-### Univariate analysis
-
--   Inter-group means were compared using non-parametric analysis (Kruskal-Wallis)\
--   Individual lipids that returned a p value of \< 0.05, then underwent analysis using Dunn's test, to report specific inter-group differences\
--   Significant lipids from the test are displayed in the table
-
-#### Results table
-
-<br />
-
-```{r compare means, eval=FALSE, echo=TRUE, warning=FALSE, error=FALSE, message=FALSE,results='asis'}
-
-for(idx_data in mstr_lst$proj_details$sub_projects){
-  mstr_lst[[idx_data]]$results$univariate <- lst()
-
-#create a html taglist (work around for rendering kable html in a loop in .RMD documents) and start iterative idx for printing
-print_list <- htmltools::tagList(); i <- 1
-  #find project colours to use to consistently match PCA and OPLS
-  plot_colours <- mstr_lst$proj_details$proj_colours[which(
-    levels(mstr_lst[[idx_data]]$data$imputed_data$annotation$sample_class_factor) %in% mstr_lst$proj_details$univariate$comparison)]
-
-    #perform univariate and stats 
-  mstr_lst[[idx_data]]$results$univariate <- mstr_lst$functions$LGW_FUNC_univariate$value(
-    FUNC_data = bind_cols(mstr_lst[[idx_data]]$data$imputed_data$annotation,
-                          mstr_lst[[idx_data]]$data$imputed_data$data),
-    FUNC_metabolite_list = mstr_lst[[idx_data]]$data$imputed_data$features,
-    FUNC_class_to_include = mstr_lst$proj_details$univariate$comparison,
-    FUNC_HEADER_class = "sample_class_factor",
-    FUNC_HEADER_colour = "sample_class_factor",
-    FUNC_OPTION_colour_choice <- plot_colours, 
-    FUNC_OPTION_log_plot_data = FALSE,
-    FUNC_OPTION_compare_means_method = mstr_lst$proj_details$univariate$method, #OPTIONS = kruskal.test, wilcox.test, wilcox.test.paired
-    FUNC_HEADER_paired = NA, #if paired test is desired add here the linking column header, else = NA
-    FUNC_plot_comparisons = NA, ##only required for specific Mann.Whitney; e.g. c("admission - presurgery")
-    FUNC_OPTION_plot_qc = FALSE,
-    FUNC_OPTION_plot_show_legend = FALSE,
-    FUNC_OPTION_plot_outliers = FALSE,
-    FUNC_OPTION_point_size = 1
-)
+  pca_output <- list()
   
-  # p value control for multiple testing
-  mstr_lst[[idx_data]]$results$univariate$table <- mstr_lst[[idx_data]]$results$univariate$table %>%
-    select(-"p.adj", - "p.format") %>%
-    add_column(padj = p.adjust(p =  mstr_lst[[idx_data]]$results$univariate$table$p, method = "BH"), 
-               .after = "p") %>%
-    arrange(p)
+  #create data matrix for PCA
+  pca_x <- FUNC_data %>%  select(all_of(FUNC_metabolite_list)) %>% as.matrix() 
   
-  #add kable to print_list for report
-mstr_lst[[idx_data]]$results$univariate$table %>%
-  kbl(align = "c", booktabs = TRUE, longtable = TRUE) %>%
-  kable_minimal("hover") %>%
-  kable_styling(font_size = 10) %>%
-  scroll_box(height = "500px") %>% print()
-
-
+  #create PCA model
+  pca_output$pca_model <- ropls::opls(x = pca_x,
+                                      y = NULL,
+                                      algoC = "nipals",
+                                      predI = 2,
+                                      crossvalI	= 5,
+                                      log10L = FUNC_OPTION_log_data,
+                                      scaleC = FUNC_OPTION_scaling,
+                                      subset = NULL,
+                                      fig.pdfC = 'none',
+                                      info.txtC = 'none')
+  
+  # extract scores values for plotting in plot_ly
+  plotly_scores_data <- pca_output$pca_model@scoreMN %>% as_tibble(rownames = "sample_idx") %>%
+    add_column(type = FUNC_data[[FUNC_HEADER_colour_by]],
+               name = FUNC_data[[FUNC_HEADER_plot_label]])
+  
+  plotly_scores_data$type <- "Sample"
+  plotly_scores_data$type[grep("LTR", plotly_scores_data$name)] <- "LTR"
+  
+  pca_output$plot_scores <- ggplot(data = plotly_scores_data,
+                      aes(x=p1, y=p2, fill = type, color=type, shape= type, size = type)) +
+    geom_point() +
+    theme_bw() +
+    theme(plot.title = element_blank(),
+          axis.title = element_text(size = 5),
+          axis.text = element_text(size = 5),
+          legend.text = element_text(size = 5),
+          legend.title = element_text(size = 5),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank()) +
+    scale_fill_manual(values=c("orange", "black")) +
+     scale_color_manual(values=c("black", "black")) +
+     scale_shape_manual(values = c(21,3)) +
+    scale_size_manual(values = c(2.5, 1))
+  
+  ggplotly(pca_output$plot_scores)
 }
 
 
 
+#---------- apply PCA scores function
 
-```
+cat("### ", "PCA scores plot")
 
-#### Univariate boxplots
+mstr_lst$ltr$pca <- lgw_rPCA(FUNC_data = mstr_lst$data$calib_ltr_mv_filtered,
+                             FUNC_metabolite_list = mstr_lst$data$calib_ltr_mv_filtered %>%
+                               select(-plate,-name, -type) %>% names(),
+                             FUNC_HEADER_colour_by = "type",
+                             FUNC_HEADER_plot_label = "name",
+                             FUNC_OPTION_log_data = TRUE,
+                             FUNC_OPTION_scaling = "pareto",
+                             FUNC_OPTION_plot_colours = c("black", "orange")
+                             )
 
--   Boxplots for metabolites that returned a Kruskal Wallis \<0.05 are displayed below
-
--   The False Discovery Rate was controlled using the method proposed by Bejamini and Hochburg
-
-Boxplot annotation:\
-\* = p\<0.05\
-\*\* = p\<0.01\
-\*\*\* = p\<0.001\
-\*\*\*\* = p\<0.0001
-
-```{r print boxplots, eval=FALSE, echo=TRUE, warning=FALSE, error=FALSE, message=FALSE,results='asis', fig.width=2.8, fig.height=2.8, out.height="80%", out.width = "80%", dpi=300, fig.show="hold"}
-
-  #print sig boxplots
-  for(idx_data in mstr_lst$proj_details$sub_projects){
-sig_max <- which(mstr_lst[[idx_data]]$results$univariate$table$padj <0.05) %>% max()
-for (idx_plot in mstr_lst[[idx_data]]$results$univariate$table$feature[1:sig_max]){
-print(mstr_lst[[idx_data]]$results$univariate$bp[[idx_plot]])
-}
-}
+combineWidgets(mstr_lst$ltr$pca,
+              height = 600, width = 600, rowsize = 1, ncol = 1)
 
 ```
