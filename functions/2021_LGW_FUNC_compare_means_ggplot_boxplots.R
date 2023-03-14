@@ -310,6 +310,8 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       #create a list of comparisons and thir y coordinates for annotating sig values on boxplots
       plot_comparisons <- list()
       y_positions <- NULL
+      x_min <- NULL
+      x_max <- NULL
       for(idx_comp in 1:nrow(plot_coord)){
         # list comparisons
         plot_comparisons[[idx_comp]] <- c(plot_coord$group1[idx_comp],
