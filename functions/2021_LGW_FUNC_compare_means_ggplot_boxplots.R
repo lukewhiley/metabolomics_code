@@ -319,7 +319,11 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       }
       
       #add co-ordinate columns to tibble
-      plot_coord  <- plot_coord %>% add_column(y.position = y_positions) %>% add_x_position()
+      plot_coord  <- plot_coord %>% 
+        add_column(y.position = y_positions) %>% 
+        #add_x_position()
+        add_column(xmin = which(unique(bp$data$plot_class) == plot_coord$group1)) %>%
+        add_column(xmax = which(unique(bp$data$plot_class) == plot_coord$group2))
    
     #add to bp
     bp <- bp + stat_pvalue_manual(plot_coord, label = "p.adj.signif", tip.length = 0.008, vjust = 0.5, size = 2.5)
