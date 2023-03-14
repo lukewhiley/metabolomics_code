@@ -310,20 +310,22 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       #create a list of comparisons and thir y coordinates for annotating sig values on boxplots
       plot_comparisons <- list()
       y_positions <- NULL
-    for (idx_comp in 1:nrow(plot_coord)){
-      # list comparisons
-      plot_comparisons[[idx_comp]] <- c(plot_coord$group1[idx_comp],
-                                        plot_coord$group2[idx_comp])
-      # concat coordinates
-      y_positions <- c(y_positions, (bp_y_max + (idx_comp * bp_y_max *0.1)))
+      for(idx_comp in 1:nrow(plot_coord)){
+        # list comparisons
+        plot_comparisons[[idx_comp]] <- c(plot_coord$group1[idx_comp],
+                                          plot_coord$group2[idx_comp])
+        # concat coordinates
+        y_positions <- c(y_positions, (bp_y_max + (idx_comp * bp_y_max *0.1)))
+        x_min <- c(x_min, which(unique(bp$data$plot_class) == plot_coord$group1[idx_comp]))
+        x_max <- c(x_max, which(unique(bp$data$plot_class) == plot_coord$group2[idx_comp]))
       }
       
       #add co-ordinate columns to tibble
       plot_coord  <- plot_coord %>% 
         add_column(y.position = y_positions) %>% 
         #add_x_position()
-        add_column(xmin = which(unique(bp$data$plot_class) == plot_coord$group1)) %>%
-        add_column(xmax = which(unique(bp$data$plot_class) == plot_coord$group2))
+        add_column(xmin = x_min) %>%
+        add_column(xmax = x_max)
    
     #add to bp
     bp <- bp + stat_pvalue_manual(plot_coord, label = "p.adj.signif", tip.length = 0.008, vjust = 0.5, size = 2.5)
