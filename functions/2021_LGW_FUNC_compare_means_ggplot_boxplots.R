@@ -1,6 +1,5 @@
 # boxplot function
 
-#test
 lgw_compare_means_ggplot_boxplot <- function(FUNC_data, 
                                FUNC_metabolite_list, 
                                FUNC_class_to_include,
