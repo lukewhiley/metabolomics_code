@@ -7,6 +7,7 @@ lgw_impute <- function(x){
     map(.x = x, .f = ~ (min(.x[.x > 0], na.rm = TRUE))/2) %>%
     #use replace_na to replace NAs with min/2 value
     replace_na(
-      data = x %>% na_if(x = ., y = 0), #note - replace zeros with NA to make compatible with replace_na()
+      data = x %>% mutate_all(~ replace(., . == 0, NA)), #note - replace zeros with NA to make compatible with replace_na()
       replace = .) #note - replace with list of min/2 values generated from map function in pipe (.)
 }
+

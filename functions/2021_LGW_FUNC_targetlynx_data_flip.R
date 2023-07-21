@@ -3,10 +3,14 @@
   # -> janitor
   # -> tidyverse
 
+#FUNC_txt_file_path = path (including filename) of .txt file from targetlynx
+#FUNC_header_conc = header string for column containing conc values (can be conc, ng_ml etc etc)
+
 require(tidyverse)
 require(janitor)
 
-targetlynx_flippR <- function(FUNC_txt_file_path){
+targetlynx_flippR <- function(FUNC_txt_file_path,
+                              FUNC_header_conc){
 
 flippr_func_data <- read.delim(paste(FUNC_txt_file_path),
                                sep = "\t",
@@ -21,6 +25,9 @@ for(idx_row in 1:10){
 }
 #set names from the found row idx
 names(flippr_func_data) <- flippr_func_data[colnames_row_idx[1],]
+
+#find conc column
+names(flippr_func_data)[which(names(flippr_func_data) == FUNC_header_conc)] <- "conc"
 
 #clean names - requires janitor package
 flippr_func_data <- flippr_func_data %>% clean_names()
@@ -56,6 +63,7 @@ for(idx_analyte in 1:length(compound_start_idx)){
   
   start_idx <- which(temp_data$name == "Name")
   temp_data <- temp_data[-(1:start_idx),]
+  print(start_idx)
   
   if(idx_analyte == 1){
     flippr_func_data_output <- temp_data

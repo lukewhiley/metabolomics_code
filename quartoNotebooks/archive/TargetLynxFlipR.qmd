@@ -28,12 +28,12 @@ theme: cosmo
 
 #USER INPUT REQUIRED BELOW
 mstr_lst <- list(proj_optns = list(
-  project_name = "harvardc2", #name of project
+  project_name = "Imperial_Alz", #name of project
   username = "LGW", #user of project
-  project_dir = "/Users/lukegraywhiley/Downloads/temp_data/harvardC2/",
-  project_data_subdir = "data", # sub directory contatining export data from TargetLynx
+  project_dir = "/Users/lukegraywhiley/Library/CloudStorage/OneDrive-MurdochUniversity/projects/ANPC_methods/tryptophan/imperial_data/",
+  project_data_subdir = "targetlynx", # sub directory contatining export data from TargetLynx
   data_type = ".txt", # import flie type [.txt as default]
-  keep_header = c("conc", "area", "response", "percent_dev") # header to keep [e.g c("response", "conc", "area") etc]
+  keep_header = c("ng_ml", "area", "response", "percent_dev") # header to keep [e.g c("response", "conc", "area") etc]
   ))
 
 ```
