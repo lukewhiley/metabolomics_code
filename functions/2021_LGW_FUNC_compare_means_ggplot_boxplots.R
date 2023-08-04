@@ -76,7 +76,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
       
 
       #get index of significant comparisons
-      dunn_test_significance_idx <- which(dunn_test_result$p.adj.signif != "ns")
+      dunn_test_significance_idx <- which(dunn_test_result$p.signif != "ns")
       
       #get significant comparisons for plotting later - see stat_compare_means for details
       dunn_test_comparisons <- list()
@@ -303,7 +303,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
     if(FUNC_OPTION_compare_means_method != "wilcox.test.paired"){
       
       #filter results to only annotate sig comparisons
-      plot_coord <- dunn_test_result %>% filter(p.adj.signif != "ns") 
+      plot_coord <- dunn_test_result %>% filter(p.signif != "ns") 
       
       if(nrow(plot_coord) > 0){
       
@@ -330,7 +330,7 @@ lgw_compare_means_ggplot_boxplot <- function(FUNC_data,
         add_column(xmax = x_max)
    
     #add to bp
-    bp <- bp + stat_pvalue_manual(plot_coord, label = "p.adj.signif", tip.length = 0.008, vjust = 0.5, size = 2.5)
+    bp <- bp + stat_pvalue_manual(plot_coord, label = "p.signif", tip.length = 0.008, vjust = 0.5, size = 2.5)
       }
     }
     
