@@ -1,4 +1,4 @@
-#ANPC PCA quality control visualisation
+#ANPC
 
 # FUNC_compare_means_table = data containing individual lipid data - MUST CONTAIN sampleID column 
 # FUNC_colour_by = how to colour the plot (e.g. sample class, is_ltr or cohort)
